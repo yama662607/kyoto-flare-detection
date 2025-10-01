@@ -2,15 +2,32 @@
 
 ## 概要
 
-このプロジェクトは、TESS (Transiting Exoplanet Survey Satellite) の光度曲線データから恒星のフレアを検出し、そのエネルギーや頻度を分析するためのPythonフレームワークです。
+このプロジェクトは、TESS (Transiting Exoplanet Survey Satellite) の光度曲線データから恒星のフレアを検出し、そのエネルギーや頻度を分析するための Python フレームワークです。
 
 ### 主な機能
 
-- TESSのFITSファイルから光度曲線データを読み込み
+- TESS の FITS ファイルから光度曲線データを読み込み
 - データのギャップ補正、デトレンド処理
 - フレア現象の自動検出
 - フレアのエネルギー、継続時間、ピーク時刻などの物理量を推定
-- PlotlyおよびMatplotlibによる結果の可視化
+- Plotly および Matplotlib による結果の可視化
+
+## 重要
+
+- TESS 衛星のデータは非常に大きいため、Git の追跡対象から除外しています。`data/`ディレクトリに TESS の FITS ファイルを配置して使用してください。
+
+構成例
+
+```
+data/
+└── TESS/
+    ├── DS_Tuc_A/
+    │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+    ├── EK_Dra/
+    │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+    └── V889_Her/
+        └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+```
 
 ## コードの構成
 
@@ -19,6 +36,7 @@
 ### `src/base_flare_detector.py`
 
 `BaseFlareDetector` クラスを定義しています。このクラスは、フレア検出のコアとなるエンジン部分です。
+
 - **役割**: 星の種類によらない共通のアルゴリズム（データの読み込み、ギャップ補正、デトレンド、フレア検出、エネルギー計算など）を実装します。
 - **主なメソッド**:
   - `process_data()`: データ処理のパイプライン全体を実行します。
@@ -28,8 +46,9 @@
 ### `src/*_detector.py` (例: `src/ds_tuc_a_detector.py`)
 
 特定の恒星に特化した派生クラスを定義しています。これらは `BaseFlareDetector` を継承して作成されます。
+
 - **役割**: 各恒星の物理的特性（半径、温度など）や、データに見られる特有のノイズ（例: トランジット）に対応するための設定ファイルとして機能します。
-- **実装**: 
+- **実装**:
   - `__init__`メソッドをオーバーライドし、`super()`を通じて基底クラスにその星固有のパラメータを渡します。
   - 必要に応じて、`remove()` (データ除去) や `detrend_flux()` (デトレンド) などのメソッドをオーバーライドし、その星に特化したアルゴリズムを実装します。
 
@@ -56,49 +75,53 @@
 
 ## セットアップ
 
-本プロジェクトは、Pythonのパッケージ管理ツールとして `uv` を使用します。
+本プロジェクトは、Python のパッケージ管理ツールとして `uv` を使用します。
 
 ### 1. `uv` のインストール
 
-`uv`がインストールされていない場合は、お使いのOSに応じて以下のコマンドを実行してください。
+`uv`がインストールされていない場合は、お使いの OS に応じて以下のコマンドを実行してください。
 
 **macOS / Linux:**
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
+
 インストール後、ターミナルを再起動してください。
 
 ### 2. 仮想環境の作成と依存関係のインストール
 
 プロジェクトのルートディレクトリで以下のコマンドを実行すると、`.venv` という名前の仮想環境が作成され、`uv.lock`に基づいて依存パッケージがインストールされます。
+
 ```bash
 uv sync
 ```
 
 ## 使用方法
 
-### VS CodeでのJupyter Notebookカーネル設定
+### VS Code での Jupyter Notebook カーネル設定
 
-`uv`で作成した仮想環境をVS CodeのNotebookで認識させるには、以下の手順を実行します。
+`uv`で作成した仮想環境を VS Code の Notebook で認識させるには、以下の手順を実行します。
 
 1. `uv sync` を実行して `.venv` ディレクトリが作成されていることを確認します。
-2. `ipykernel` パッケージをインストールします（Jupyterがカーネルを認識するために必要です）。
+2. `ipykernel` パッケージをインストールします（Jupyter がカーネルを認識するために必要です）。
    ```bash
-   uv pip install ipykernel
+   uv add ipykernel
    ```
-3. VS CodeでJupyter Notebookファイル (`.ipynb`) を開きます。
+3. VS Code で Jupyter Notebook ファイル (`.ipynb`) を開きます。
 4. 右上の **「カーネルの選択」** (`Select Kernel`) をクリックします。
 5. **「Python 環境...」** (`Python Environments...`) を選択します。
-6. リストから、プロジェクトルートにある `.venv` フォルダ内のPythonインタプリタを選択します。これにより、Notebookがプロジェクトの仮想環境で実行されるようになります。
+6. リストから、プロジェクトルートにある `.venv` フォルダ内の Python インタプリタを選択します。これにより、Notebook がプロジェクトの仮想環境で実行されるようになります。
 
 ### 分析の実行
 
-主な分析は `notebooks/` ディレクトリ内のJupyter Notebookから行います。
+主な分析は `notebooks/` ディレクトリ内の Jupyter Notebook から行います。
 
 ```python
 from src.ds_tuc_a_detector import DSTucAFlareDetector
