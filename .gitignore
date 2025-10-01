@@ -9,4 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
-TESS/
+TESS/src/archive/
+data/TESS/**/*.fits
+**/.DS_Store
+\ndata/TESS/**/*.fits
+**/.DS_Store
