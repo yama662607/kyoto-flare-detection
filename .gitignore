@@ -13,3 +13,6 @@ wheels/
 TESS/src/archive/
 data/TESS/**/*.fits
 **/.DS_Store
+
+# any pdf file
+*.pdf

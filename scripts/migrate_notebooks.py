@@ -8,18 +8,21 @@ STAR_CONFIG = [
         "module": "flarepy_DS_Tuc_A",
         "class": "FlareDetector_DS_Tuc_A",
         "data_dir": "data/TESS/DS_Tuc_A",
+        "list_name": "detectors_DS_Tuc_A",
     },
     {
         "name": "EK_Dra",
         "module": "flarepy_EK_Dra",
         "class": "FlareDetector_EK_Dra",
         "data_dir": "data/TESS/EK_Dra",
+        "list_name": "detectors_EK_Dra",
     },
     {
         "name": "V889_Her",
         "module": "flarepy_V889_Her",
         "class": "FlareDetector_V889_Her",
         "data_dir": "data/TESS/V889_Her",
+        "list_name": "detectors_V889_Her",
     },
 ]
 
@@ -41,12 +44,12 @@ if str(PROJECT_ROOT) not in sys.path:
 print('Project:', PROJECT_ROOT)
 """
 
-CELL_DETECTOR_LOOP = """{class_name} = []
-for file_path in sorted(Path('{data_dir}').glob('*.fits')):
-    detector = {module}.{class_name}(file=file_path, process_data=True)
-    {class_name}.append(detector)
+CELL_DETECTOR_LOOP = """{list_name} = []
+for file_path in sorted((PROJECT_ROOT / '{data_dir}').glob('*.fits')):
+    detector = {class_name}(file=str(file_path), process_data=True)
+    {list_name}.append(detector)
 
-for detector in {class_name}:
+for detector in {list_name}:
     print(detector.file, detector.flare_number, detector.sum_flare_energy)
 """
 
@@ -63,9 +66,9 @@ def build_notebook(config):
     nb.cells.append(nbformat.v4.new_code_cell(header))
     nb.cells.append(nbformat.v4.new_markdown_cell(f"# {config['name']} 軌跡データの処理"))
     nb.cells.append(nbformat.v4.new_code_cell(CELL_DETECTOR_LOOP.format(
-        module=f"src.{config['module']}",
         class_name=config['class'],
         data_dir=config['data_dir'],
+        list_name=config['list_name'],
     )))
     nb.metadata.update(CELL_METADATA)
     return nb
