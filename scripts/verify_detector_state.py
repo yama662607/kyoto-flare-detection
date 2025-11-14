@@ -7,7 +7,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 
@@ -144,6 +144,14 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    plt.rcParams.update(
+        {
+            "font.size": 12,
+            "axes.titlesize": 16,
+            "axes.labelsize": 13,
+            "legend.fontsize": 11,
+        }
+    )
     sections = sorted({row["section"] for row in rows})
     status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
     colors = {
@@ -156,7 +164,8 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
     for row in rows:
         counts[row["section"]][row["status"]] += 1
 
-    fig, ax = plt.subplots(figsize=(8, 3 + len(sections)))
+    fig_height = max(4.5, 2.0 + 0.8 * len(sections))
+    fig, ax = plt.subplots(figsize=(11, fig_height))
     bottom = np.zeros(len(sections))
     y_pos = np.arange(len(sections))
     for status in status_order:
@@ -167,7 +176,7 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
         bottom += values
 
     for idx, total in enumerate(bottom):
-        ax.text(total + 0.1, y_pos[idx], f"{int(total)} vars", va="center", fontsize=10)
+        ax.text(total + 0.2, y_pos[idx], f"{int(total)} vars", va="center", fontsize=12)
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(sections)
