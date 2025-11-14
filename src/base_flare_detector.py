@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
+ROTATION_FREQUENCY_GRID = 1 / np.linspace(1.0, 8.0, 10000)
 
 
 class BaseFlareDetector:
@@ -214,10 +215,23 @@ class BaseFlareDetector:
         bjd = self.tessBJD
         flux = self.s2mPDCSAPflux
         err = np.ones(len(self.mPDCSAPfluxerr))
+        quiet_mask = flux <= 0.005
+        quiet_bjd = bjd[quiet_mask]
+        quiet_flux = flux[quiet_mask]
 
-        for i in range(len(err)):
-            nearby = (np.abs(bjd - bjd[i]) <= 0.5) & (flux <= 0.005)
-            err[i] = np.std(flux[nearby])
+        if len(quiet_bjd) == 0:
+            err[:] = np.nan
+        else:
+            window = 0.5
+            for i, center in enumerate(bjd):
+                left = center - window
+                right = center + window
+                start = np.searchsorted(quiet_bjd, left, side="left")
+                end = np.searchsorted(quiet_bjd, right, side="right")
+                if start == end:
+                    err[i] = np.nan
+                    continue
+                err[i] = np.std(quiet_flux[start:end])
 
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
@@ -448,8 +462,12 @@ class BaseFlareDetector:
         print(f"average_flare_ratio: {BaseFlareDetector.average_flare_ratio}")
 
     def rotation_period(self):
-        frequency = 1 / np.linspace(1.0, 8.0, 10000)
-        power = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux).power(frequency)
+        frequency = ROTATION_FREQUENCY_GRID
+        lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
+        try:
+            power = lomb.power(frequency, method="fast")
+        except ValueError:
+            power = lomb.power(frequency)
         self.per = 1 / frequency[np.argmax(power)]
         half_max_power = np.max(power) / 2
         aa = np.where(power > half_max_power)[0]
