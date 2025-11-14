@@ -218,11 +218,11 @@
     },
     "per": {
       "type": "scalar",
-      "value": 3.525152515251525
+      "value": 3.525429704715734
     },
     "per_err": {
       "type": "scalar",
-      "value": 0.22717271727172683
+      "value": 0.2267603220462593
     },
     "precise_obs_time": {
       "type": "scalar",
@@ -329,7 +329,7 @@
       "shape": [
         1
       ],
-      "sha256": "3dd4188eaa87884e895d3b15ce95d9f795b4d4815dc353d84369a4b8df86f0b8"
+      "sha256": "7ddd772998b4ab891211ea32581cf2aed617cf549c73c5bb206671acab275c38"
     },
     "array_per_err": {
       "type": "ndarray",
@@ -337,7 +337,7 @@
       "shape": [
         1
       ],
-      "sha256": "08514313b50b0e4ba5d5ac856c30fa90c7fca36a358ee22acf25ea9167e5313e"
+      "sha256": "7d033ee64015a680b8bf95afec7b515974dbd884021077cf07e725c68cd8028e"
     },
     "array_starspot": {
       "type": "ndarray",

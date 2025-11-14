@@ -12,7 +12,8 @@ from scipy.interpolate import interp1d
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
-ROTATION_FREQUENCY_GRID = 1 / np.linspace(1.0, 8.0, 10000)
+ROTATION_FREQUENCY_GRID = np.linspace(1 / 8.0, 1.0, 10000)
+_ROTATION_PERIODS = 1 / ROTATION_FREQUENCY_GRID
 _TESS_RESPONSE_CACHE: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
 _STAR_INTENSITY_CACHE: dict[float, float] = {}
 _REF_INTENSITY: float | None = None
@@ -504,15 +505,14 @@ class BaseFlareDetector:
 
     def rotation_period(self):
         frequency = ROTATION_FREQUENCY_GRID
+        periods = _ROTATION_PERIODS
         lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
-        try:
-            power = lomb.power(frequency, method="fast")
-        except ValueError:
-            power = lomb.power(frequency)
-        self.per = 1 / frequency[np.argmax(power)]
+        power = lomb.power(frequency, method="fast")
+        idx_max = int(np.argmax(power))
+        self.per = periods[idx_max]
         half_max_power = np.max(power) / 2
         aa = np.where(power > half_max_power)[0]
-        self.per_err = (1 / frequency[aa[-1]] - 1 / frequency[aa[0]]) / 2
+        self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
 
     def remove(self):
         # This method is intended to be overridden by subclasses for specific data removal.
