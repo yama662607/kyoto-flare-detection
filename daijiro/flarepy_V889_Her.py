@@ -229,7 +229,7 @@ class FlareDetector:
         match = re.match(r"(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         if match:
             self.data_name = match.group(1)  # グラフに表示するデータ名
-        
+
         match = re.match(r"[a-z]+\d+-s00(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         if match:
             data_number = int(match.group(1))  # グラフに表示するデータ名
@@ -388,14 +388,14 @@ class FlareDetector:
         flux_err_ext = self.gmPDCSAPfluxerr
         buf_size = self.buffer_size
 
-        
+
         #ローパスをする前に、大きいフレアが影響しないように取り除いておく、とりあえず急に1%以上上がるところを除く
         diff_flux = np.array([])
         flare_can_start = 0.0
         before_low_flare_list = []
         flare_can_end = np.array([])
 
-       
+
         #flare_canにstart～endにあるindex全てを入れる
         diff_time = np.diff(time_ext)
         diff_flux = np.diff(flux_ext)
@@ -469,7 +469,7 @@ class FlareDetector:
         flux_valid = flux_ext[~mask]
 
         # 4. スプライン補間
-        
+
         # interp1d を使用 (線形、3次スプラインなど種類を選べる)
         # kind='linear', 'quadratic', 'cubic' など
         spline_func = interp1d(time_valid, flux_valid, kind='cubic',)
@@ -480,7 +480,7 @@ class FlareDetector:
         # フレア区間の値を補間された値で置き換える
         if len(time_flare_intervals) > 0:
             flux_to_interpolate[mask] = spline_func(time_flare_intervals)
-        
+
         # 補間後のflux (これがローパスされた結果に近いものになる)
         self.flux_splined = flux_to_interpolate
         #print("Spline interpolation applied.")
@@ -1028,7 +1028,7 @@ class FlareDetector:
         #     col=1,
         # )
         # fig.update_yaxes(title_text="spline Flux", row=5, col=1)
-        
+
         # fig.add_trace(
         #     go.Scatter(
         #         x=self.gtessBJD,
@@ -1231,25 +1231,25 @@ class FlareDetector:
                 FlareDetector.array_amplitude = np.append(
                         FlareDetector.array_amplitude, self.brightness_variation_amplitude
                         )
-                
+
                 FlareDetector.array_starspot = np.append(
                         FlareDetector.array_starspot, self.starspot
-                        ) 
-                
+                        )
+
                 FlareDetector.array_starspot_ratio = np.append(
                         FlareDetector.array_starspot_ratio, self.starspot_ratio
-                        ) 
+                        )
 
                 # データの名前をリストに追加
                 FlareDetector.array_data_name = np.append(
                         FlareDetector.array_data_name, self.data_name
                         )
-                
+
                 #自転周期をリストに追加
                 FlareDetector.array_per = np.append(
                         FlareDetector.array_per, self.per
                         )
-                
+
                 #自転周期の誤差をリストに追加
                 FlareDetector.array_per_err = np.append(
                         FlareDetector.array_per_err, self.per_err
@@ -1323,12 +1323,3 @@ class FlareDetector:
                 # ndarray 以外はそのまま出力
                 print(f"{var_name}: {description} | value: {value}")
         print("------------------------------------")
-
-
-
-
-
-
-
-    
-
