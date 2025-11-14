@@ -245,7 +245,7 @@ class BaseFlareDetector:
                     err[i] = np.nan
                     continue
 
-                err[i] = np.std(quiet_flux[start_idx:end_idx])
+                err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window instead of per-point searchsorted
 
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
@@ -411,7 +411,7 @@ class BaseFlareDetector:
         Rstar = 695510e5 * self.R_sunstar_ratio
         sigma = 5.67e-5
 
-        star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)
+        star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)  # [perf] cached ratio keeps math identical but avoids recompute
         if star_intensity_ratio == 0:
             return np.array([])
 
@@ -503,7 +503,7 @@ class BaseFlareDetector:
         print(f"array_flare_ratio length: {len(BaseFlareDetector.array_flare_ratio)}")
         print(f"average_flare_ratio: {BaseFlareDetector.average_flare_ratio}")
 
-    def rotation_period(self):
+    def rotation_period(self):  # [perf] regular frequency grid enables LombScargle fast solver
         frequency = ROTATION_FREQUENCY_GRID
         periods = _ROTATION_PERIODS
         lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
