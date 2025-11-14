@@ -36,6 +36,42 @@ CLASS_DEFAULT_FACTORIES: Dict[str, Callable[[], Any]] = {
     "average_flare_ratio": lambda: 0.0,
 }
 
+STATUS_COLORS = {
+    "match": "#e8f5e9",
+    "diff": "#ffebee",
+    "missing_in_baseline": "#fff3e0",
+    "missing_in_current": "#e3f2fd",
+}
+
+
+def _status_color(status: str) -> str:
+    return STATUS_COLORS.get(status, "#f9f9f9")
+
+
+def _format_serialized_value(value_repr: str | None) -> str:
+    if not value_repr:
+        return ""
+    try:
+        data = json.loads(value_repr)
+    except json.JSONDecodeError:
+        return value_repr
+
+    value_type = data.get("type")
+    if value_type in {"scalar", "path"}:
+        return str(data.get("value"))
+    if value_type == "ndarray":
+        return f"array shape={data.get('shape')} dtype={data.get('dtype')}"
+    if value_type == "ndarray_object":
+        length = data.get("length")
+        return f"object array len={length}"
+    if value_type == "list":
+        return f"list(len={len(data.get('items', []))})"
+    if value_type == "dict":
+        return f"dict(keys={len(data.get('items', {}))})"
+    if value_type == "repr":
+        return str(data.get("value"))
+    return value_repr
+
 
 def reset_class_state(BaseFlareDetector: Any) -> None:
     for attr, factory in CLASS_DEFAULT_FACTORIES.items():
@@ -200,24 +236,18 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
         return
     detail_df = pd.DataFrame(rows_sorted)
     detail_df["Variable"] = detail_df["section"] + "." + detail_df["key"]
-    detail_df["Baseline"] = detail_df["baseline_repr"].apply(lambda v: (v or "")[:120])
-    detail_df["Current"] = detail_df["current_repr"].apply(lambda v: (v or "")[:120])
+    detail_df["Baseline"] = detail_df["baseline_repr"].apply(_format_serialized_value)
+    detail_df["Current"] = detail_df["current_repr"].apply(_format_serialized_value)
     detail_df["Status"] = detail_df["status"]
+    columns = ["Variable", "Baseline", "Current", "Status"]
+    row_colors = [_status_color(status) for status in detail_df["Status"]]
+    fill_colors = [row_colors for _ in columns]
 
     fig = go.Figure(
         data=[
             go.Table(
-                header=dict(
-                    values=["Variable", "Baseline", "Current", "Status"],
-                    fill_color="#1f2a44",
-                    font=dict(color="white"),
-                    align="left",
-                ),
-                cells=dict(
-                    values=[detail_df[col] for col in ["Variable", "Baseline", "Current", "Status"]],
-                    fill_color=[["#f9f9f9", "#eef3fb"] * (len(detail_df) // 2 + 1)],
-                    align="left",
-                ),
+                header=dict(values=columns, fill_color="#1f2a44", font=dict(color="white"), align="left"),
+                cells=dict(values=[detail_df[col] for col in columns], fill_color=fill_colors, align="left"),
             )
         ]
     )
