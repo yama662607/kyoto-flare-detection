@@ -1,0 +1,307 @@
+function,ncalls,tottime,cumtime
+<frozen codecs>:263:__init__,1,1.67e-07,1.67e-07
+<frozen abc>:117:__instancecheck__,4,1.5440000000000002e-06,5.0501e-05
+<frozen abc>:121:__subclasscheck__,28,3.5850000000000004e-06,4.1168e-05
+<frozen genericpath>:157:_splitext,3,3.0420000000000003e-06,4.167e-06
+_local.py:237:_format_parsed_parts,1,9.170000000000001e-07,1.25e-06
+<frozen codecs>:312:__init__,1,1.5e-06,1.667e-06
+<frozen posixpath>:131:splitdrive,4,1.167e-06,1.5e-06
+<frozen codecs>:334:getstate,3,5.830000000000001e-07,5.830000000000001e-07
+<frozen genericpath>:16:exists,1,1.126e-06,9.042e-06
+<frozen _collections_abc>:108:_check_methods,1,1.917e-06,1.917e-06
+<frozen posixpath>:117:splitext,3,3.501e-06,8.333000000000001e-06
+<frozen codecs>:322:decode,3,2.667e-06,7.541e-06
+<frozen os>:1127:__subclasshook__,1,1.0000000000000002e-06,2.917e-06
+<frozen posixpath>:42:_get_sep,3,6.25e-07,1.0420000000000001e-06
+contextlib.py:361:__enter__,1,1.2500000000000002e-07,1.2500000000000002e-07
+~:0:<method 'disable' of '_lsprof.Profiler' objects>,1,8.583e-06,8.583e-06
+~:0:<built-in method math.factorial>,3,9.170000000000001e-07,9.170000000000001e-07
+~:0:<built-in method math.prod>,1,6.25e-07,6.25e-07
+~:0:<method 'append' of 'list' objects>,38,4.628e-06,4.628e-06
+~:0:<method 'insert' of 'list' objects>,2,5.84e-07,5.84e-07
+~:0:<method 'index' of 'list' objects>,1,2.92e-07,2.92e-07
+~:0:<method 'bit_length' of 'int' objects>,3,5.84e-07,5.84e-07
+~:0:<method 'get' of 'dict' objects>,8,1.542e-06,1.542e-06
+~:0:<method 'pop' of 'dict' objects>,2,9.160000000000001e-07,9.160000000000001e-07
+~:0:<method 'keys' of 'dict' objects>,5,1.1240000000000002e-06,1.1240000000000002e-06
+~:0:<method 'items' of 'dict' objects>,15,2.206e-06,2.206e-06
+~:0:<method 'update' of 'dict' objects>,2,1.2080000000000001e-06,1.2080000000000001e-06
+~:0:<method 'copy' of 'dict' objects>,1,3.34e-07,3.34e-07
+~:0:<built-in method __new__ of type object at 0x100cebcf0>,7,1.8730000000000001e-06,1.8730000000000001e-06
+~:0:<method 'replace' of 'str' objects>,12,2.0000000000000003e-06,2.0000000000000003e-06
+~:0:<method 'split' of 'str' objects>,2,1.582e-06,1.582e-06
+~:0:<method 'join' of 'str' objects>,1,3.3300000000000003e-07,3.3300000000000003e-07
+~:0:<method 'find' of 'str' objects>,2,6.25e-07,6.25e-07
+~:0:<method 'lstrip' of 'str' objects>,14,1.956e-06,1.956e-06
+~:0:<method 'rfind' of 'str' objects>,6,1.125e-06,1.125e-06
+~:0:<method 'strip' of 'str' objects>,2,4.1700000000000004e-07,4.1700000000000004e-07
+~:0:<method 'startswith' of 'str' objects>,7,1.4170000000000002e-06,1.4170000000000002e-06
+~:0:<method 'endswith' of 'str' objects>,6,7.92e-07,7.92e-07
+~:0:<method 'removeprefix' of 'str' objects>,4,5.82e-07,5.82e-07
+~:0:<built-in method builtins.abs>,5,1.1625000000000001e-05,1.1625000000000001e-05
+~:0:<built-in method builtins.all>,2,1.458e-06,2.791e-06
+~:0:<built-in method builtins.any>,2,2.125e-06,5.749e-06
+~:0:<built-in method builtins.getattr>,16,4.873000000000001e-06,4.873000000000001e-06
+~:0:<built-in method builtins.hasattr>,14,5.667e-06,5.667e-06
+~:0:<built-in method builtins.isinstance>,84,1.4878e-05,6.5379e-05
+~:0:<built-in method builtins.issubclass>,28,6.458000000000001e-06,6.458000000000001e-06
+~:0:<built-in method builtins.iter>,1,8.400000000000001e-08,8.400000000000001e-08
+~:0:<built-in method builtins.len>,74,7.206e-06,7.206e-06
+~:0:<built-in method builtins.max>,16943,0.001024563,0.001024563
+~:0:<built-in method builtins.min>,1,2.09e-07,2.09e-07
+~:0:<built-in method builtins.sorted>,3,0.002048875,0.002048875
+~:0:<built-in method builtins.sum>,1,1.875e-06,5.208e-06
+~:0:<method 'set' of '_contextvars.ContextVar' objects>,2,1.7080000000000002e-06,1.7080000000000002e-06
+~:0:<method 'reset' of '_contextvars.ContextVar' objects>,2,1.5010000000000001e-06,1.5010000000000001e-06
+~:0:<built-in method sys.intern>,6,3.5000000000000004e-06,3.5000000000000004e-06
+~:0:<built-in method posix.stat>,1,7.916e-06,7.916e-06
+~:0:<built-in method posix.getcwd>,1,6.6667e-05,6.6667e-05
+~:0:<built-in method posix._path_splitroot_ex>,1,9.58e-07,9.58e-07
+~:0:<built-in method posix._path_normpath>,3,1.25e-06,1.25e-06
+~:0:<built-in method posix.fspath>,17,2.085e-06,3.1168000000000004e-05
+~:0:<built-in method _codecs.utf_8_decode>,3,4.874e-06,4.874e-06
+~:0:<built-in method _io.open>,1,0.000283583,0.00028525
+~:0:<method 'close' of '_io.TextIOWrapper' objects>,1,3.75e-06,3.75e-06
+~:0:<built-in method _abc._abc_instancecheck>,4,7.789000000000001e-06,4.8957000000000006e-05
+~:0:<built-in method _abc._abc_subclasscheck>,28,3.4666e-05,4.0167000000000004e-05
+~:0:<built-in method _operator.index>,8,1.0840000000000001e-06,1.0840000000000001e-06
+_local.py:166:__fspath__,1,1.2080000000000001e-06,2.9333000000000002e-05
+contextlib.py:359:__init__,1,4.1700000000000004e-07,4.1700000000000004e-07
+contextlib.py:786:__init__,1,2.92e-07,2.92e-07
+_local.py:289:drive,1,3.2500000000000002e-06,2.1542e-05
+_local.py:298:root,1,1.2500000000000002e-07,1.2500000000000002e-07
+_local.py:307:_tail,1,1.2500000000000002e-07,1.2500000000000002e-07
+_local.py:277:_raw_path,1,1.958e-06,8.042e-06
+contextlib.py:363:__exit__,1,1.291e-06,5.0410000000000005e-06
+_local.py:227:__str__,1,5.083e-06,2.8125000000000003e-05
+getlimits.py:709:min,3,1.5e-06,1.5e-06
+fromnumeric.py:3735:mean,3,8.375e-06,7.6458e-05
+fromnumeric.py:1904:ravel,21,1.063e-05,2.3126000000000002e-05
+fromnumeric.py:1621:squeeze,1,1.709e-06,2.0000000000000003e-06
+numerictypes.py:293:issubclass_,14,4.668e-06,9.293e-06
+multiarray.py:188:concatenate,16,1.001e-06,1.001e-06
+numeric.py:171:ones,1,4.25e-06,4.958000000000001e-06
+_ufunc_config.py:436:__init__,2,3.34e-07,3.34e-07
+fromnumeric.py:3523:ndim,5,2.9590000000000004e-06,4.583e-06
+numeric.py:2465:<genexpr>,10,3.294e-06,5.127e-06
+shape_base.py:295:hstack,4,0.000190625,0.00020058400000000002
+fromnumeric.py:51:_wrapfunc,8,8.25e-06,0.00044837500000000004
+fromnumeric.py:757:partition,1,2.582e-06,0.000634291
+numeric.py:324:full,4,9.5e-06,1.3625e-05
+numeric.py:1964:isscalar,2,3.7600000000000003e-07,6.26e-07
+fromnumeric.py:109:take,1,6.240000000000001e-07,8.479100000000001e-05
+fromnumeric.py:1129:argsort,1,1.5e-06,0.000286166
+fromnumeric.py:2879:cumsum,2,1.1660000000000001e-06,1.9625000000000003e-05
+fromnumeric.py:89:_wrapreduction_any_all,9,1.1254000000000001e-05,3.4833000000000003e-05
+getlimits.py:722:max,3,7.92e-07,7.92e-07
+_ufunc_config.py:462:__exit__,2,1.291e-06,2.792e-06
+fromnumeric.py:3052:max,1,8.340000000000001e-07,8.917000000000001e-06
+fromnumeric.py:3328:prod,3,3.7490000000000004e-06,6.6958e-05
+numeric.py:1469:<genexpr>,8,1.7500000000000002e-06,2.209e-06
+multiarray.py:115:empty_like,7,7.08e-07,7.08e-07
+multiarray.py:698:result_type,17,1.167e-06,1.167e-06
+fromnumeric.py:105:_take_dispatcher,1,8.400000000000001e-08,8.400000000000001e-08
+fromnumeric.py:1250:argmax,1,1.25e-06,1.2667000000000001e-05
+_methods.py:57:_any,5,2.5010000000000003e-06,1.3751000000000001e-05
+_methods.py:66:_all,4,1.6260000000000002e-06,7.667000000000001e-06
+numeric.py:2279:allclose,2,6.126e-06,0.000132458
+shape_base.py:208:_arrays_for_stack_dispatcher,4,1.374e-06,2.333e-06
+multiarray.py:391:where,6,7.09e-07,7.09e-07
+multiarray.py:769:dot,2,2.91e-07,2.91e-07
+multiarray.py:1106:copyto,5,4.18e-07,4.18e-07
+numerictypes.py:475:issubdtype,7,6.2080000000000005e-06,1.6209e-05
+fromnumeric.py:2338:sum,2,3.458e-06,1.2458e-05
+fromnumeric.py:2236:_clip_dispatcher,3,4.5800000000000005e-07,4.5800000000000005e-07
+fromnumeric.py:2472:_any_dispatcher,3,2.91e-07,2.91e-07
+fromnumeric.py:2584:_all_dispatcher,6,6.650000000000001e-07,6.650000000000001e-07
+fromnumeric.py:3730:_mean_dispatcher,3,5.000000000000001e-07,5.000000000000001e-07
+shape_base.py:216:_vhstack_dispatcher,4,2.085e-06,4.418e-06
+numeric.py:2275:_allclose_dispatcher,2,2.5000000000000004e-07,2.5000000000000004e-07
+numeric.py:2369:_isclose_dispatcher,2,1.66e-07,1.66e-07
+fromnumeric.py:2477:any,3,2.791e-06,1.2416000000000001e-05
+fromnumeric.py:2589:all,6,3.0420000000000003e-06,2.8250000000000002e-05
+fromnumeric.py:753:_partition_dispatcher,1,8.3e-08,8.3e-08
+fromnumeric.py:1125:_argsort_dispatcher,1,1.2500000000000002e-07,1.2500000000000002e-07
+fromnumeric.py:1246:_argmax_dispatcher,1,8.400000000000001e-08,8.400000000000001e-08
+fromnumeric.py:1617:_squeeze_dispatcher,1,8.400000000000001e-08,8.400000000000001e-08
+fromnumeric.py:1900:_ravel_dispatcher,21,1.6680000000000002e-06,1.6680000000000002e-06
+fromnumeric.py:2333:_sum_dispatcher,2,1.67e-07,1.67e-07
+fromnumeric.py:2875:_cumsum_dispatcher,2,2.09e-07,2.09e-07
+fromnumeric.py:3047:_max_dispatcher,1,4.2000000000000006e-08,4.2000000000000006e-08
+fromnumeric.py:3323:_prod_dispatcher,3,3.3300000000000003e-07,3.3300000000000003e-07
+fromnumeric.py:3519:_ndim_dispatcher,5,5.000000000000001e-07,5.000000000000001e-07
+_methods.py:45:_amin,3,1.2080000000000001e-06,0.00019395800000000002
+_methods.py:49:_sum,1,3.34e-07,4.9170000000000005e-06
+_stride_tricks_impl.py:413:_broadcast_shape,8,1.4668000000000001e-05,1.5666000000000002e-05
+_stride_tricks_impl.py:481:broadcast_arrays,8,1.7457000000000002e-05,5.1249000000000003e-05
+shape_base.py:17:_atleast_1d_dispatcher,6,3.32e-07,3.32e-07
+numeric.py:1478:_moveaxis_dispatcher,2,1.66e-07,1.66e-07
+shape_base.py:21:atleast_1d,6,7.79e-06,1.3001000000000001e-05
+_datasource.py:371:abspath,1,3.5840000000000003e-06,2.6833000000000002e-05
+_stride_tricks_impl.py:24:_maybe_view_as_subclass,1,2.5000000000000004e-07,2.5000000000000004e-07
+_function_base_impl.py:5661:append,9,1.7624000000000003e-05,2.9542000000000003e-05
+_datasource.py:290:_possible_names,2,4.333e-06,2.6959e-05
+_npyio_impl.py:816:_ensure_ndmin_ndarray,1,2.25e-06,4.334e-06
+function_base.py:21:_linspace_dispatcher,2,2.09e-07,2.09e-07
+_stride_tricks_impl.py:345:<genexpr>,2,3.3300000000000003e-07,3.3300000000000003e-07
+_function_base_impl.py:358:iterable,1,7.91e-07,8.750000000000001e-07
+_function_base_impl.py:3936:median,1,3e-06,0.0006769170000000001
+_datasource.py:128:keys,5,6.418e-06,1.1875e-05
+_type_check_impl.py:84:real,2,6.67e-07,6.67e-07
+_datasource.py:483:open,1,5.249e-06,0.00039812500000000004
+_datasource.py:299:_isurl,3,6.4170000000000006e-06,3.5084000000000005e-05
+_function_base_impl.py:1387:_diff_dispatcher,6,4.99e-07,4.99e-07
+~:0:<method 'all' of 'numpy.generic' objects>,4,6.124e-06,1.3791e-05
+~:0:<method 'any' of 'numpy.generic' objects>,1,1.6250000000000001e-06,3.75e-06
+~:0:<method 'as_arrays' of 'numpy._core._multiarray_umath._array_converter' objects>,2,4.16e-07,4.16e-07
+~:0:<method 'result_type' of 'numpy._core._multiarray_umath._array_converter' objects>,2,8.33e-07,8.33e-07
+~:0:<method 'wrap' of 'numpy._core._multiarray_umath._array_converter' objects>,2,5.420000000000001e-07,5.420000000000001e-07
+~:0:<method 'any' of 'numpy.ndarray' objects>,4,4.291e-06,1.5917e-05
+~:0:<method 'argmax' of 'numpy.ndarray' objects>,1,9.375000000000001e-06,9.375000000000001e-06
+~:0:<method 'argsort' of 'numpy.ndarray' objects>,1,0.00028245900000000004,0.00028245900000000004
+~:0:<method 'astype' of 'numpy.ndarray' objects>,11,4.9125e-05,4.9125e-05
+~:0:<method 'clip' of 'numpy.ndarray' objects>,3,5.166e-06,4.5874e-05
+~:0:<method 'copy' of 'numpy.ndarray' objects>,6,1.9499e-05,1.9499e-05
+~:0:<method 'cumsum' of 'numpy.ndarray' objects>,2,1.6625e-05,1.6625e-05
+~:0:<method 'flatten' of 'numpy.ndarray' objects>,1,4.0420000000000004e-06,4.0420000000000004e-06
+~:0:<method 'min' of 'numpy.ndarray' objects>,3,3.084e-06,0.000197042
+~:0:<method 'partition' of 'numpy.ndarray' objects>,1,0.000627625,0.000627625
+~:0:<method 'ravel' of 'numpy.ndarray' objects>,25,6.830000000000001e-06,6.830000000000001e-06
+~:0:<method 'reshape' of 'numpy.ndarray' objects>,10,6.5410000000000006e-06,6.5410000000000006e-06
+~:0:<method 'squeeze' of 'numpy.ndarray' objects>,1,2.91e-07,2.91e-07
+~:0:<method 'sum' of 'numpy.ndarray' objects>,1,8.750000000000001e-07,5.792000000000001e-06
+~:0:<method 'take' of 'numpy.ndarray' objects>,2,8.462500000000001e-05,8.462500000000001e-05
+~:0:<method 'transpose' of 'numpy.ndarray' objects>,2,1.167e-06,1.167e-06
+~:0:<built-in method numpy.array>,29,1.9001e-05,1.9001e-05
+~:0:<built-in method numpy.asarray>,27,5.29e-06,5.29e-06
+~:0:<built-in method numpy.asanyarray>,62,1.2372000000000001e-05,1.2372000000000001e-05
+~:0:<built-in method numpy.ascontiguousarray>,5,1.5410000000000002e-06,1.5410000000000002e-06
+~:0:<built-in method numpy.arange>,6,2.8915e-05,2.8915e-05
+~:0:<built-in method numpy.zeros>,4,4.4957000000000003e-05,4.4957000000000003e-05
+~:0:<built-in method numpy.empty>,6,4.041e-06,4.041e-06
+~:0:<built-in method numpy.lib.array_utils.normalize_axis_index>,20,4.543e-06,4.543e-06
+~:0:<built-in method numpy._core._multiarray_umath._load_from_filelike>,1,0.000646084,0.0006542080000000001
+~:0:<built-in method numpy._core._multiarray_umath._make_extobj>,2,9.59e-07,9.59e-07
+~:0:<method '__exit__' of 'numpy.nditer' objects>,1,3.3300000000000003e-07,3.3300000000000003e-07
+~:0:<method 'reduce' of 'numpy.ufunc' objects>,27,0.00030795700000000003,0.00030795700000000003
+~:0:<method 'at' of 'numpy.ufunc' objects>,15,0.0009370390000000001,0.0009370390000000001
+_npyio_impl.py:843:_check_nonneg_int,1,1.291e-06,1.666e-06
+_datasource.py:255:__del__,1,5.420000000000001e-07,7.92e-07
+_stride_tricks_impl.py:477:_broadcast_arrays_dispatcher,8,7.930000000000001e-07,7.930000000000001e-07
+_function_base_impl.py:3931:_median_dispatcher,1,8.400000000000001e-08,8.400000000000001e-08
+_npyio_impl.py:806:_ensure_ndmin_ndarray_check_param,1,2.5000000000000004e-07,2.5000000000000004e-07
+_datasource.py:154:open,1,3.208e-06,0.000475583
+_function_base_impl.py:5657:_append_dispatcher,9,6.27e-07,6.27e-07
+_datasource.py:262:_iszip,3,4.293e-06,2.2167e-05
+_datasource.py:276:_splitzipext,1,2.91e-07,3.125e-06
+_type_check_impl.py:80:_real_dispatcher,2,1.66e-07,1.66e-07
+_datasource.py:245:__init__,1,1.791e-06,7.425e-05
+_datasource.py:147:__getitem__,1,4.59e-07,5.420000000000001e-07
+core.py:6686:isMaskedArray,2,1.5e-06,2.042e-06
+parse.py:119:_coerce_args,6,3.209e-06,3.71e-06
+parse.py:845:__getattr__,4,3e-06,3e-06
+parse.py:374:urlparse,4,1.1083e-05,3.3792000000000004e-05
+<string>:1:<lambda>,4,1.2930000000000002e-06,2.0000000000000003e-06
+parse.py:108:_noop,6,5.41e-07,5.41e-07
+base_flare_detector.py:462:calculate_precise_obs_time,1,1.3625e-05,3.7167000000000005e-05
+base_flare_detector.py:527:remove,1,8.400000000000001e-08,8.400000000000001e-08
+base_flare_detector.py:431:_get_tess_response,1,5.667e-06,0.0012345000000000001
+base_flare_detector.py:466:<genexpr>,2,3.333e-06,3.333e-06
+base_flare_detector.py:410:planck,2,1.7583e-05,1.7583e-05
+base_flare_detector.py:414:tess_band_energy,1,5.376000000000001e-06,0.001279834
+core.py:187:_power_unit,1,7.92e-07,1.292e-06
+_pocketfft.py:120:fft,2,3.4590000000000003e-06,0.002211793
+_pocketfft.py:219:ifft,5,5.583000000000001e-06,0.004271625
+_pocketfft.py:108:_swap_direction,5,1.2900000000000001e-06,1.2900000000000001e-06
+_pocketfft.py:116:_fft_dispatcher,7,5.01e-07,5.01e-07
+main.py:40:_is_regular,2,5.709000000000001e-06,0.000151958
+main.py:52:_get_frequency_grid,1,1.7500000000000002e-06,5.6625e-05
+core.py:329:power,1,1.0916e-05,0.007951125
+main.py:78:validate_method,1,2.9580000000000003e-06,0.000101416
+utils.py:6:bitceil,3,5.0410000000000005e-06,5.625e-06
+main.py:31:available_methods,1,7.5e-07,9.58e-07
+_interpolate.py:167:_do_extrapolate,1,3.75e-07,8.33e-07
+core.py:23:strip_units,2,1.374e-06,2.126e-06
+core.py:15:has_units,6,1.374e-06,2.832e-06
+_interpolate.py:536:_call_spline,1,2.041e-06,0.00037625
+core.py:152:<genexpr>,4,1.5e-06,3.2910000000000003e-06
+core.py:24:<lambda>,4,1.0000000000000002e-06,1.333e-06
+_interpolate.py:544:_evaluate,1,7.249e-06,0.00039816600000000004
+blas.py:395:getter,1,3.7090000000000004e-06,2.1875e-05
+_sparse.py:10:issparse,1,4.16e-07,3.7208e-05
+_util.py:1032:normalize_axis_index,1,2.5000000000000004e-07,2.5000000000000004e-07
+lapack.py:927:get_lapack_funcs,1,3.0830000000000004e-06,1.7833e-05
+_bsplines.py:29:_as_float_array,3,3.7920000000000003e-06,1.5542e-05
+_bsplines.py:1013:_not_a_knot,1,7.4600000000000006e-06,3.4875e-05
+_bsplines.py:1591:<genexpr>,1,9.160000000000001e-07,9.160000000000001e-07
+_bsplines.py:1594:<genexpr>,1,4.1700000000000004e-07,4.1700000000000004e-07
+_bsplines.py:1040:_convert_string_aliases,2,7.08e-07,9.160000000000001e-07
+_bsplines.py:541:_ensure_c_contiguous,1,6.25e-07,6.25e-07
+_bsplines.py:255:construct_fast,1,3.209e-06,3.834e-06
+_bsplines.py:21:_get_dtype,3,1.4590000000000001e-06,6.334000000000001e-06
+_bsplines.py:1051:_process_deriv_spec,2,1.7080000000000002e-06,5.6660000000000005e-06
+~:0:<built-in method scipy.interpolate._dierckx.evaluate_spline>,1,0.000367292,0.000367292
+~:0:<built-in method scipy.interpolate._dierckx._coloc>,1,0.0005748340000000001,0.0005748340000000001
+_polyint.py:60:__call__,1,3.001e-06,0.00044829200000000004
+_polyint.py:53:__init__,1,1.9590000000000002e-06,1.25e-05
+_polyint.py:91:_prepare_x,1,1.7920000000000002e-06,4.6125e-05
+blas.py:270:find_best_blas_type,1,5.082000000000001e-06,6.5410000000000006e-06
+blas.py:337:_get_funcs,1,7.0420000000000005e-06,1.4583e-05
+_util.py:410:_asarray_validated,1,4.208e-06,4.4083000000000005e-05
+_polyint.py:116:_set_yi,1,2.708e-06,1.0541000000000001e-05
+_polyint.py:97:_finish_y,1,6.67e-07,1.0000000000000002e-06
+_polyint.py:108:_reshape_yi,1,3.3350000000000003e-06,2.0792e-05
+_polyint.py:136:_set_dtype,1,1.624e-06,7.666e-06
+_pocketfft.py:58:_raw_fft,7,0.006469294,0.0064734580000000005
+utils.py:15:extirpolate,3,0.0019380450000000002,0.0031008330000000003
+core.py:162:_validate_frequency,1,7.09e-07,1.3750000000000002e-06
+main.py:109:lombscargle,1,1.8501e-05,0.007934667000000001
+core.py:106:__init__,1,3.834e-06,2.7458e-05
+core.py:142:_validate_inputs,1,3.875e-06,1.5833000000000002e-05
+utils.py:82:trig_sum,3,0.001920082,0.007138915
+_interpolate.py:282:__init__,1,4.5167e-05,0.004658000000000001
+_interpolate.py:151:_check_broadcast_up_to,1,2.5410000000000003e-06,3.0830000000000004e-06
+_interpolate.py:434:fill_value,1,4.126e-06,8.750000000000001e-06
+_interpolate.py:559:_check_bounds,1,1.0291e-05,1.4458000000000001e-05
+base_flare_detector.py:162:apply_gap_correction,1,0.00038354100000000005,0.000629167
+base_flare_detector.py:196:detrend_flux,1,0.00016075,0.010068750000000001
+base_flare_detector.py:469:flare_energy,1,7.92e-07,8.33e-07
+base_flare_detector.py:484:flux_diff,1,6.166000000000001e-06,0.002053833
+base_flare_detector.py:185:lowpass,2,0.00014583100000000002,0.004801458000000001
+base_flare_detector.py:447:_get_star_intensity_ratio,1,9.75e-06,3.9958e-05
+base_flare_detector.py:516:rotation_period,1,3.1332000000000004e-05,0.008032000000000001
+base_flare_detector.py:325:flaredetect_check,1,5.9990000000000005e-06,7.125e-06
+base_flare_detector.py:263:flaredetect,1,3.1331e-05,0.001334083
+base_flare_detector.py:218:reestimate_errors,1,0.020449771000000002,0.021554125
+parse.py:469:urlsplit,2,1.1168e-05,1.7542000000000002e-05
+parse.py:421:_checknetloc,2,2.91e-07,2.91e-07
+_index_tricks_impl.py:344:__getitem__,1,1.5539e-05,2.3666e-05
+_stride_tricks_impl.py:340:_broadcast_to,1,1.1626e-05,1.4292000000000001e-05
+_function_base_impl.py:1391:diff,6,7.8292e-05,8.3292e-05
+_function_base_impl.py:3857:_ureduce,1,4.125e-06,0.000673917
+_function_base_impl.py:4025:_median,1,1.0542e-05,0.000669375
+_npyio_impl.py:1131:loadtxt,1,8.417000000000001e-06,0.001211667
+_npyio_impl.py:874:_read,1,2.0207e-05,0.001202708
+_utils_impl.py:645:_median_nancheck,1,4.668e-06,1.1417000000000001e-05
+_datasource.py:101:_load,6,4.416000000000001e-06,4.416000000000001e-06
+_datasource.py:340:_findfile,1,5.042e-06,7.804200000000001e-05
+_datasource.py:413:_sanitize_relative_path,2,7.502e-06,1.1457e-05
+_datasource.py:427:exists,1,9.99e-07,1.0041000000000001e-05
+<frozen posixpath>:72:join,3,7.541e-06,1.0793e-05
+<frozen posixpath>:376:abspath,1,2.916e-06,7.2459e-05
+_local.py:257:_parse_path,1,4.751e-06,1.025e-05
+fromnumeric.py:2241:clip,3,4.75e-06,5.4416e-05
+_ufunc_config.py:446:__enter__,2,3.1660000000000003e-06,5.833000000000001e-06
+_methods.py:75:_count_reduce_items,3,1.1209e-05,1.2376000000000001e-05
+fromnumeric.py:69:_wrapreduction,6,9.75e-06,7.9917e-05
+_methods.py:117:_mean,3,3.3499e-05,6.8083e-05
+_methods.py:98:_clip,3,3.2499e-05,4.0708000000000004e-05
+numeric.py:1420:normalize_axis_tuple,4,8.959e-06,1.2543e-05
+numeric.py:2373:isclose,2,6.895700000000001e-05,0.00011975100000000001
+numeric.py:1482:moveaxis,2,8.746e-06,2.4833e-05
+function_base.py:26:linspace,2,3.5542e-05,6e-05
+getlimits.py:698:__init__,6,5.917e-06,5.917e-06
+base_flare_detector.py:531:process_data,1,0.00015179,0.044589542
+fast_impl.py:6:lombscargle_fast,1,0.000587794,0.007754584
+_bsplines.py:1369:make_interp_spline,1,0.0034807550000000003,0.004174959000000001
+_bsplines.py:473:__call__,1,4.291e-06,0.000374209
