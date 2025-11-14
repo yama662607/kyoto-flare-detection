@@ -13,6 +13,9 @@ from scipy.interpolate import interp1d
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
 ROTATION_FREQUENCY_GRID = 1 / np.linspace(1.0, 8.0, 10000)
+_TESS_RESPONSE_CACHE: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+_STAR_INTENSITY_CACHE: dict[float, float] = {}
+_REF_INTENSITY: float | None = None
 
 
 class BaseFlareDetector:
@@ -398,24 +401,52 @@ class BaseFlareDetector:
         return (2.0 * h * c**2) / ((wav**5) * (np.exp(h * c / (wav * k * T)) - 1.0))
 
     def tess_band_energy(self, count):
-        try:
-            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
-        except FileNotFoundError:
-            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+        response = self._get_tess_response()
+        if response is None:
             return np.array([])
 
+        wave, resp, dw = response
         dt = 120.0
-        dw = np.hstack([np.diff(wave), 0])
         Rstar = 695510e5 * self.R_sunstar_ratio
         sigma = 5.67e-5
 
-        star_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
-        ref_intensity = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
-        if ref_intensity == 0:
+        star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)
+        if star_intensity_ratio == 0:
             return np.array([])
 
-        area_factor = (np.pi * Rstar**2) * (star_intensity / ref_intensity)
+        area_factor = (np.pi * Rstar**2) * star_intensity_ratio
         return sigma * (10000**4) * area_factor * dt * count
+
+    @staticmethod
+    def _get_tess_response():
+        global _TESS_RESPONSE_CACHE
+        if _TESS_RESPONSE_CACHE is not None:
+            return _TESS_RESPONSE_CACHE
+        try:
+            data = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",")
+        except FileNotFoundError:
+            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+            return None
+        wave = data[:, 0]
+        resp = data[:, 1]
+        dw = np.hstack([np.diff(wave), 0])
+        _TESS_RESPONSE_CACHE = (wave, resp, dw)
+        return _TESS_RESPONSE_CACHE
+
+    def _get_star_intensity_ratio(self, wave, resp, dw):
+        global _STAR_INTENSITY_CACHE, _REF_INTENSITY
+        key = float(self.T_star)
+        if key not in _STAR_INTENSITY_CACHE:
+            star_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
+            _STAR_INTENSITY_CACHE[key] = star_intensity
+        star_intensity = _STAR_INTENSITY_CACHE[key]
+
+        if _REF_INTENSITY is None:
+            _REF_INTENSITY = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
+
+        if _REF_INTENSITY == 0:
+            return 0.0
+        return star_intensity / _REF_INTENSITY
 
     def calculate_precise_obs_time(self):
         bjd = self.tessBJD
