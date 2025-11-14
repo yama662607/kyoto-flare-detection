@@ -48,7 +48,7 @@ def _status_color(status: str) -> str:
     return STATUS_COLORS.get(status, "#f9f9f9")
 
 
-def _format_serialized_value(value_repr: str | None) -> str:
+def _format_serialized_value(value_repr: str | None, depth: int = 0) -> str:
     if not value_repr:
         return ""
     try:
@@ -65,9 +65,16 @@ def _format_serialized_value(value_repr: str | None) -> str:
         length = data.get("length")
         return f"object array len={length}"
     if value_type == "list":
-        return f"list(len={len(data.get('items', []))})"
+        items = data.get("items", [])
+        preview = ", ".join(_format_serialized_value(json.dumps(item), depth + 1) for item in items[:3])
+        suffix = "..." if len(items) > 3 else ""
+        return f"[{preview}{suffix}] (len={len(items)})"
     if value_type == "dict":
-        return f"dict(keys={len(data.get('items', {}))})"
+        items = data.get("items", {})
+        keys = list(items.keys())[:3]
+        preview = ", ".join(f"{k}: {_format_serialized_value(json.dumps(items[k]), depth + 1)}" for k in keys)
+        suffix = "..." if len(items) > 3 else ""
+        return f"{{{preview}{suffix}}} (keys={len(items)})"
     if value_type == "repr":
         return str(data.get("value"))
     return value_repr
