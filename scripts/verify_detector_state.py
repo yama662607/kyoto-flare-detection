@@ -82,11 +82,12 @@ def _format_serialized_value(value_repr: str | None, depth: int = 0) -> str:
 
 
 def _wrap_with_tooltip(display: str, tooltip: str) -> str:
-    display_text = html.escape(display or "")
-    tooltip_text = html.escape(tooltip or "")
+    display_text = display or ""
+    tooltip_text = tooltip or ""
     if not tooltip_text or tooltip_text == display_text:
         return display_text
-    return f'<span title="{tooltip_text}">{display_text}</span>'
+    escaped_tooltip = html.escape(tooltip_text, quote=True)
+    return f'<span title="{escaped_tooltip}">{display_text}</span>'
 
 
 def reset_class_state(BaseFlareDetector: Any) -> None:
@@ -256,19 +257,13 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
     detail_df["CurrentDisplay"] = detail_df["current_repr"].apply(_format_serialized_value)
     detail_df["BaselineHover"] = detail_df["baseline_repr"].fillna("")
     detail_df["CurrentHover"] = detail_df["current_repr"].fillna("")
-    detail_df["BaselineCell"] = detail_df.apply(
-        lambda row: _wrap_with_tooltip(row["BaselineDisplay"], row["BaselineHover"]), axis=1
-    )
-    detail_df["CurrentCell"] = detail_df.apply(
-        lambda row: _wrap_with_tooltip(row["CurrentDisplay"], row["CurrentHover"]), axis=1
-    )
     detail_df["Status"] = detail_df["status"]
 
     columns = ["Variable", "Baseline", "Current", "Status"]
-    values = [
+    plain_values = [
         detail_df["Variable"],
-        detail_df["BaselineCell"],
-        detail_df["CurrentCell"],
+        detail_df["BaselineDisplay"],
+        detail_df["CurrentDisplay"],
         detail_df["Status"],
     ]
     row_colors = [_status_color(status) for status in detail_df["Status"]]
@@ -279,10 +274,9 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
             go.Table(
                 header=dict(values=columns, fill_color="#1f2a44", font=dict(color="white"), align="left"),
                 cells=dict(
-                    values=values,
+                    values=plain_values,
                     fill_color=fill_colors,
                     align="left",
-                    format=[None] * len(columns),
                 ),
             )
         ]
@@ -295,7 +289,32 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
     if show_plot:
-        pio.show(fig, renderer="browser")
+        hover_values = [
+            detail_df["Variable"],
+            [
+                _wrap_with_tooltip(display, tooltip)
+                for display, tooltip in zip(detail_df["BaselineDisplay"], detail_df["BaselineHover"], strict=False)
+            ],
+            [
+                _wrap_with_tooltip(display, tooltip)
+                for display, tooltip in zip(detail_df["CurrentDisplay"], detail_df["CurrentHover"], strict=False)
+            ],
+            detail_df["Status"],
+        ]
+        hover_fig = go.Figure(
+            data=[
+                go.Table(
+                    header=dict(values=columns, fill_color="#1f2a44", font=dict(color="white"), align="left"),
+                    cells=dict(values=hover_values, fill_color=fill_colors, align="left"),
+                )
+            ]
+        )
+        hover_fig.update_layout(
+            title="BaseFlareDetector variable comparison (hover for full info)",
+            height=max(600, 25 * len(detail_df)),
+            margin=dict(l=40, r=40, t=60, b=40),
+        )
+        pio.show(hover_fig, renderer="browser")
 
 
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:
