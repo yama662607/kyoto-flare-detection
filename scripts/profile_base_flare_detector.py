@@ -14,11 +14,9 @@ import pstats
 import sys
 from typing import Sequence
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
+import plotly.io as pio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -40,7 +38,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=PROJECT_ROOT / "docs" / "profiling",
+        default=PROJECT_ROOT / "reports" / "performance",
         help="結果ファイル (CSV / PNG / .prof) の出力先ディレクトリ",
     )
     parser.add_argument(
@@ -70,6 +68,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--run-process-data-2",
         action="store_true",
         help="BaseFlareDetector コンストラクタの run_process_data_2 を True にする",
+    )
+    parser.add_argument(
+        "--show-plot",
+        action="store_true",
+        help="生成したグラフをブラウザで表示します（Plotly のデフォルトレンダラーを利用）",
     )
     return parser.parse_args(argv)
 
@@ -126,15 +129,23 @@ def save_outputs(df: pd.DataFrame, args: argparse.Namespace) -> tuple[Path, Path
         top_df = df.nlargest(args.top_n, "cumtime").copy()
 
     fig_path = args.output_dir / f"{args.fits.stem}_profile_top{args.top_n}.png"
-    plt.figure(figsize=(10, max(4, 0.4 * len(top_df))))
-    plt.barh(top_df["function"], top_df["cumtime"], color="#1f77b4")
-    plt.xlabel("Cumulative time [s]")
-    plt.ylabel("Function (file:line:name)")
-    plt.title("BaseFlareDetector cumulative time (top contributors)")
-    plt.gca().invert_yaxis()
-    plt.tight_layout()
-    plt.savefig(fig_path, dpi=200)
-    plt.close()
+    fig = px.bar(
+        top_df,
+        x="cumtime",
+        y="function",
+        orientation="h",
+        title="BaseFlareDetector cumulative time (top contributors)",
+        labels={"cumtime": "Cumulative time [s]", "function": "Function (file:line:name)"},
+        text=top_df["cumtime"].map(lambda v: f"{v:.3f}s"),
+    )
+    fig.update_layout(
+        height=max(400, 60 * len(top_df)),
+        yaxis=dict(autorange="reversed"),
+        margin=dict(l=120, r=40, t=60, b=40),
+    )
+    fig.write_image(fig_path, scale=2)
+    if args.show_plot:
+        pio.show(fig, renderer="browser")
     return csv_path, fig_path
 
 

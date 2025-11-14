@@ -12,6 +12,11 @@ from scipy.interpolate import interp1d
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
+ROTATION_FREQUENCY_GRID = np.linspace(1 / 8.0, 1.0, 10000)
+_ROTATION_PERIODS = 1 / ROTATION_FREQUENCY_GRID
+_TESS_RESPONSE_CACHE: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+_STAR_INTENSITY_CACHE: dict[float, float] = {}
+_REF_INTENSITY: float | None = None
 
 
 class BaseFlareDetector:
@@ -214,10 +219,43 @@ class BaseFlareDetector:
         bjd = self.tessBJD
         flux = self.s2mPDCSAPflux
         err = np.ones(len(self.mPDCSAPfluxerr))
+        quiet_mask = flux <= 0.005
+        quiet_bjd = bjd[quiet_mask]
+        quiet_flux = flux[quiet_mask]
 
-        for i in range(len(err)):
-            nearby = (np.abs(bjd - bjd[i]) <= 0.5) & (flux <= 0.005)
-            err[i] = np.std(flux[nearby])
+        if len(quiet_bjd) == 0:
+            err[:] = np.nan
+        else:
+            window = 0.5
+            n_quiet = len(quiet_bjd)
+            start_idx = 0
+            end_idx = 0
+            prefix = np.concatenate(([0.0], np.cumsum(quiet_flux, dtype=float)))
+            prefix_sq = np.concatenate(([0.0], np.cumsum(quiet_flux**2, dtype=float)))
+            for i, center in enumerate(bjd):
+                left = center - window
+                right = center + window
+
+                while start_idx < n_quiet and quiet_bjd[start_idx] < left:
+                    start_idx += 1
+                if end_idx < start_idx:
+                    end_idx = start_idx
+                while end_idx < n_quiet and quiet_bjd[end_idx] <= right:
+                    end_idx += 1
+
+                if start_idx == end_idx:
+                    err[i] = np.nan
+                    continue
+
+                samples = end_idx - start_idx
+                if samples == 1:
+                    err[i] = 0.0
+                    continue
+                sum_val = prefix[end_idx] - prefix[start_idx]
+                sum_sq = prefix_sq[end_idx] - prefix_sq[start_idx]
+                mean_val = sum_val / samples
+                var = max((sum_sq / samples) / 1.0 - mean_val**2, 0.0)
+                err[i] = np.sqrt(var)  # [perf] prefix-sum variance to avoid slicing
 
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
@@ -374,24 +412,52 @@ class BaseFlareDetector:
         return (2.0 * h * c**2) / ((wav**5) * (np.exp(h * c / (wav * k * T)) - 1.0))
 
     def tess_band_energy(self, count):
-        try:
-            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
-        except FileNotFoundError:
-            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+        response = self._get_tess_response()
+        if response is None:
             return np.array([])
 
+        wave, resp, dw = response
         dt = 120.0
-        dw = np.hstack([np.diff(wave), 0])
         Rstar = 695510e5 * self.R_sunstar_ratio
         sigma = 5.67e-5
 
-        star_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
-        ref_intensity = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
-        if ref_intensity == 0:
+        star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)  # [perf] cached ratio keeps math identical but avoids recompute
+        if star_intensity_ratio == 0:
             return np.array([])
 
-        area_factor = (np.pi * Rstar**2) * (star_intensity / ref_intensity)
+        area_factor = (np.pi * Rstar**2) * star_intensity_ratio
         return sigma * (10000**4) * area_factor * dt * count
+
+    @staticmethod
+    def _get_tess_response():
+        global _TESS_RESPONSE_CACHE
+        if _TESS_RESPONSE_CACHE is not None:
+            return _TESS_RESPONSE_CACHE
+        try:
+            data = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",")
+        except FileNotFoundError:
+            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+            return None
+        wave = data[:, 0]
+        resp = data[:, 1]
+        dw = np.hstack([np.diff(wave), 0])
+        _TESS_RESPONSE_CACHE = (wave, resp, dw)
+        return _TESS_RESPONSE_CACHE
+
+    def _get_star_intensity_ratio(self, wave, resp, dw):
+        global _STAR_INTENSITY_CACHE, _REF_INTENSITY
+        key = float(self.T_star)
+        if key not in _STAR_INTENSITY_CACHE:
+            star_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
+            _STAR_INTENSITY_CACHE[key] = star_intensity
+        star_intensity = _STAR_INTENSITY_CACHE[key]
+
+        if _REF_INTENSITY is None:
+            _REF_INTENSITY = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
+
+        if _REF_INTENSITY == 0:
+            return 0.0
+        return star_intensity / _REF_INTENSITY
 
     def calculate_precise_obs_time(self):
         bjd = self.tessBJD
@@ -447,13 +513,16 @@ class BaseFlareDetector:
         print(f"array_flare_ratio length: {len(BaseFlareDetector.array_flare_ratio)}")
         print(f"average_flare_ratio: {BaseFlareDetector.average_flare_ratio}")
 
-    def rotation_period(self):
-        frequency = 1 / np.linspace(1.0, 8.0, 10000)
-        power = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux).power(frequency)
-        self.per = 1 / frequency[np.argmax(power)]
+    def rotation_period(self):  # [perf] regular frequency grid enables LombScargle fast solver
+        frequency = ROTATION_FREQUENCY_GRID
+        periods = _ROTATION_PERIODS
+        lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
+        power = lomb.power(frequency, method="fast")
+        idx_max = int(np.argmax(power))
+        self.per = periods[idx_max]
         half_max_power = np.max(power) / 2
         aa = np.where(power > half_max_power)[0]
-        self.per_err = (1 / frequency[aa[-1]] - 1 / frequency[aa[0]]) / 2
+        self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
 
     def remove(self):
         # This method is intended to be overridden by subclasses for specific data removal.

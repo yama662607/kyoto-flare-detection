@@ -1,0 +1,18 @@
+function_key,function_before,main (before)_cumtime,function_after,feat/safe-speedup (after)_cumtime,delta,percent_change
+base_flare_detector.py::process_data,base_flare_detector.py:462:process_data,2.008371583,base_flare_detector.py:531:process_data,0.041086458,-1.967285125,-97.95424022388191
+base_flare_detector.py::rotation_period,base_flare_detector.py:450:rotation_period,1.519165,base_flare_detector.py:516:rotation_period,0.006131,-1.513034,-99.59642303502253
+base_flare_detector.py::reestimate_errors,base_flare_detector.py:213:reestimate_errors,0.476643833,base_flare_detector.py:218:reestimate_errors,0.020907958,-0.455735875,-95.6135049795137
+base_flare_detector.py::detrend_flux,base_flare_detector.py:191:detrend_flux,0.009356833,base_flare_detector.py:196:detrend_flux,0.009766958,0.00041012499999999903,4.3831604133578
+base_flare_detector.py::lowpass,base_flare_detector.py:180:lowpass,0.006662334,base_flare_detector.py:185:lowpass,0.007159125,0.0004967909999999999,7.456711116554647
+base_flare_detector.py::flux_diff,base_flare_detector.py:418:flux_diff,0.001686333,base_flare_detector.py:484:flux_diff,0.001981542,0.00029520900000000027,17.50597301956377
+base_flare_detector.py::flaredetect,base_flare_detector.py:225:flaredetect,0.00099225,base_flare_detector.py:263:flaredetect,0.001238416,0.0002461659999999999,24.808868732678246
+base_flare_detector.py::tess_band_energy,base_flare_detector.py:376:tess_band_energy,0.000937125,base_flare_detector.py:414:tess_band_energy,0.001179791,0.0002426659999999999,25.89473122582365
+base_flare_detector.py::apply_gap_correction,base_flare_detector.py:157:apply_gap_correction,0.000219417,base_flare_detector.py:162:apply_gap_correction,0.000183541,-3.587599999999998e-05,-16.35060182210129
+base_flare_detector.py::calculate_precise_obs_time,base_flare_detector.py:396:calculate_precise_obs_time,2.6666e-05,base_flare_detector.py:462:calculate_precise_obs_time,3.2416e-05,5.750000000000004e-06,21.563039075976917
+base_flare_detector.py::planck,base_flare_detector.py:372:planck,1.5292000000000002e-05,base_flare_detector.py:410:planck,1.8292e-05,2.9999999999999984e-06,19.6181009678263
+base_flare_detector.py::flaredetect_check,base_flare_detector.py:287:flaredetect_check,6.916e-06,base_flare_detector.py:325:flaredetect_check,7.625000000000001e-06,7.090000000000003e-07,10.251590514748415
+base_flare_detector.py::<genexpr>,base_flare_detector.py:400:<genexpr>,1.791e-06,base_flare_detector.py:466:<genexpr>,2.583e-06,7.92e-07,44.22110552763819
+base_flare_detector.py::flare_energy,base_flare_detector.py:403:flare_energy,9.58e-07,base_flare_detector.py:469:flare_energy,9.17e-07,-4.100000000000001e-08,-4.279749478079333
+base_flare_detector.py::remove,base_flare_detector.py:458:remove,2.08e-07,base_flare_detector.py:527:remove,8.3e-08,-1.2500000000000002e-07,-60.096153846153854
+base_flare_detector.py::_get_star_intensity_ratio,base_flare_detector.py:447:_get_star_intensity_ratio,0.0,base_flare_detector.py:447:_get_star_intensity_ratio,4.0041000000000005e-05,4.0041000000000005e-05,
+base_flare_detector.py::_get_tess_response,base_flare_detector.py:431:_get_tess_response,0.0,base_flare_detector.py:431:_get_tess_response,0.001133917,0.001133917,
