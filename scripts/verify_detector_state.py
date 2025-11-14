@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASELINE = PROJECT_ROOT / "docs" / "regression" / "base_flare_detector_state.json"
@@ -174,7 +175,7 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
     if show_plot:
-        fig.show()
+        pio.show(fig, renderer="browser")
 
 
 def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool = False) -> None:
@@ -207,7 +208,7 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
     if show_plot:
-        fig.show()
+        pio.show(fig, renderer="browser")
 
 
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:

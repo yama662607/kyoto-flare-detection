@@ -9,7 +9,9 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
+import plotly.io as pio
+from plotly.subplots import make_subplots
 
 
 def canonical_function_label(func: str) -> str:
@@ -68,56 +70,72 @@ def plot_comparison(
     top = df.head(top_n).copy()
     before_col = f"{label_before}_cumtime"
     after_col = f"{label_after}_cumtime"
+    labels = list(top["function_key"])
+    percent_fmt = top["percent_change"].apply(lambda v: f"{v:+.1f}%" if not np.isnan(v) else "N/A").tolist()
 
-    melted = top.melt(
-        id_vars=["function_key", "percent_change"],
-        value_vars=[before_col, after_col],
-        var_name="label",
-        value_name="cumtime",
-    )
-    melted["label"] = melted["label"].replace(
-        {
-            before_col: label_before,
-            after_col: label_after,
-        }
+    fig = make_subplots(
+        rows=1,
+        cols=2,
+        subplot_titles=(f"Top {top_n} cumulative time comparison", "Before / After summary"),
+        specs=[[{"type": "xy"}, {"type": "domain"}]],
+        column_widths=[0.6, 0.4],
     )
 
-    fig = px.bar(
-        melted,
-        x="cumtime",
-        y="function_key",
-        color="label",
-        orientation="h",
-        labels={"cumtime": "Cumulative time [s]", "function_key": "Function"},
-        barmode="group",
-        text=melted["cumtime"].map(lambda v: f"{v:.3f}s"),
+    fig.add_trace(
+        go.Bar(
+            y=labels,
+            x=top[before_col],
+            orientation="h",
+            name=label_before,
+            marker_color="#1f77b4",
+            text=top[before_col].map(lambda v: f"{v:.3f}s"),
+            textposition="auto",
+        ),
+        row=1,
+        col=1,
     )
+    fig.add_trace(
+        go.Bar(
+            y=labels,
+            x=top[after_col],
+            orientation="h",
+            name=label_after,
+            marker_color="#ff7f0e",
+            text=top[after_col].map(lambda v: f"{v:.3f}s"),
+            textposition="auto",
+        ),
+        row=1,
+        col=1,
+    )
+
+    table = go.Table(
+        header=dict(
+            values=["Function", f"{label_before} [s]", f"{label_after} [s]", "Δ %"],
+            fill_color="#1f2a44",
+            font=dict(color="white"),
+            align="left",
+        ),
+        cells=dict(
+            values=[labels, top[before_col].round(6), top[after_col].round(6), percent_fmt],
+            fill_color=[["#f9f9f9", "#e8eff7"] * (len(labels) // 2 + 1)],
+            align="left",
+        ),
+    )
+    fig.add_trace(table, row=1, col=2)
+
     fig.update_layout(
-        height=max(500, 80 * len(top)),
-        yaxis=dict(autorange="reversed"),
-        title=f"BaseFlareDetector cumulative time comparison (top {top_n})",
-        margin=dict(l=200, r=120, t=60, b=40),
+        barmode="group",
+        height=max(600, 30 * len(labels)),
+        yaxis=dict(autorange="reversed", title="Function"),
+        xaxis=dict(title="Cumulative time [s]"),
+        margin=dict(l=200, r=20, t=60, b=40),
+        title="BaseFlareDetector cumulative time comparison",
     )
-
-    max_val = float(melted["cumtime"].max() or 1.0)
-    for _, row in top.iterrows():
-        pct = row["percent_change"]
-        if np.isnan(pct):
-            continue
-        fig.add_annotation(
-            x=max_val * 1.05,
-            y=row["function_key"],
-            text=f"{pct:+.1f}%",
-            showarrow=False,
-            font=dict(size=12),
-            xanchor="left",
-            yanchor="middle",
-        )
 
     output_png.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_png, scale=2)
     if show_plot:
-        fig.show()
+        pio.show(fig, renderer="browser")
 
 
 def parse_args() -> argparse.Namespace:

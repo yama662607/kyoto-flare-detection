@@ -16,6 +16,7 @@ from typing import Sequence
 
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -144,7 +145,7 @@ def save_outputs(df: pd.DataFrame, args: argparse.Namespace) -> tuple[Path, Path
     )
     fig.write_image(fig_path, scale=2)
     if args.show_plot:
-        fig.show()
+        pio.show(fig, renderer="browser")
     return csv_path, fig_path
 
 
