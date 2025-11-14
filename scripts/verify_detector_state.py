@@ -49,6 +49,14 @@ def _status_color(status: str) -> str:
     return STATUS_COLORS.get(status, "#f9f9f9")
 
 
+def _coerce_scalar(value: Any) -> Any:
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (np.ndarray, list, tuple)):
+        return [_coerce_scalar(v) for v in value]
+    return value
+
+
 def _format_serialized_value(value_repr: str | None, depth: int = 0) -> str:
     if not value_repr:
         return ""
@@ -61,10 +69,21 @@ def _format_serialized_value(value_repr: str | None, depth: int = 0) -> str:
     if value_type in {"scalar", "path"}:
         return str(data.get("value"))
     if value_type == "ndarray":
-        return f"array shape={data.get('shape')} dtype={data.get('dtype')}"
+        preview = data.get("preview", [])
+        size = data.get("size")
+        shape = data.get("shape")
+        dtype = data.get("dtype")
+        preview_str = ", ".join(str(v) for v in preview)
+        if size and preview and len(preview) < size:
+            preview_str += ", ..."
+        return f"[{preview_str}] (shape={shape}, dtype={dtype})"
     if value_type == "ndarray_object":
         length = data.get("length")
-        return f"object array len={length}"
+        preview = data.get("preview", [])
+        preview_str = ", ".join(str(v) for v in preview)
+        if length and len(preview) < length:
+            preview_str += ", ..."
+        return f"[{preview_str}] (object array, len={length})"
     if value_type == "list":
         items = data.get("items", [])
         preview = ", ".join(_format_serialized_value(json.dumps(item), depth + 1) for item in items[:3])
@@ -106,22 +125,23 @@ def serialize_value(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         shape = list(value.shape)
         dtype_str = str(value.dtype)
+        flat = value.ravel()
+        preview_elems = [_coerce_scalar(v) for v in flat[:3]]
         if value.dtype == object:
-            elements = [repr(v) for v in value.tolist()]
-            joined = "\u241f".join(elements)  # unit separator-like char
-            digest = hashlib.sha256(joined.encode("utf-8")).hexdigest()
             return {
                 "type": "ndarray_object",
                 "dtype": dtype_str,
                 "shape": shape,
-                "length": len(elements),
-                "sha256": digest,
+                "length": int(value.size),
+                "preview": preview_elems,
             }
         return {
             "type": "ndarray",
             "dtype": dtype_str,
             "shape": shape,
+            "size": int(value.size),
             "sha256": hash_ndarray(value),
+            "preview": preview_elems,
         }
     if isinstance(value, (np.floating, np.integer)):
         return {

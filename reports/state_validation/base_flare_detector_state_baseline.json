@@ -14,7 +14,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "amPDCSAPflux": {
       "type": "ndarray",
@@ -22,7 +24,13 @@
       "shape": [
         15307
       ],
-      "sha256": "feceae8aca56c668c00dcc9609e7ac6452f54c20555bc4efac8960fa7507c54d"
+      "size": 15307,
+      "sha256": "feceae8aca56c668c00dcc9609e7ac6452f54c20555bc4efac8960fa7507c54d",
+      "preview": [
+        122859.9296875,
+        122937.3828125,
+        122670.7578125
+      ]
     },
     "amPDCSAPfluxerr": {
       "type": "ndarray",
@@ -30,7 +38,13 @@
       "shape": [
         15307
       ],
-      "sha256": "8d1918519b9d28e2f00ab615d187a1e85f10f96de4dd8ce1b826291ca93f274d"
+      "size": 15307,
+      "sha256": "8d1918519b9d28e2f00ab615d187a1e85f10f96de4dd8ce1b826291ca93f274d",
+      "preview": [
+        46.14494323730469,
+        46.15401840209961,
+        46.13033676147461
+      ]
     },
     "atessBJD": {
       "type": "ndarray",
@@ -38,7 +52,13 @@
       "shape": [
         15307
       ],
-      "sha256": "00735c2d6d25a390b110b7ed44894d8f79f0b1ab9c66ce7c3d99b6891ee4dbe1"
+      "size": 15307,
+      "sha256": "00735c2d6d25a390b110b7ed44894d8f79f0b1ab9c66ce7c3d99b6891ee4dbe1",
+      "preview": [
+        2061.8540674283827,
+        2061.8554563217826,
+        2061.8568452154145
+      ]
     },
     "b_i": {
       "type": "ndarray",
@@ -46,7 +66,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "brightness_variation_amplitude": {
       "type": "scalar",
@@ -70,7 +92,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "duration": {
       "type": "ndarray",
@@ -78,7 +102,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "edecay": {
       "type": "ndarray",
@@ -86,7 +112,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "endtime": {
       "type": "ndarray",
@@ -94,7 +122,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "ene_thres_high": {
       "type": "scalar",
@@ -110,7 +140,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "err_constant_mean": {
       "type": "scalar",
@@ -134,7 +166,13 @@
       "shape": [
         35307
       ],
-      "sha256": "131e1268a8eb244d77d2540aeaff294dbdc40c53c46c6c15214c26b52619673c"
+      "size": 35307,
+      "sha256": "131e1268a8eb244d77d2540aeaff294dbdc40c53c46c6c15214c26b52619673c",
+      "preview": [
+        123570.34375,
+        123558.3515625,
+        123546.421875
+      ]
     },
     "flare_number": {
       "type": "scalar",
@@ -154,7 +192,13 @@
       "shape": [
         15307
       ],
-      "sha256": "e6bdf4d03d26727d5cb23be6e23d061ac5ad9dc290625024c7a89b73df8b799f"
+      "size": 15307,
+      "sha256": "e6bdf4d03d26727d5cb23be6e23d061ac5ad9dc290625024c7a89b73df8b799f",
+      "preview": [
+        122828.125,
+        122828.53125,
+        122829.0703125
+      ]
     },
     "gap_threshold": {
       "type": "scalar",
@@ -166,7 +210,13 @@
       "shape": [
         35307
       ],
-      "sha256": "463363e0c3e7145fa2cfd5b7d0b060b5c0ba538111c86b800b0d438ff415ceb5"
+      "size": 35307,
+      "sha256": "463363e0c3e7145fa2cfd5b7d0b060b5c0ba538111c86b800b0d438ff415ceb5",
+      "preview": [
+        122859.9296875,
+        122859.9296875,
+        122859.9296875
+      ]
     },
     "gmPDCSAPfluxerr": {
       "type": "ndarray",
@@ -174,7 +224,13 @@
       "shape": [
         35307
       ],
-      "sha256": "88b7bf369bdc9ef9b88a79e493709fcceaa49c7da41c44e4740cc4ec56620e37"
+      "size": 35307,
+      "sha256": "88b7bf369bdc9ef9b88a79e493709fcceaa49c7da41c44e4740cc4ec56620e37",
+      "preview": [
+        0.0001,
+        0.0001,
+        0.0001
+      ]
     },
     "gtessBJD": {
       "type": "ndarray",
@@ -182,7 +238,13 @@
       "shape": [
         35307
       ],
-      "sha256": "ebd698b85fd6dee84930e21ec4f750ea2b9455778f2e5f3d34238f5442959294"
+      "size": 35307,
+      "sha256": "ebd698b85fd6dee84930e21ec4f750ea2b9455778f2e5f3d34238f5442959294",
+      "preview": [
+        2047.9651785394938,
+        2047.9665674283826,
+        2047.9679563172715
+      ]
     },
     "mPDCSAPflux": {
       "type": "ndarray",
@@ -190,7 +252,13 @@
       "shape": [
         15307
       ],
-      "sha256": "feceae8aca56c668c00dcc9609e7ac6452f54c20555bc4efac8960fa7507c54d"
+      "size": 15307,
+      "sha256": "feceae8aca56c668c00dcc9609e7ac6452f54c20555bc4efac8960fa7507c54d",
+      "preview": [
+        122859.9296875,
+        122937.3828125,
+        122670.7578125
+      ]
     },
     "mPDCSAPfluxerr": {
       "type": "ndarray",
@@ -198,7 +266,13 @@
       "shape": [
         15307
       ],
-      "sha256": "8d1918519b9d28e2f00ab615d187a1e85f10f96de4dd8ce1b826291ca93f274d"
+      "size": 15307,
+      "sha256": "8d1918519b9d28e2f00ab615d187a1e85f10f96de4dd8ce1b826291ca93f274d",
+      "preview": [
+        46.14494323730469,
+        46.15401840209961,
+        46.13033676147461
+      ]
     },
     "mPDCSAPfluxerr_cor": {
       "type": "ndarray",
@@ -206,7 +280,13 @@
       "shape": [
         15307
       ],
-      "sha256": "600f7f32c8443d31ad4aa784a9a13232d063b23f4e39db9dca9e6d20f20b1d12"
+      "size": 15307,
+      "sha256": "600f7f32c8443d31ad4aa784a9a13232d063b23f4e39db9dca9e6d20f20b1d12",
+      "preview": [
+        3105044.372511565,
+        3105044.372511565,
+        3105044.372511565
+      ]
     },
     "peaktime": {
       "type": "ndarray",
@@ -214,7 +294,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "per": {
       "type": "scalar",
@@ -238,7 +320,13 @@
       "shape": [
         15307
       ],
-      "sha256": "d745bc663ae45ecea8f3e7c9b04b1ba2f25328c33b6ff0605569d9652e4aa153"
+      "size": 15307,
+      "sha256": "d745bc663ae45ecea8f3e7c9b04b1ba2f25328c33b6ff0605569d9652e4aa153",
+      "preview": [
+        31.8046875,
+        108.8515625,
+        -158.3125
+      ]
     },
     "sector_threshold": {
       "type": "scalar",
@@ -258,7 +346,9 @@
       "shape": [
         0
       ],
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
     },
     "sum_flare_energy": {
       "type": "scalar",
@@ -270,7 +360,13 @@
       "shape": [
         15307
       ],
-      "sha256": "00735c2d6d25a390b110b7ed44894d8f79f0b1ab9c66ce7c3d99b6891ee4dbe1"
+      "size": 15307,
+      "sha256": "00735c2d6d25a390b110b7ed44894d8f79f0b1ab9c66ce7c3d99b6891ee4dbe1",
+      "preview": [
+        2061.8540674283827,
+        2061.8554563217826,
+        2061.8568452154145
+      ]
     },
     "tessheader1": {
       "type": "repr",
@@ -288,7 +384,11 @@
       "shape": [
         1
       ],
-      "sha256": "cebb8cf230c9c4e6e010e42941dfa19b69d01fe5df989aecb41b89e2388b1bb1"
+      "size": 1,
+      "sha256": "cebb8cf230c9c4e6e010e42941dfa19b69d01fe5df989aecb41b89e2388b1bb1",
+      "preview": [
+        7560.59375
+      ]
     },
     "array_data_name": {
       "type": "ndarray_object",
@@ -297,7 +397,9 @@
         1
       ],
       "length": 1,
-      "sha256": "44fc67f202c25f05cea5c0fa7729fe9e1b43ef49d4d473347c053fb6b11305d2"
+      "preview": [
+        "tess2020212050318-s0028"
+      ]
     },
     "array_energy_ratio": {
       "type": "ndarray",
@@ -305,7 +407,11 @@
       "shape": [
         1
       ],
-      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+      "size": 1,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "preview": [
+        0.0
+      ]
     },
     "array_flare_ratio": {
       "type": "ndarray",
@@ -313,7 +419,11 @@
       "shape": [
         1
       ],
-      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+      "size": 1,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "preview": [
+        0.0
+      ]
     },
     "array_observation_time": {
       "type": "ndarray",
@@ -321,7 +431,11 @@
       "shape": [
         1
       ],
-      "sha256": "acd42a24d7dfd5973c4266a034948e12424e5bf0f8e263a438925cb56c812518"
+      "size": 1,
+      "sha256": "acd42a24d7dfd5973c4266a034948e12424e5bf0f8e263a438925cb56c812518",
+      "preview": [
+        2072.5054230642613
+      ]
     },
     "array_per": {
       "type": "ndarray",
@@ -329,7 +443,11 @@
       "shape": [
         1
       ],
-      "sha256": "7ddd772998b4ab891211ea32581cf2aed617cf549c73c5bb206671acab275c38"
+      "size": 1,
+      "sha256": "7ddd772998b4ab891211ea32581cf2aed617cf549c73c5bb206671acab275c38",
+      "preview": [
+        3.525429704715734
+      ]
     },
     "array_per_err": {
       "type": "ndarray",
@@ -337,7 +455,11 @@
       "shape": [
         1
       ],
-      "sha256": "7d033ee64015a680b8bf95afec7b515974dbd884021077cf07e725c68cd8028e"
+      "size": 1,
+      "sha256": "7d033ee64015a680b8bf95afec7b515974dbd884021077cf07e725c68cd8028e",
+      "preview": [
+        0.2267603220462593
+      ]
     },
     "array_starspot": {
       "type": "ndarray",
@@ -345,7 +467,11 @@
       "shape": [
         1
       ],
-      "sha256": "4d2055a2d230297642b8724bc713df3d4d1bcb305488a034acffcb81c7b9d547"
+      "size": 1,
+      "sha256": "4d2055a2d230297642b8724bc713df3d4d1bcb305488a034acffcb81c7b9d547",
+      "preview": [
+        2.941857561549614e+22
+      ]
     },
     "array_starspot_ratio": {
       "type": "ndarray",
@@ -353,7 +479,11 @@
       "shape": [
         1
       ],
-      "sha256": "4302965b103c7eb82845756b2c7bd6b5ea3c8f73e45c05b425f04be549575f88"
+      "size": 1,
+      "sha256": "4302965b103c7eb82845756b2c7bd6b5ea3c8f73e45c05b425f04be549575f88",
+      "preview": [
+        9679.1005859375
+      ]
     },
     "average_flare_ratio": {
       "type": "scalar",
