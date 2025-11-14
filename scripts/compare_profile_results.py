@@ -11,22 +11,37 @@ import numpy as np
 import pandas as pd
 
 
+def canonical_function_label(func: str) -> str:
+    parts = func.split(":")
+    if len(parts) >= 3:
+        file_part = parts[0]
+        func_part = parts[-1]
+        return f"{file_part}::{func_part}"
+    return func
+
+
 def load_profile(path: Path) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"プロファイル CSV が見つかりません: {path}")
     df = pd.read_csv(path)
     mask = df["function"].str.contains("base_flare_detector.py")
-    return df[mask].copy()
+    df = df[mask].copy()
+    df["key"] = df["function"].apply(canonical_function_label)
+    return df
 
 
 def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: str, label_after: str) -> pd.DataFrame:
     merged = pd.merge(
-        before[["function", "cumtime"]],
-        after[["function", "cumtime"]],
-        on="function",
+        before[["key", "function", "cumtime"]],
+        after[["key", "function", "cumtime"]],
+        on="key",
         how="outer",
         suffixes=("_before", "_after"),
-    ).fillna(0.0)
+    )
+    for col in ("cumtime_before", "cumtime_after"):
+        merged[col] = merged[col].fillna(0.0)
+    merged["function_before"] = merged["function_before"].fillna(merged["function_after"])
+    merged["function_after"] = merged["function_after"].fillna(merged["function_before"])
     merged["delta"] = merged["cumtime_after"] - merged["cumtime_before"]
     merged["percent_change"] = np.where(
         merged["cumtime_before"] > 0,
@@ -41,6 +56,8 @@ def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: st
         },
         inplace=True,
     )
+    merged.insert(0, "function_key", merged["key"])
+    merged.drop(columns=["key"], inplace=True)
     return merged
 
 
@@ -79,7 +96,7 @@ def plot_comparison(df: pd.DataFrame, output_png: Path, label_before: str, label
         ax.text(max_val * 1.02, indices[idx], text, va="center", ha="left", fontsize=11)
 
     ax.set_yticks(indices)
-    ax.set_yticklabels(top["function"])
+    ax.set_yticklabels(top["function_key"])
     ax.set_xlabel("Cumulative time [s]")
     ax.set_title(f"BaseFlareDetector cumulative time comparison (top {top_n})")
     ax.invert_yaxis()
