@@ -223,15 +223,25 @@ class BaseFlareDetector:
             err[:] = np.nan
         else:
             window = 0.5
+            n_quiet = len(quiet_bjd)
+            start_idx = 0
+            end_idx = 0
             for i, center in enumerate(bjd):
                 left = center - window
                 right = center + window
-                start = np.searchsorted(quiet_bjd, left, side="left")
-                end = np.searchsorted(quiet_bjd, right, side="right")
-                if start == end:
+
+                while start_idx < n_quiet and quiet_bjd[start_idx] < left:
+                    start_idx += 1
+                if end_idx < start_idx:
+                    end_idx = start_idx
+                while end_idx < n_quiet and quiet_bjd[end_idx] <= right:
+                    end_idx += 1
+
+                if start_idx == end_idx:
                     err[i] = np.nan
                     continue
-                err[i] = np.std(quiet_flux[start:end])
+
+                err[i] = np.std(quiet_flux[start_idx:end_idx])
 
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
