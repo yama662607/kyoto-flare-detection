@@ -10,6 +10,14 @@ from astropy.timeseries import LombScargle
 from plotly.subplots import make_subplots
 from scipy.interpolate import interp1d
 
+
+def _ensure_native(array, dtype=None):
+    """Plotly などに渡す前にエンディアンをネイティブに揃える。"""
+    arr = np.asarray(array, dtype=dtype)
+    if arr.dtype.byteorder not in ("=", "|"):
+        arr = arr.astype(arr.dtype.newbyteorder("="), copy=False)
+    return arr
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
 ROTATION_FREQUENCY_GRID = np.linspace(1 / 8.0, 1.0, 10000)
@@ -68,6 +76,9 @@ class BaseFlareDetector:
         self.gap_threshold = 0.1  # デフォルトのギャップ検出閾値
         self.time_offset = 2457000  # For matplotlib plot
 
+
+        self.debug_print = "hello"
+
         # Initialize data arrays
         self.data_name = None
         self.tessheader1 = None
@@ -99,6 +110,7 @@ class BaseFlareDetector:
         self.precise_obs_time = 0.0
         self.flare_number = 0
         self.sum_flare_energy = 0.0
+        self.power = None
         self.per = None
         self.per_err = 0.0
         self.brightness_variation_amplitude = 0.0
@@ -143,9 +155,9 @@ class BaseFlareDetector:
             flux_err_field = "PDCSAP_FLUX_ERR"
 
         mask = ~np.isnan(data.field(flux_field))
-        bjd = data.field("time")[mask]
-        pdcsap_flux = data.field(flux_field)[mask]
-        pdcsap_flux_err = data.field(flux_err_field)[mask]
+        bjd = _ensure_native(data.field("time")[mask], dtype=np.float64)
+        pdcsap_flux = _ensure_native(data.field(flux_field)[mask], dtype=np.float64)
+        pdcsap_flux_err = _ensure_native(data.field(flux_err_field)[mask], dtype=np.float64)
 
         norm_flux = pdcsap_flux / self.flux_mean
         norm_flux_err = pdcsap_flux_err / self.flux_mean
@@ -517,11 +529,11 @@ class BaseFlareDetector:
         frequency = ROTATION_FREQUENCY_GRID
         periods = _ROTATION_PERIODS
         lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
-        power = lomb.power(frequency, method="fast")
-        idx_max = int(np.argmax(power))
+        self.power = lomb.power(frequency, method="fast")
+        idx_max = int(np.argmax(self.power))
         self.per = periods[idx_max]
-        half_max_power = np.max(power) / 2
-        aa = np.where(power > half_max_power)[0]
+        half_max_power = np.max(self.power) / 2
+        aa = np.where(self.power > half_max_power)[0]
         self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
 
     def remove(self):
@@ -579,15 +591,18 @@ class BaseFlareDetector:
         if self.tessBJD is None:
             return
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1)
+        x_native = np.asarray(self.tessBJD, dtype=np.float64)
+        y_flux = np.asarray(self.mPDCSAPflux, dtype=np.float64)
         fig.add_trace(
-            go.Scatter(x=self.tessBJD, y=self.mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Normalized Flux"),
+            go.Scatter(x=x_native, y=y_flux, mode="lines", line=dict(color="black", width=1), name="Normalized Flux"),
             row=1,
             col=1,
         )
         fig.update_yaxes(title_text="Normalized Flux", row=1, col=1)
         if self.s2mPDCSAPflux is not None:
+            y_detrended = np.asarray(self.s2mPDCSAPflux, dtype=np.float64)
             fig.add_trace(
-                go.Scatter(x=self.tessBJD, y=self.s2mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Detrended Flux"),
+                go.Scatter(x=x_native, y=y_detrended, mode="lines", line=dict(color="black", width=1), name="Detrended Flux"),
                 row=2,
                 col=1,
             )
