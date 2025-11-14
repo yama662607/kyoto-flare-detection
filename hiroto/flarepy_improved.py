@@ -13,12 +13,17 @@ FlareDetector クラス
 
 import os
 import re
+from pathlib import Path
 
 import astropy.io.fits as fits
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.interpolate import interp1d
+
+MODULE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = MODULE_DIR.parent
+TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
 
 
 class FlareDetector:
@@ -634,7 +639,7 @@ class FlareDetector:
 
         try:
             # TESSの透過率 (応答関数) を読み込み
-            wave, resp = np.loadtxt("../data/tess-response-function-v1.0.csv", delimiter=",").T
+            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
         except FileNotFoundError:
             print("Error: TESS応答関数のCSVファイルが見つかりません。")
             return np.array([])
