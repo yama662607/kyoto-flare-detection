@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BASELINE = PROJECT_ROOT / "reports" / "state_validation" / "base_flare_detector_state_baseline.json"
+DEFAULT_BASELINE = PROJECT_ROOT / "reports" / "validation" / "global" / "base_flare_detector_state_baseline.json"
 
 
 def _array_factory(dtype=float) -> Callable[[], np.ndarray]:

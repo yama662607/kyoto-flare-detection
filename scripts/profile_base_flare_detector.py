@@ -38,7 +38,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=PROJECT_ROOT / "reports" / "performance_profiles",
+        default=PROJECT_ROOT / "reports" / "performance",
         help="結果ファイル (CSV / PNG / .prof) の出力先ディレクトリ",
     )
     parser.add_argument(

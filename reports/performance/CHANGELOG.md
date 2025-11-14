@@ -49,7 +49,7 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 | 項目 | 内容 |
 | ---- | ---- |
 | 変更前 | Matplotlib ベースの静的 PNG。`docs/profiling/` 直下にファイルが点在。ブラウザ表示は不可。 |
-| 変更後 | `scripts/profile_base_flare_detector.py`, `scripts/compare_profile_results.py`, `scripts/verify_detector_state.py` を Plotly Express / Graph Objects に統一。`--show-plot` でブラウザ表示、`reports/performance_profiles/...` および `reports/state_validation/...` に成果物を整理。 |
+| 変更後 | `scripts/profile_base_flare_detector.py`, `scripts/compare_profile_results.py`, `scripts/verify_detector_state.py` を Plotly Express / Graph Objects に統一。`--show-plot` でブラウザ表示、`reports/performance/...` および `reports/validation/...` に成果物を整理。 |
 | 目的 | ビジュアルの統一と、開発者・研究者がコマンド一発でブラウザ表示まで確認できるようにする。 |
 | 値が不変な理由 | CSV と計算ロジックは従来のままで、可視化レイヤーのみ変更。`base_flare_detector_cumtime_comparison.csv` などを比較し差異がないことを確認。 |
 
@@ -71,13 +71,13 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 ```
 uv run python scripts/profile_base_flare_detector.py \
   --fits data/TESS/DS_Tuc_A/tess2020212050318-s0028-0000000410214986-0190-s_lc.fits \
-  --output-dir reports/performance_profiles/ds_tuc_a_s0028/after \
+  --output-dir reports/performance/ds_tuc_a/s0028/after \
   --show-plot
 
 uv run python scripts/compare_profile_results.py \
-  --before reports/performance_profiles/ds_tuc_a_s0028/before/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
-  --after  reports/performance_profiles/ds_tuc_a_s0028/after/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
-  --output-dir reports/performance_profiles/ds_tuc_a_s0028 \
+  --before reports/performance/ds_tuc_a/s0028/before/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
+  --after  reports/performance/ds_tuc_a/s0028/after/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
+  --output-dir reports/performance/ds_tuc_a/s0028 \
   --label-before "main (before)" \
   --label-after  "feat/safe-speedup (after)" \
   --top-n 12 \
@@ -85,9 +85,9 @@ uv run python scripts/compare_profile_results.py \
 
 uv run python scripts/verify_detector_state.py \
   --fits data/TESS/DS_Tuc_A/tess2020212050318-s0028-0000000410214986-0190-s_lc.fits \
-  --plot        reports/state_validation/base_flare_detector_summary_table.png \
-  --detail-plot reports/state_validation/base_flare_detector_detail_table.png \
-  --table-csv   reports/state_validation/base_flare_detector_variable_status.csv \
+  --plot        reports/validation/global/base_flare_detector_summary_table.png \
+  --detail-plot reports/validation/global/base_flare_detector_detail_table.png \
+  --table-csv   reports/validation/global/base_flare_detector_variable_status.csv \
   --show-plot
 ```
 
