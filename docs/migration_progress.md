@@ -230,6 +230,21 @@ V889 Her は**高度なデトレンド処理**が特徴。
 - ✅ エネルギー分布が妥当
 - ✅ プロットが正しく表示
 
+### 7. Notebook テンプレートの整備（進行中）
+
+**目的**: `hiroto/`, `daijiro/`, `src/archive` で残っているノートブックを星ごとに単純結合した `notebooks/flare_detect_template.ipynb` を作成し、テンプレートから共有処理を切り出した上で固有セルを手動で整理する。
+
+**実施内容**:
+- `scripts/build_template_merged.py` により DS Tuc A / EK Dra / V889 Her のノートブックを順に読み込み、markdown セクションを挿入しながら `notebooks/flare_detect_template.ipynb` を生成 (@scripts/build_template_merged.py)。
+- 生成したテンプレートには hiroto & daijiro の元ファイルを времен? 取り込み、目次として利用することでテンプレート的な処理の重複を後続作業で削減できるようにした。
+- 星ごとのノートブックはこのテンプレートを参照しつつ、固有の描画/解析セルは手動で残す予定。テンプレートを元に整理した後、不要なテンプレート的処理を段階的に削除していく。
+
+**検証方法**:
+- テンプレートからコピーしたセルが漏れなく記録されているかファイルのサイズと Markdown セクションを確認
+- `notebooks/flare_detect_template.ipynb` を `nbformat` で読み込み、セル数と star セクションが期待どおりであることを検証
+
+**状態**: ✅ 1回目の生成完了、以降手動整理へ移行
+
 **状態**: ⏳ 未着手
 
 ---
