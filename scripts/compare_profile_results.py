@@ -74,11 +74,14 @@ def plot_comparison(
     percent_fmt = top["percent_change"].apply(lambda v: f"{v:+.1f}%" if not np.isnan(v) else "N/A").tolist()
 
     fig = make_subplots(
-        rows=1,
-        cols=2,
-        subplot_titles=(f"Top {top_n} cumulative time comparison", "Before / After summary"),
-        specs=[[{"type": "xy"}, {"type": "domain"}]],
-        column_widths=[0.6, 0.4],
+        rows=2,
+        cols=1,
+        subplot_titles=(
+            f"Top {top_n} cumulative time comparison",
+            "Percent change (after vs before)",
+        ),
+        specs=[[{"type": "xy"}], [{"type": "xy"}]],
+        vertical_spacing=0.12,
     )
 
     fig.add_trace(
@@ -108,27 +111,28 @@ def plot_comparison(
         col=1,
     )
 
-    table = go.Table(
-        header=dict(
-            values=["Function", f"{label_before} [s]", f"{label_after} [s]", "Δ %"],
-            fill_color="#1f2a44",
-            font=dict(color="white"),
-            align="left",
+    percent_colors = ["#2ca02c" if pct >= 0 else "#d62728" for pct in top["percent_change"].fillna(0)]
+    fig.add_trace(
+        go.Bar(
+            y=labels,
+            x=top["percent_change"],
+            orientation="h",
+            name="Δ%",
+            marker_color=percent_colors,
+            text=[f"{pct:+.1f}%" if not np.isnan(pct) else "N/A" for pct in top["percent_change"]],
+            textposition="auto",
         ),
-        cells=dict(
-            values=[labels, top[before_col].round(6), top[after_col].round(6), percent_fmt],
-            fill_color=[["#f9f9f9", "#e8eff7"] * (len(labels) // 2 + 1)],
-            align="left",
-        ),
+        row=2,
+        col=1,
     )
-    fig.add_trace(table, row=1, col=2)
 
     fig.update_layout(
         barmode="group",
-        height=max(600, 30 * len(labels)),
+        height=max(800, 60 * len(labels)),
         yaxis=dict(autorange="reversed", title="Function"),
         xaxis=dict(title="Cumulative time [s]"),
-        margin=dict(l=200, r=20, t=60, b=40),
+        xaxis2=dict(title="Percent change [%]", zeroline=True, zerolinecolor="#888"),
+        margin=dict(l=220, r=60, t=80, b=40),
         title="BaseFlareDetector cumulative time comparison",
     )
 
