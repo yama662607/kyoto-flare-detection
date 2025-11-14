@@ -7,7 +7,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Tuple
+from typing import Any, Callable, Dict, Iterable, List
 
 import numpy as np
 
@@ -88,6 +88,98 @@ def serialize_value(value: Any) -> Any:
     return {"type": "repr", "value": repr(value)}
 
 
+def value_repr(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+
+def compare_sections(section_name: str, baseline_section: Dict[str, Any], current_section: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    keys = sorted(set(baseline_section.keys()) | set(current_section.keys()))
+    for key in keys:
+        base = baseline_section.get(key)
+        curr = current_section.get(key)
+        if base is None:
+            status = "missing_in_baseline"
+            row = {
+                "section": section_name,
+                "key": key,
+                "status": status,
+                "baseline_repr": None,
+                "current_repr": value_repr(curr),
+            }
+        elif curr is None:
+            status = "missing_in_current"
+            row = {
+                "section": section_name,
+                "key": key,
+                "status": status,
+                "baseline_repr": value_repr(base),
+                "current_repr": None,
+            }
+        else:
+            base_repr = value_repr(base)
+            curr_repr = value_repr(curr)
+            status = "match" if base_repr == curr_repr else "diff"
+            row = {
+                "section": section_name,
+                "key": key,
+                "status": status,
+                "baseline_repr": base_repr,
+                "current_repr": curr_repr,
+            }
+        rows.append(row)
+    return rows
+
+
+def summarize_differences(baseline: Dict[str, Any], snapshot: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    rows.extend(compare_sections("instance", baseline.get("instance", {}), snapshot.get("instance", {})))
+    rows.extend(compare_sections("class", baseline.get("class", {}), snapshot.get("class", {})))
+    return rows
+
+
+def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    sections = sorted({row["section"] for row in rows})
+    status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
+    colors = {
+        "match": "#2ca02c",
+        "diff": "#d62728",
+        "missing_in_baseline": "#ff7f0e",
+        "missing_in_current": "#1f77b4",
+    }
+    counts = {section: {status: 0 for status in status_order} for section in sections}
+    for row in rows:
+        counts[row["section"]][row["status"]] += 1
+
+    fig, ax = plt.subplots(figsize=(8, 3 + len(sections)))
+    bottom = np.zeros(len(sections))
+    y_pos = np.arange(len(sections))
+    for status in status_order:
+        values = np.array([counts[section][status] for section in sections])
+        if np.all(values == 0):
+            continue
+        ax.barh(y_pos, values, left=bottom, label=status, color=colors.get(status, "#999999"))
+        bottom += values
+
+    for idx, total in enumerate(bottom):
+        ax.text(total + 0.1, y_pos[idx], f"{int(total)} vars", va="center", fontsize=10)
+
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(sections)
+    ax.set_xlabel("Number of variables")
+    ax.set_title("BaseFlareDetector state comparison result")
+    ax.legend()
+    plt.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=200)
+    plt.close(fig)
+
+
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:
     if not args.fits.exists():
         raise FileNotFoundError(f"FITS ファイルが存在しません: {args.fits}")
@@ -118,27 +210,6 @@ def capture_state(args: argparse.Namespace) -> Dict[str, Any]:
     return {"instance": instance_state, "class": class_state}
 
 
-def diff_states(baseline: Any, current: Any, path: str = "") -> Iterable[str]:
-    if baseline == current:
-        return []
-
-    if isinstance(baseline, dict) and isinstance(current, dict):
-        diffs = []
-        keys = sorted(set(baseline.keys()) | set(current.keys()))
-        for key in keys:
-            new_path = f"{path}.{key}" if path else key
-            if key not in baseline:
-                diffs.append(f"{new_path}: baseline に存在しません (現行のみ)")
-                continue
-            if key not in current:
-                diffs.append(f"{new_path}: 現行結果に存在しません (baseline のみ)")
-                continue
-            diffs.extend(diff_states(baseline[key], current[key], new_path))
-        return diffs
-
-    return [f"{path}: baseline={baseline} != current={current}"]
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="BaseFlareDetector のクラス変数／インスタンス変数が baseline と一致するか検証します。"
@@ -156,6 +227,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ene-thres-low", type=float, default=None, help="process_data の ene_thres_low 上書き値")
     parser.add_argument("--ene-thres-high", type=float, default=None, help="process_data の ene_thres_high 上書き値")
     parser.add_argument("--update-baseline", action="store_true", help="baseline を現在の結果で更新します")
+    parser.add_argument("--plot", type=Path, help="比較結果を図示して保存するファイルパス (PNG 推奨)")
     return parser.parse_args()
 
 
@@ -167,17 +239,33 @@ def main() -> None:
         args.baseline.parent.mkdir(parents=True, exist_ok=True)
         args.baseline.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
         print(f"Baseline を更新しました: {args.baseline}")
+        if args.plot:
+            summary_rows = summarize_differences(snapshot, snapshot)
+            plot_summary(summary_rows, args.plot)
+            print(f"基準状態の図を生成しました: {args.plot}")
         return
 
     if not args.baseline.exists():
         raise FileNotFoundError(f"baseline ファイルが見つかりません。まず --update-baseline で作成してください: {args.baseline}")
 
     baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
-    diffs = list(diff_states(baseline, snapshot))
-    if diffs:
+    summary_rows = summarize_differences(baseline, snapshot)
+    if args.plot:
+        plot_summary(summary_rows, args.plot)
+        print(f"比較結果を図示しました: {args.plot}")
+    diff_rows = [row for row in summary_rows if row["status"] != "match"]
+    if diff_rows:
         print("状態差分を検出しました:")
-        for diff in diffs:
-            print(f"- {diff}")
+        for row in diff_rows:
+            path = f"{row['section']}.{row['key']}"
+            if row["status"] == "diff":
+                print(f"- {path}: baseline={row['baseline_repr']} vs current={row['current_repr']}")
+            elif row["status"] == "missing_in_baseline":
+                print(f"- {path}: baseline に存在せず、現行のみ {row['current_repr']}")
+            elif row["status"] == "missing_in_current":
+                print(f"- {path}: baseline には存在しますが、現行には存在しません")
+            else:
+                print(f"- {path}: status={row['status']}")
         raise SystemExit(1)
 
     print("BaseFlareDetector のクラス変数／インスタンス変数は baseline と一致しています。")
