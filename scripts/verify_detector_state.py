@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 from pathlib import Path
@@ -189,6 +190,66 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_detailed(rows: List[Dict[str, Any]], output_path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update(
+        {
+            "font.size": 10,
+            "axes.titlesize": 16,
+            "axes.labelsize": 12,
+            "legend.fontsize": 10,
+        }
+    )
+
+    rows_sorted = sorted(rows, key=lambda r: (r["section"], r["key"]))
+    labels = [f"{row['section']}.{row['key']}" for row in rows_sorted]
+    statuses = [row["status"] for row in rows_sorted]
+
+    status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
+    colors = {
+        "match": "#2ca02c",
+        "diff": "#d62728",
+        "missing_in_baseline": "#ff7f0e",
+        "missing_in_current": "#1f77b4",
+    }
+
+    height = max(6, 3 + 0.2 * len(rows_sorted))
+    fig, ax = plt.subplots(figsize=(14, height))
+    y_pos = np.arange(len(rows_sorted))
+
+    for idx, status in enumerate(statuses):
+        ax.barh(idx, 1, color=colors.get(status, "#999999"))
+
+    ax.set_xlim(0, 1)
+    ax.set_xticks([])
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels)
+    ax.set_title("BaseFlareDetector variable-by-variable status")
+
+    legend_elements = [plt.Rectangle((0, 0), 1, 1, color=colors.get(s, "#999999"), label=s) for s in status_order]
+    ax.legend(handles=legend_elements, loc="upper right")
+
+    for idx, row in enumerate(rows_sorted):
+        ax.text(
+            0.5,
+            idx,
+            row["status"],
+            ha="center",
+            va="center",
+            color="white" if row["status"] == "diff" else "black",
+            fontsize=9,
+        )
+
+    plt.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=200)
+    plt.close(fig)
+
+
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:
     if not args.fits.exists():
         raise FileNotFoundError(f"FITS ファイルが存在しません: {args.fits}")
@@ -236,7 +297,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ene-thres-low", type=float, default=None, help="process_data の ene_thres_low 上書き値")
     parser.add_argument("--ene-thres-high", type=float, default=None, help="process_data の ene_thres_high 上書き値")
     parser.add_argument("--update-baseline", action="store_true", help="baseline を現在の結果で更新します")
-    parser.add_argument("--plot", type=Path, help="比較結果を図示して保存するファイルパス (PNG 推奨)")
+    parser.add_argument("--plot", type=Path, help="集計グラフ (セクション別) の保存先 PNG")
+    parser.add_argument("--detail-plot", type=Path, help="変数ごとのステータス可視化グラフの保存先 PNG")
+    parser.add_argument("--table-csv", type=Path, help="各変数の比較結果を CSV で保存するパス")
     return parser.parse_args()
 
 
@@ -248,20 +311,36 @@ def main() -> None:
         args.baseline.parent.mkdir(parents=True, exist_ok=True)
         args.baseline.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
         print(f"Baseline を更新しました: {args.baseline}")
-        if args.plot:
-            summary_rows = summarize_differences(snapshot, snapshot)
-            plot_summary(summary_rows, args.plot)
-            print(f"基準状態の図を生成しました: {args.plot}")
-        return
+        summary_rows = summarize_differences(snapshot, snapshot)
+    else:
+        if not args.baseline.exists():
+            raise FileNotFoundError(
+                f"baseline ファイルが見つかりません。まず --update-baseline で作成してください: {args.baseline}"
+            )
+        baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+        summary_rows = summarize_differences(baseline, snapshot)
 
-    if not args.baseline.exists():
-        raise FileNotFoundError(f"baseline ファイルが見つかりません。まず --update-baseline で作成してください: {args.baseline}")
+    if args.table_csv:
+        args.table_csv.parent.mkdir(parents=True, exist_ok=True)
+        with args.table_csv.open("w", newline="", encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=["section", "key", "status", "baseline_repr", "current_repr"])
+            writer.writeheader()
+            for row in summary_rows:
+                writer.writerow(row)
+        print(f"比較結果テーブルを出力しました: {args.table_csv}")
 
-    baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
-    summary_rows = summarize_differences(baseline, snapshot)
     if args.plot:
         plot_summary(summary_rows, args.plot)
-        print(f"比較結果を図示しました: {args.plot}")
+        print(f"比較結果（集計）を図示しました: {args.plot}")
+    if args.detail_plot:
+        plot_detailed(summary_rows, args.detail_plot)
+        print(f"比較結果（一覧）を図示しました: {args.detail_plot}")
+
+    if args.update_baseline:
+        if args.table_csv or args.detail_plot:
+            print("基準状態の可視化／テーブルを生成しました。")
+        return
+
     diff_rows = [row for row in summary_rows if row["status"] != "match"]
     if diff_rows:
         print("状態差分を検出しました:")
