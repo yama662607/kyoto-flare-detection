@@ -12,11 +12,11 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import plotly.io as pio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BASELINE = PROJECT_ROOT / "docs" / "regression" / "base_flare_detector_state.json"
+DEFAULT_BASELINE = PROJECT_ROOT / "reports" / "state_validation" / "base_flare_detector_state_baseline.json"
 
 
 def _array_factory(dtype=float) -> Callable[[], np.ndarray]:
@@ -149,28 +149,44 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool 
     for row in rows:
         counts[row["section"]][row["status"]] += 1
 
-    data = []
+    summary_rows = []
     for section in sections:
-        for status in status_order:
-            data.append({"section": section, "status": status, "count": counts[section][status]})
-    df = pd.DataFrame(data)
+        total = sum(counts[section].values())
+        match_rate = (counts[section]["match"] / total * 100) if total else 0.0
+        summary_rows.append(
+            {
+                "Section": section,
+                "Total vars": total,
+                "Matches": counts[section]["match"],
+                "Diffs": counts[section]["diff"],
+                "Missing in baseline": counts[section]["missing_in_baseline"],
+                "Missing in current": counts[section]["missing_in_current"],
+                "Match rate (%)": round(match_rate, 1),
+            }
+        )
+    summary_df = pd.DataFrame(summary_rows)
 
-    fig = px.bar(
-        df,
-        x="count",
-        y="section",
-        color="status",
-        orientation="h",
-        text=df["count"].map(lambda v: f"{int(v)}"),
-        category_orders={"status": status_order},
-        labels={"count": "Number of variables", "section": "Section"},
+    fig = go.Figure(
+        data=[
+            go.Table(
+                header=dict(
+                    values=list(summary_df.columns),
+                    fill_color="#1f2a44",
+                    font=dict(color="white"),
+                    align="left",
+                ),
+                cells=dict(
+                    values=[summary_df[col] for col in summary_df.columns],
+                    fill_color=[["#f9f9f9", "#e8eff7"] * (len(summary_df) // 2 + 1)],
+                    align="left",
+                ),
+            )
+        ]
     )
     fig.update_layout(
-        barmode="stack",
-        height=max(400, 80 * len(sections)),
-        yaxis=dict(autorange="reversed"),
-        title="BaseFlareDetector state comparison result",
-        margin=dict(l=140, r=40, t=60, b=40),
+        title="BaseFlareDetector state summary",
+        height=300 + 30 * len(summary_df),
+        margin=dict(l=40, r=40, t=60, b=40),
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
@@ -183,27 +199,32 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
     if not rows_sorted:
         return
     detail_df = pd.DataFrame(rows_sorted)
-    detail_df["label"] = detail_df["section"] + "." + detail_df["key"]
-    detail_df["value"] = 1
-    status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
+    detail_df["Variable"] = detail_df["section"] + "." + detail_df["key"]
+    detail_df["Baseline"] = detail_df["baseline_repr"].apply(lambda v: (v or "")[:120])
+    detail_df["Current"] = detail_df["current_repr"].apply(lambda v: (v or "")[:120])
+    detail_df["Status"] = detail_df["status"]
 
-    fig = px.bar(
-        detail_df,
-        x="value",
-        y="label",
-        color="status",
-        orientation="h",
-        text="status",
-        category_orders={"status": status_order},
-        labels={"value": "", "label": "Variable"},
+    fig = go.Figure(
+        data=[
+            go.Table(
+                header=dict(
+                    values=["Variable", "Baseline", "Current", "Status"],
+                    fill_color="#1f2a44",
+                    font=dict(color="white"),
+                    align="left",
+                ),
+                cells=dict(
+                    values=[detail_df[col] for col in ["Variable", "Baseline", "Current", "Status"]],
+                    fill_color=[["#f9f9f9", "#eef3fb"] * (len(detail_df) // 2 + 1)],
+                    align="left",
+                ),
+            )
+        ]
     )
     fig.update_layout(
-        barmode="stack",
-        height=max(600, 20 * len(detail_df)),
-        yaxis=dict(autorange="reversed"),
-        xaxis=dict(showticklabels=False),
-        title="BaseFlareDetector variable-by-variable status",
-        margin=dict(l=260, r=80, t=60, b=40),
+        title="BaseFlareDetector variable comparison",
+        height=max(600, 25 * len(detail_df)),
+        margin=dict(l=40, r=40, t=60, b=40),
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
