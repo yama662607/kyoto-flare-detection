@@ -391,12 +391,25 @@ class BaseFlareDetector:
         # This method is intended to be overridden by subclasses for specific data removal.
         pass
 
-    def process_data(self, ene_thres_low, ene_thres_high):
+    def process_data(self, ene_thres_low, ene_thres_high, skip_remove: bool = False):
+        """
+        Run the standard flare-processing pipeline.
+
+        Parameters
+        ----------
+        ene_thres_low : float
+            最小エネルギー閾値 (erg)。
+        ene_thres_high : float
+            最大エネルギー閾値 (erg)。
+        skip_remove : bool, optional
+            True にすると `remove()` をスキップし、トランジット除去を行わない処理流を実行します。
+        """
         if self.tessBJD is None or len(self.tessBJD) < 2:
             print("Error: BJD が正しく読み込まれていないか、要素数が不足しています。")
             return
 
-        self.remove()
+        if not skip_remove:
+            self.remove()
         self.apply_gap_correction()
         self.detrend_flux()
         self.reestimate_errors()

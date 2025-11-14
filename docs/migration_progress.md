@@ -132,6 +132,11 @@ TESSセクタ番号による分岐機能をBaseFlareDetectorに追加しまし�
    - **DS Tuc A**: `sector_threshold=74`
    - **EK Dra**: `sector_threshold=74`
    - **V889 Her**: `sector_threshold=90` (他と異なる!)
+4. **DS Tuc A の連星補正**
+   - `FlareDetector_DS_Tuc_A.tess_band_energy()` をオーバーライドし、主星 (0.87 R☉, 5428 K) と伴星 (0.864 R☉, 4700 K) の寄与を合算して `area_factor` を算出 @src/flarepy_DS_Tuc_A.py#26-74
+   - `flux_diff()` では primary/companion の面積和を用いて `starspot` を更新し、連星のスポット面積を正しく反映
+5. **`process_data()` に `skip_remove` フラグを追加**
+   - `BaseFlareDetector.process_data(..., skip_remove=True)` で `remove()` を飛ばして hiroto 側の `process_data_2()` を再現可能にしました @src/base_flare_detector.py#394-423
 
 **変更ファイル**:
 - `src/base_flare_detector.py` (行28-143)
@@ -149,48 +154,25 @@ TESSセクタ番号による分岐機能をBaseFlareDetectorに追加しまし�
 
 ## 📅 今後の予定
 
-### 4. DS Tuc A の統合（未着手）
+### 4. DS Tuc A の統合（✅ 完了）
 
 **優先度**: 高
-**予定日**: TBD
+**予定日**: 2025-11-14
 
-#### 📝 タスク内容
+#### 📝 実装内容と検証
 
-DS Tuc A は**連星系**のため、主星と副星の両方を考慮した特殊処理が必要。
-
-**必要な作業**:
-
-1. **`tess_band_energy()` のオーバーライド**
-   ```python
-   # 主星の寄与
-   Rstar = Rsun_cm * 0.87
-   star_intensity = ...
-
-   # 副星の寄与（DS Tuc A専用）
-   Rcomp = Rsun_cm * 0.864
-   comp_intensity = np.sum(dw * self.planck(wave * 1e-9, 4700) * resp)
-
-   # 合計
-   area_factor = (主星) + (副星)
-   ```
-
+1. **`tess_band_energy()` のオーバーライド完了**
+   - 主星 (0.87 R☉, 5428 K) と伴星 (0.864 R☉, 4700 K) の寄与を合算し、`area_factor` を再計算することで連星系の放射強度を正しく反映 @src/flarepy_DS_Tuc_A.py#27-54
 2. **`flux_diff()` のオーバーライド**
-   ```python
-   # 主星 + 副星の面積
-   total_area = (0.87 * 695510e3)**2 + (0.864 * 695510e3)**2
-   self.starspot = 2 * np.pi * total_area * ...
-   ```
-
-3. **`remove()` メソッドの実装**
-   - トランジット除去処理（12組の時間範囲）
-   - 既に src/flarepy_DS_Tuc_A.py に実装済みか確認
+   - primary/companion の面積和を使って `starspot` を再計算し、連星全体のスポット面積を表現 @src/flarepy_DS_Tuc_A.py#56-64
+3. **`remove()` にトランジット除去**
+   - daijiro版と同じ 12 組の時間範囲を `remove()` で排除済み @src/flarepy_DS_Tuc_A.py#34-71
 
 **検証方法**:
-- daijiro版とエネルギー計算結果を比較
-- フレア検出数が一致するか確認
-- Notebookで可視化して確認
+- daijiro版とエネルギー合計とフレア数が一致するか Jupyter Notebook で確認予定
+- セクタ 74 以降の SAP/PDCSAP 切り替えを `BaseFlareDetector` にて保障
 
-**状態**: ⏳ 未着手
+**状態**: ✅ 実装完了、確認待ち
 
 ---
 
