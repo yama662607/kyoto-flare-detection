@@ -232,32 +232,20 @@ V889 Her は**高度なデトレンド処理**が特徴。
 
 ### 7. Notebook テンプレートの整備（進行中）
 
-**目的**: `hiroto/`, `daijiro/`, `src/archive` に残るノートブックを星ごとに結合した `notebooks/flare_detect_template.ipynb` を作成し、共有処理を集中管理した上で固有セルを手動で整理する。
+**目的**: `hiroto/`, `daijiro/`, `src/archive` で残っているノートブックを星ごとに単純結合した `notebooks/flare_detect_template.ipynb` を作成し、テンプレートから共有処理を切り出した上で固有セルを手動で整理する。
 
 **実施内容**:
-- `scripts/build_template_merged.py` で DS Tuc A / EK Dra / V889 Her のノートブックを順に読み込み、Markdown セクションを付けつつ `notebooks/flare_detect_template.ipynb` を生成 (@scripts/build_template_merged.py)。
-- 生成したテンプレートは hiroto・daijiro由来のセルを順次並べ、テンプレート的な処理をまとめることで重複を後続作業で削除しやすくした。
-- 星ごとのノートブックはテンプレートを土台に、固有の描画/解析セルだけを整理する予定。テンプレートで不要なセルを特定しながら段階的に削除する。
+- `scripts/build_template_merged.py` により DS Tuc A / EK Dra / V889 Her のノートブックを順に読み込み、markdown セクションを挿入しながら `notebooks/flare_detect_template.ipynb` を生成 (@scripts/build_template_merged.py)。
+- 生成したテンプレートには hiroto & daijiro の元ファイルを времен? 取り込み、目次として利用することでテンプレート的な処理の重複を後続作業で削減できるようにした。
+- 星ごとのノートブックはこのテンプレートを参照しつつ、固有の描画/解析セルは手動で残す予定。テンプレートを元に整理した後、不要なテンプレート的処理を段階的に削除していく。
 
 **検証方法**:
-- テンプレート内の Markdown セクションとセル数を確認し、全対象星が含まれることを検証
-- `nbformat` で読み込み、各セクションの先頭・末尾が想定どおりに整列していることを確認
+- テンプレートからコピーしたセルが漏れなく記録されているかファイルのサイズと Markdown セクションを確認
+- `notebooks/flare_detect_template.ipynb` を `nbformat` で読み込み、セル数と star セクションが期待どおりであることを検証
 
 **状態**: ✅ 1回目の生成完了、以降手動整理へ移行
 
-### 8. 星別ノートブックの統合（進行中）
-
-**目的**: `hiroto/`, `daijiro/`, `notebooks/` にある同一星のノートブックを順に読み込んで重複を除き、最終的な `notebooks/flare_detect_{星}.ipynb` に統合する。
-
-**実施内容**:
-- `scripts/merge_star_notebooks.py` を作成し、DS Tuc A・EK Dra・V889 Her それぞれについて `cell_type`＋`source` の組合せで重複を避けながら結合して `notebooks/flare_detect_{星}.ipynb` を再生成。星間で共通するベースセルは1回ずつだけ挿入されます。
-- このスクリプトは `hiroto` や `daijiro` 側の改変があったときにも再実行可能なため、テンプレート更新と併せてノートブックを同期的に整備できます。
-
-**検証方法**:
-- `python scripts/merge_star_notebooks.py` を実行した後、出力ファイルのセル数と先頭/末尾が期待どおりか `nbformat` で確認
-- 星ごとに `FlareDetector_*` を実行し、旧ファイルと同じ処理結果が得られることを spot-check
-
-**状態**: ✅ マージ完了、以降は重複削除／固有セルの微調整フェーズ
+**状態**: ⏳ 未着手
 
 ---
 
