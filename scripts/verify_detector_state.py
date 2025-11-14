@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import html
 import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List
@@ -78,6 +79,14 @@ def _format_serialized_value(value_repr: str | None, depth: int = 0) -> str:
     if value_type == "repr":
         return str(data.get("value"))
     return value_repr
+
+
+def _wrap_with_tooltip(display: str, tooltip: str) -> str:
+    display_text = html.escape(display or "")
+    tooltip_text = html.escape(tooltip or "")
+    if not tooltip_text or tooltip_text == display_text:
+        return display_text
+    return f'<span title="{tooltip_text}">{display_text}</span>'
 
 
 def reset_class_state(BaseFlareDetector: Any) -> None:
@@ -243,10 +252,25 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
         return
     detail_df = pd.DataFrame(rows_sorted)
     detail_df["Variable"] = detail_df["section"] + "." + detail_df["key"]
-    detail_df["Baseline"] = detail_df["baseline_repr"].apply(_format_serialized_value)
-    detail_df["Current"] = detail_df["current_repr"].apply(_format_serialized_value)
+    detail_df["BaselineDisplay"] = detail_df["baseline_repr"].apply(_format_serialized_value)
+    detail_df["CurrentDisplay"] = detail_df["current_repr"].apply(_format_serialized_value)
+    detail_df["BaselineHover"] = detail_df["baseline_repr"].fillna("")
+    detail_df["CurrentHover"] = detail_df["current_repr"].fillna("")
+    detail_df["BaselineCell"] = detail_df.apply(
+        lambda row: _wrap_with_tooltip(row["BaselineDisplay"], row["BaselineHover"]), axis=1
+    )
+    detail_df["CurrentCell"] = detail_df.apply(
+        lambda row: _wrap_with_tooltip(row["CurrentDisplay"], row["CurrentHover"]), axis=1
+    )
     detail_df["Status"] = detail_df["status"]
+
     columns = ["Variable", "Baseline", "Current", "Status"]
+    values = [
+        detail_df["Variable"],
+        detail_df["BaselineCell"],
+        detail_df["CurrentCell"],
+        detail_df["Status"],
+    ]
     row_colors = [_status_color(status) for status in detail_df["Status"]]
     fill_colors = [row_colors for _ in columns]
 
@@ -254,7 +278,12 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool
         data=[
             go.Table(
                 header=dict(values=columns, fill_color="#1f2a44", font=dict(color="white"), align="left"),
-                cells=dict(values=[detail_df[col] for col in columns], fill_color=fill_colors, align="left"),
+                cells=dict(
+                    values=values,
+                    fill_color=fill_colors,
+                    align="left",
+                    format=[None] * len(columns),
+                ),
             )
         ]
     )
