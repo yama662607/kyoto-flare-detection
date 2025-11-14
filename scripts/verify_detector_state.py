@@ -313,7 +313,7 @@ def main() -> None:
         print(f"比較結果テーブルを出力しました: {args.table_csv}")
 
     if args.plot:
-        plot_summary(summary_rows, args.plot, show_plot=args.show_plot)
+        plot_summary(summary_rows, args.plot, show_plot=False)
         print(f"比較結果（集計）を図示しました: {args.plot}")
     if args.detail_plot:
         plot_detailed(summary_rows, args.detail_plot, show_plot=args.show_plot)
