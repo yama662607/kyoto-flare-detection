@@ -78,7 +78,7 @@ def plot_comparison(
         cols=1,
         subplot_titles=(
             f"Top {top_n} cumulative time comparison",
-            "Percent change (after vs before)",
+            "Share of after cumulative time (relative bottleneck)",
         ),
         specs=[[{"type": "xy"}], [{"type": "xy"}]],
         vertical_spacing=0.12,
@@ -111,16 +111,22 @@ def plot_comparison(
         col=1,
     )
 
-    percent_colors = ["#2ca02c" if pct >= 0 else "#d62728" for pct in top["percent_change"].fillna(0)]
+    after_total = top[after_col].sum()
+    share_percent = np.where(after_total > 0, top[after_col] / after_total * 100, np.nan)
+    share_colors = [
+        "#d62728" if pct >= 40 else "#ff7f0e" if pct >= 20 else "#2ca02c" for pct in share_percent
+    ]
     fig.add_trace(
         go.Bar(
             y=labels,
-            x=top["percent_change"],
+            x=share_percent,
             orientation="h",
-            name="Δ%",
-            marker_color=percent_colors,
-            text=[f"{pct:+.1f}%" if not np.isnan(pct) else "N/A" for pct in top["percent_change"]],
+            name="After share",
+            marker_color=share_colors,
+            text=[f"{pct:.1f}%" if not np.isnan(pct) else "N/A" for pct in share_percent],
             textposition="auto",
+            customdata=top["percent_change"],
+            hovertemplate="Function: %{y}<br>After share: %{x:.1f}%<br>Δ% vs before: %{customdata:+.1f}%<extra></extra>",
         ),
         row=2,
         col=1,
@@ -128,10 +134,10 @@ def plot_comparison(
 
     fig.update_layout(
         barmode="group",
-        height=max(800, 60 * len(labels)),
+        height=max(900, 65 * len(labels)),
         yaxis=dict(autorange="reversed", title="Function"),
         xaxis=dict(title="Cumulative time [s]"),
-        xaxis2=dict(title="Percent change [%]", zeroline=True, zerolinecolor="#888"),
+        xaxis2=dict(title="Share of after cumulative time [%]", range=[0, 100], zeroline=True, zerolinecolor="#888"),
         margin=dict(l=220, r=60, t=80, b=40),
         title="BaseFlareDetector cumulative time comparison",
     )
