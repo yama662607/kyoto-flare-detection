@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
 
+
 class BaseFlareDetector:
     """
     TESS光度データからのフレア検出とエネルギー推定を行う基本的なクラス。
@@ -37,6 +38,7 @@ class BaseFlareDetector:
         f_cut_spline=6,
         ene_thres_low=5e33,
         ene_thres_high=2e40,
+        sector_threshold=None,
         process_data=False,
     ):
         self.file = file
@@ -45,6 +47,7 @@ class BaseFlareDetector:
         self.flux_mean = flux_mean
         self.err_constant_mean = err_constant_mean
         self.rot_period = rot_period
+        self.sector_threshold = sector_threshold
         self.d_T_star = 3.58e-5 * self.T_star**2 + 0.249 * self.T_star - 808
         self.buffer_size = buffer_size
         self.f_cut_lowpass = f_cut_lowpass
@@ -106,6 +109,7 @@ class BaseFlareDetector:
         if match:
             self.data_name = match.group(1)
 
+        # セクタ番号を抽出
         match = re.match(r"[a-z]+\d+-s00(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         data_number = int(match.group(1)) if match else 0
 
@@ -113,8 +117,13 @@ class BaseFlareDetector:
         self.tessheader1 = hdulist[0].header
         data = hdulist[1].data
 
-        flux_field = "SAP_FLUX" if data_number > 74 else "PDCSAP_FLUX"
-        flux_err_field = "SAP_FLUX_ERR" if data_number > 74 else "PDCSAP_FLUX_ERR"
+        # セクタ分岐: sector_thresholdが設定されている場合のみ分岐
+        if self.sector_threshold is not None and data_number > self.sector_threshold:
+            flux_field = "SAP_FLUX"
+            flux_err_field = "SAP_FLUX_ERR"
+        else:
+            flux_field = "PDCSAP_FLUX"
+            flux_err_field = "PDCSAP_FLUX_ERR"
 
         mask = ~np.isnan(data.field(flux_field))
         bjd = data.field("time")[mask]
@@ -127,7 +136,7 @@ class BaseFlareDetector:
         self.atessBJD = bjd
         self.amPDCSAPflux = norm_flux
         self.amPDCSAPfluxerr = norm_flux_err
-        
+
         # Initially, set tessBJD to the loaded data. It can be overridden by child classes.
         self.tessBJD = self.atessBJD
         self.mPDCSAPflux = self.amPDCSAPflux
@@ -198,7 +207,7 @@ class BaseFlareDetector:
         for i in range(len(err)):
             nearby = (np.abs(bjd - bjd[i]) <= 0.5) & (flux <= 0.005)
             err[i] = np.std(flux[nearby])
-        
+
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
 
@@ -234,14 +243,14 @@ class BaseFlareDetector:
             ss_ind = np.where(overonesigma_idx == n)[0]
             if len(endtime) > 0 and np.max(endtime) >= bjd[n]: continue
             if len(ss_ind) == 0: continue
-            
+
             ss_val = ss_ind[0]
             k, j = 0, 0
             while (ss_val + k + 1 < len(overonesigma_idx)) and ((overonesigma_idx[ss_val + k + 1] - overonesigma_idx[ss_val + k]) == 1): k += 1
             while (ss_val + j - 1 >= 0) and ((overonesigma_idx[ss_val + j] - overonesigma_idx[ss_val + j - 1]) == 1): j -= 1
 
             if (n + j) <= 30 or (n + k) >= (len(bjd) - 30): continue
-            
+
             a = diff_bjd[(n + j - 10) : (n + k + 10)]
             if len(a) > 0 and np.max(a) >= (2 / (24 * 60)) * 20: continue
 
@@ -261,13 +270,13 @@ class BaseFlareDetector:
         detecttime_new, starttime_new, endtime_new, peaktime_new, count_new, edecay_new, a_array, b_array = [], [], [], [], [], [], [], []
 
         flux, err, bjd, stime, etime, ptime = self.mPDCSAPflux, self.mPDCSAPfluxerr, self.tessBJD, self.starttime, self.endtime, self.peaktime
-        
+
         flag = 0
         for i in range(N):
             if flag == 1:
                 flag = 0
                 continue
-            
+
             ss_pre = np.where(np.abs(bjd - (stime[i] - 0.025)) <= 0.0125)[0]
             val_pre = np.median(flux[ss_pre]) if len(ss_pre) > 0 else np.nan
             ss_post = np.where(np.abs(bjd - (etime[i] + 0.05)) <= 0.025)[0]
@@ -288,7 +297,7 @@ class BaseFlareDetector:
             k, j = 0, 0
             while (n_peak + k < len(flux_diff)) and (flux_diff[n_peak + k] >= err[n_peak + k]): k += 1
             while (n_peak + j >= 0) and (flux_diff[n_peak + j] >= err[n_peak + j]): j -= 1
-            
+
             n_end, n_start = n_peak + k - 1, n_peak + j + 1
             if n_start < 0 or n_end >= len(flux_diff): continue
 
@@ -297,7 +306,7 @@ class BaseFlareDetector:
 
             peak_flux = flux_diff[ss_flare].max()
             peak_loc = ss_flare[np.where(flux_diff[ss_flare] == peak_flux)[0][0]]
-            
+
             ll = 0
             while ((peak_loc + ll) < len(flux_diff)) and (flux_diff[peak_loc + ll] >= peak_flux * np.exp(-1)): ll += 1
             if ll == 0: continue
@@ -355,7 +364,7 @@ class BaseFlareDetector:
         energy_cor = np.sort(self.energy)
         cumenergy = np.arange(len(energy_cor), 0, -1)
         energy_mask = (energy_cor >= energy_threshold_low) & (energy_cor <= energy_threshold_high)
-        
+
         if np.any(energy_mask):
             self.flare_number = np.sum(energy_mask)
             self.sum_flare_energy = np.sum(energy_cor[energy_mask])
@@ -435,54 +444,121 @@ class BaseFlareDetector:
         fig.update_layout(title_text=f"Flare Energy Distribution ({self.data_name})")
         fig.update_xaxes(title_text="Flare Energy [erg]", type="log")
         fig.update_yaxes(title_text=r"Cumulative Number [day$^{-1}$]", type="log")
-        fig.show()
 
-    def plot_flare_matplotlib(self, dpi=300):
-        if self.tessBJD is None: return
-        with plt.style.context(self._get_matplotlib_style()):
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
-            fig.suptitle(f"Light Curve of {self.data_name}", fontsize=16)
-            ax1.plot(self.tessBJD, self.mPDCSAPflux, marker=".", ls="none", color="darkgray", label="Normalized Flux")
-            ax1.set_ylabel("Normalized Flux", fontsize=14)
-            ax1.legend(loc="upper right", frameon=False)
-            if self.s2mPDCSAPflux is not None:
-                ax2.plot(self.tessBJD, self.s2mPDCSAPflux, color="black", lw=1, label="Detrended Flux")
-                if self.peaktime is not None:
-                    for peak in self.peaktime:
-                        ax2.axvline(peak, color="red", linestyle="--", linewidth=1)
-            ax2.set_ylabel("Detrended Flux", fontsize=14)
-            ax2.legend(loc="upper right", frameon=False)
-            ax2.set_xlabel(f"Time (BJD - {self.time_offset})", fontsize=14)
-            plt.tight_layout(rect=[0, 0, 1, 0.96])
-            plt.savefig(f"{self.data_name}_light_curve.pdf", dpi=dpi, bbox_inches="tight")
-            plt.show()
+    def plot_flare_matplotlib(self, save_path=None, dpi=300):
+        """
+        論文投稿用の高品質なmatplotlibプロット
 
-    def plot_energy_matplotlib(self, dpi=300):
-        if self.energy is None or len(self.energy) == 0: return
+        Parameters
+        ----------
+        save_path : str, optional
+            保存先パス。Noneの場合はデフォルトで "{data_name}_light_curve.pdf" に保存
+        dpi : int
+            解像度（デフォルト300）
+        """
+        if self.tessBJD is None:
+            return
+
+        # 論文品質の設定を適用
+        plt.rcParams['xtick.major.width'] = 1.5
+        plt.rcParams['ytick.major.width'] = 1.5
+        plt.rcParams['axes.linewidth'] = 1.5
+        plt.rcParams['xtick.major.size'] = 7
+        plt.rcParams['ytick.major.size'] = 7
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams['xtick.minor.width'] = 1.5
+        plt.rcParams['ytick.minor.width'] = 1.5
+        plt.rcParams['xtick.minor.size'] = 4
+        plt.rcParams['ytick.minor.size'] = 4
+        plt.rcParams['xtick.direction'] = 'in'
+        plt.rcParams['ytick.direction'] = 'in'
+        plt.rcParams['font.family'] = 'Arial'
+        plt.rcParams['pdf.fonttype'] = 42  # PDFフォント埋め込み
+        plt.rcParams['ps.fonttype'] = 42
+
+        # 2つのサブプロットを作成 (生の光度曲線とデトレンド後)
+        fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(13, 8))
+        fig.subplots_adjust(hspace=0.1)  # サブプロット間の垂直方向のスペースを調整
+
+        # 1つ目のサブプロット: 生の光度曲線
+        axs[0].plot(self.tessBJD, self.mPDCSAPflux, color="black", linestyle="-", label="Normalized Flux", lw=0.5)
+        axs[0].set_ylabel("Normalized Flux", fontsize=17)
+        axs[0].tick_params(labelsize=13)
+
+        # 2つ目のサブプロット: デトレンド後
+        if self.s2mPDCSAPflux is not None:
+            axs[1].plot(self.tessBJD, self.s2mPDCSAPflux, color="black", linestyle="-", label="Detrended Flux", lw=0.5)
+
+            # フレアのピーク位置を線で示す
+            if self.peaktime is not None:
+                for peak in self.peaktime:
+                    axs[1].axvline(x=peak, ymin=0.8, ymax=0.85, color="red", linestyle="-", linewidth=1.5)
+
+            axs[1].set_xlabel(f'Time (day) (BJD - {self.time_offset})', fontsize=17)
+            axs[1].set_ylabel("Detrended Flux", fontsize=17)
+            axs[1].tick_params(labelsize=13)
+            plt.tick_params(labelsize=11)
+            leg = plt.legend(loc='upper right', fontsize=11)
+            leg.get_frame().set_alpha(0)  # 背景を完全に透明にする
+
+        # 保存
+        if save_path is None:
+            save_path = f"{self.data_name}_light_curve.pdf"
+        plt.savefig(save_path, format='pdf', bbox_inches='tight', dpi=dpi)
+
+        plt.show()
+
+    def plot_energy_matplotlib(self, save_path=None, dpi=300):
+        """
+        論文投稿用のエネルギー分布プロット
+
+        Parameters
+        ----------
+        save_path : str, optional
+            保存先パス。Noneの場合はデフォルトで "{data_name}_ffd.pdf" に保存
+        dpi : int
+            解像度（デフォルト300）
+        """
+        if self.energy is None or len(self.energy) == 0:
+            return
+
+        # 論文品質の設定を適用
+        plt.rcParams['xtick.major.width'] = 1.5
+        plt.rcParams['ytick.major.width'] = 1.5
+        plt.rcParams['axes.linewidth'] = 1.5
+        plt.rcParams['xtick.major.size'] = 7
+        plt.rcParams['ytick.major.size'] = 7
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams['xtick.minor.width'] = 1.5
+        plt.rcParams['ytick.minor.width'] = 1.5
+        plt.rcParams['xtick.minor.size'] = 4
+        plt.rcParams['ytick.minor.size'] = 4
+        plt.rcParams['xtick.direction'] = 'in'
+        plt.rcParams['ytick.direction'] = 'in'
+        plt.rcParams['font.family'] = 'Arial'
+        plt.rcParams['pdf.fonttype'] = 42
+        plt.rcParams['ps.fonttype'] = 42
+
         energy_cor = np.sort(self.energy)
         cumenergy = np.arange(len(energy_cor), 0, -1)
-        with plt.style.context(self._get_matplotlib_style()):
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.plot(energy_cor, cumenergy / self.precise_obs_time, drawstyle="steps-post", color="black", lw=1.5)
-            ax.plot(energy_cor, cumenergy / self.precise_obs_time, marker="o", ls="none", markerfacecolor="white", markeredgecolor="black", mew=1.5, ms=7, label="Observed Flares")
-            ax.set_xscale("log")
-            ax.set_yscale("log")
-            ax.set_xlabel("Flare Energy [erg]", fontsize=14)
-            ax.set_ylabel(r"Cumulative Frequency [day$^{-1}$]", fontsize=14)
-            ax.set_title(f"Flare Frequency Distribution of {self.data_name}", fontsize=16)
-            ax.legend(loc="lower left", frameon=False, fontsize=12)
-            ax.grid(True, which="both", ls="--", color="lightgray", lw=0.5)
-            plt.savefig(f"{self.data_name}_ffd.pdf", dpi=dpi, bbox_inches="tight")
-            plt.show()
 
-    def _get_matplotlib_style(self):
-        return {
-            "axes.linewidth": 1.5, "xtick.major.width": 1.5, "ytick.major.width": 1.5,
-            "xtick.minor.width": 1.0, "ytick.minor.width": 1.0, "xtick.major.size": 7,
-            "ytick.major.size": 7, "xtick.minor.size": 4, "ytick.minor.size": 4,
-            "xtick.direction": "in", "ytick.direction": "in", "xtick.minor.visible": True,
-            "ytick.minor.visible": True, "font.family": "Arial", "pdf.fonttype": 42, "ps.fonttype": 42,
-        }
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.plot(energy_cor, cumenergy / self.precise_obs_time, drawstyle="steps-post", color="black", lw=1.5)
+        ax.plot(energy_cor, cumenergy / self.precise_obs_time, marker="o", ls="none", markerfacecolor="white", markeredgecolor="black", mew=1.5, ms=7, label="Observed Flares")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("Flare Energy [erg]", fontsize=14)
+        ax.set_ylabel(r"Cumulative Frequency [day$^{-1}$]", fontsize=14)
+        ax.set_title(f"Flare Frequency Distribution of {self.data_name}", fontsize=16)
+        ax.legend(loc="lower left", frameon=False, fontsize=12)
+        ax.grid(True, which="both", ls="--", color="lightgray", lw=0.5)
+
+        if save_path is None:
+            save_path = f"{self.data_name}_ffd.pdf"
+        plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        plt.show()
 
     def show_variables(self):
         # ... (Implementation is the same as before)

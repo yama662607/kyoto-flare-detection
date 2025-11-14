@@ -21,6 +21,7 @@ class FlareDetector_EK_Dra(BaseFlareDetector):
             rot_period=0.2094793179536128,
             f_cut_lowpass=3,
             f_cut_spline=6,
+            sector_threshold=74,  # Use SAP_FLUX for sectors > 74
             process_data=process_data,
             ene_thres_low=ene_thres_low,
             ene_thres_high=ene_thres_high,

@@ -23,6 +23,7 @@ class FlareDetector_V889_Her(BaseFlareDetector):
             rot_period=0.4398277479138892,
             f_cut_lowpass=30,
             f_cut_spline=40,
+            sector_threshold=90,  # Use SAP_FLUX for sectors > 90
             process_data=process_data,
             ene_thres_low=ene_thres_low,
             ene_thres_high=ene_thres_high,
