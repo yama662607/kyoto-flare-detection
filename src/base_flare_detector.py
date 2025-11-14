@@ -230,6 +230,8 @@ class BaseFlareDetector:
             n_quiet = len(quiet_bjd)
             start_idx = 0
             end_idx = 0
+            prefix = np.concatenate(([0.0], np.cumsum(quiet_flux, dtype=float)))
+            prefix_sq = np.concatenate(([0.0], np.cumsum(quiet_flux**2, dtype=float)))
             for i, center in enumerate(bjd):
                 left = center - window
                 right = center + window
@@ -245,7 +247,15 @@ class BaseFlareDetector:
                     err[i] = np.nan
                     continue
 
-                err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window instead of per-point searchsorted
+                samples = end_idx - start_idx
+                if samples == 1:
+                    err[i] = 0.0
+                    continue
+                sum_val = prefix[end_idx] - prefix[start_idx]
+                sum_sq = prefix_sq[end_idx] - prefix_sq[start_idx]
+                mean_val = sum_val / samples
+                var = max((sum_sq / samples) / 1.0 - mean_val**2, 0.0)
+                err[i] = np.sqrt(var)  # [perf] prefix-sum variance to avoid slicing
 
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err

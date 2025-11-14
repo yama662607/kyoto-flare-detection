@@ -1,0 +1,493 @@
+{
+  "instance": {
+    "R_sunstar_ratio": {
+      "type": "scalar",
+      "value": 1.0
+    },
+    "T_star": {
+      "type": "scalar",
+      "value": 5778
+    },
+    "a_i": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "amPDCSAPflux": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "4e1a4f6e98b23fb04e778d82bb15cad335f98077d3417584cd0200ade01bbb34",
+      "preview": [
+        118655.0,
+        118560.3671875,
+        118631.5234375
+      ]
+    },
+    "amPDCSAPfluxerr": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "22890942c80259d1bfa66ed9eb8fc716e4b8c403d8677c231623a937cfe335d8",
+      "preview": [
+        45.558197021484375,
+        45.56373596191406,
+        45.56010818481445
+      ]
+    },
+    "atessBJD": {
+      "type": "ndarray",
+      "dtype": ">f8",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "d2936950ebfbf000c0c41493fa4b2faf8c89742eb27a5b095f281c955968e2de",
+      "preview": [
+        2036.2815111766286,
+        2036.2842890211193,
+        2036.2856779431327
+      ]
+    },
+    "b_i": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "brightness_variation_amplitude": {
+      "type": "scalar",
+      "value": 9678.8984375
+    },
+    "buffer_size": {
+      "type": "scalar",
+      "value": 10000
+    },
+    "d_T_star": {
+      "type": "scalar",
+      "value": 1825.9151671999998
+    },
+    "data_name": {
+      "type": "scalar",
+      "value": "tess2020186164531-s0027"
+    },
+    "detecttime": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "duration": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "edecay": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "endtime": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "ene_thres_high": {
+      "type": "scalar",
+      "value": 2e+40
+    },
+    "ene_thres_low": {
+      "type": "scalar",
+      "value": 5e+33
+    },
+    "energy": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "err_constant_mean": {
+      "type": "scalar",
+      "value": 0.0005
+    },
+    "f_cut_lowpass": {
+      "type": "scalar",
+      "value": 3
+    },
+    "f_cut_spline": {
+      "type": "scalar",
+      "value": 6
+    },
+    "file": {
+      "type": "scalar",
+      "value": "data/TESS/DS_Tuc_A/tess2020186164531-s0027-0000000410214986-0189-s_lc.fits"
+    },
+    "filtered_flux": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        36781
+      ],
+      "size": 36781,
+      "sha256": "cfa82c103498187ab56b83af21d66c5f2f59bf6d666f5fda8cb97b6d475f9260",
+      "preview": [
+        120424.0859375,
+        120394.4140625,
+        120364.8203125
+      ]
+    },
+    "flare_number": {
+      "type": "scalar",
+      "value": 0
+    },
+    "flare_ratio": {
+      "type": "scalar",
+      "value": 0.0
+    },
+    "flux_mean": {
+      "type": "scalar",
+      "value": 1.0
+    },
+    "flux_spline": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "cee4e72275f4421cc7d126bbd4c8cb9f7e8188b72b3f2e7cc0963bd341415359",
+      "preview": [
+        118795.6015625,
+        118805.390625,
+        118815.453125
+      ]
+    },
+    "gap_threshold": {
+      "type": "scalar",
+      "value": 0.1
+    },
+    "gmPDCSAPflux": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        36781
+      ],
+      "size": 36781,
+      "sha256": "29d84a5879fbc01fcfa46e75a1da9c779c73b6dba84e685706106dae8e1a5ec8",
+      "preview": [
+        118655.0,
+        118655.0,
+        118655.0
+      ]
+    },
+    "gmPDCSAPfluxerr": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        36781
+      ],
+      "size": 36781,
+      "sha256": "cd6617307f00d2c6c4aef971f7a708ab6e18768433c093d8e4fb3f084a928552",
+      "preview": [
+        0.0001,
+        0.0001,
+        0.0001
+      ]
+    },
+    "gtessBJD": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        36781
+      ],
+      "size": 36781,
+      "sha256": "6a0db402a5d2d18def1c24fc844cfed9f2c42294b51035119e4ed027f4a81214",
+      "preview": [
+        2022.3926222877396,
+        2022.3940111766285,
+        2022.3954000655174
+      ]
+    },
+    "mPDCSAPflux": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "4e1a4f6e98b23fb04e778d82bb15cad335f98077d3417584cd0200ade01bbb34",
+      "preview": [
+        118655.0,
+        118560.3671875,
+        118631.5234375
+      ]
+    },
+    "mPDCSAPfluxerr": {
+      "type": "ndarray",
+      "dtype": "float32",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "22890942c80259d1bfa66ed9eb8fc716e4b8c403d8677c231623a937cfe335d8",
+      "preview": [
+        45.558197021484375,
+        45.56373596191406,
+        45.56010818481445
+      ]
+    },
+    "mPDCSAPfluxerr_cor": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "75a09bfb5553ff1651ae30128cf0bc4b74285ea75c8d3c99cccce505c9e5de1c",
+      "preview": [
+        4143807.991406658,
+        4143807.991406658,
+        4130900.7872949955
+      ]
+    },
+    "peaktime": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "per": {
+      "type": "scalar",
+      "value": 3.634182908545727
+    },
+    "per_err": {
+      "type": "scalar",
+      "value": 0.5707934102168244
+    },
+    "precise_obs_time": {
+      "type": "scalar",
+      "value": 23.336422190582198
+    },
+    "rot_period": {
+      "type": "scalar",
+      "value": 1.0
+    },
+    "s2mPDCSAPflux": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "29632aacdcb0ca0fbd7dbf2861fb8eeb09bd5b7e31d5a896c1b9bded86a2f5f2",
+      "preview": [
+        -140.6015625,
+        -245.0234375,
+        -183.9296875
+      ]
+    },
+    "sector_threshold": {
+      "type": "scalar",
+      "value": null
+    },
+    "starspot": {
+      "type": "scalar",
+      "value": 3.766098258871633e+22
+    },
+    "starspot_ratio": {
+      "type": "scalar",
+      "value": 12390.962890625
+    },
+    "starttime": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        0
+      ],
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preview": []
+    },
+    "sum_flare_energy": {
+      "type": "scalar",
+      "value": 0.0
+    },
+    "tessBJD": {
+      "type": "ndarray",
+      "dtype": ">f8",
+      "shape": [
+        16781
+      ],
+      "size": 16781,
+      "sha256": "d2936950ebfbf000c0c41493fa4b2faf8c89742eb27a5b095f281c955968e2de",
+      "preview": [
+        2036.2815111766286,
+        2036.2842890211193,
+        2036.2856779431327
+      ]
+    },
+    "tessheader1": {
+      "type": "repr",
+      "value": "SIMPLE  =                    T / conforms to FITS standards                     \nBITPIX  =                    8 / array data type                                \nNAXIS   =                    0 / number of array dimensions                     \nEXTEND  =                    T / file contains extensions                       \nNEXTEND =                    2 / number of standard extensions                  \nEXTNAME = 'PRIMARY '           / name of extension                              \nEXTVER  =                    1 / extension version number (not format version)  \nSIMDATA =                    F / file is based on simulated data                \nORIGIN  = 'NASA/Ames'          / institution responsible for creating this file \nDATE    = '2020-08-30'         / file creation date.                            \nTSTART  =    2036.280816831247 / observation start time in BTJD                 \nTSTOP   =    2060.645032777387 / observation stop time in BTJD                  \nDATE-OBS= '2020-07-05T18:43:13.390' / TSTART as UTC calendar date               \nDATE-END= '2020-07-30T03:27:41.648' / TSTOP as UTC calendar date                \nCREATOR = '25589 LightCurveExporterPipelineModule' / pipeline job and program us\nPROCVER = 'spoc-5.0.9-20200827' / SW version                                    \nFILEVER = '1.0     '           / file format version                            \nTIMVERSN= 'OGIP/93-003'        / OGIP memo number for file format               \nTELESCOP= 'TESS    '           / telescope                                      \nINSTRUME= 'TESS Photometer'    / detector type                                  \nDATA_REL=                   38 / data release version number                    \nOBJECT  = 'TIC 410214986'      / string version of target id                    \nTICID   =            410214986 / unique tess target identifier                  \nSECTOR  =                   27 / Observing sector                               \nCAMERA  =                    3 / Camera number                                  \nCCD     =                    1 / CCD chip number                                \nPXTABLE =                  258 / pixel table id                                 \nRADESYS = 'ICRS    '           / reference frame of celestial coordinates       \nRA_OBJ  = 354.9145040045340000 / [deg] right ascension                          \nDEC_OBJ = -69.1957525952350000 / [deg] declination                              \nEQUINOX =               2000.0 / equinox of celestial coordinate system         \nPMRA    =          79.46390000 / [mas/yr] RA proper motion                      \nPMDEC   =         -67.43960000 / [mas/yr] Dec proper motion                     \nPMTOTAL =         104.22385068 / [mas/yr] total proper motion                   \nTESSMAG =           7.85410023 / [mag] TESS magnitude                           \nTEFF    =        5414.00000000 / [K] Effective temperature                      \nLOGG    =           4.45392990 / [cm/s2] log10 surface gravity                  \nMH      =                      / [log10([M/H])] metallicity                     \nRADIUS  =           0.95198500 / [solar radii] stellar radius                   \nTICVER  = '8.1     '           / TIC version                                    \nCRMITEN =                    T / spacecraft cosmic ray mitigation enabled       \nCRBLKSZ =                   10 / [exposures] s/c cosmic ray mitigation block siz\nCRSPOC  =                    F / SPOC cosmic ray cleaning enabled               \nCHECKSUM= '4DX549V44AV449V4'   / HDU checksum updated 2020-08-30T04:12:30Z      "
+    },
+    "time_offset": {
+      "type": "scalar",
+      "value": 2457000
+    }
+  },
+  "class": {
+    "array_amplitude": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "104345d526ce7c7b944cf6a8747d8f1068e641b52fa704847e07c14ba79a21c2",
+      "preview": [
+        9678.8984375
+      ]
+    },
+    "array_data_name": {
+      "type": "ndarray_object",
+      "dtype": "object",
+      "shape": [
+        1
+      ],
+      "length": 1,
+      "preview": [
+        "tess2020186164531-s0027"
+      ]
+    },
+    "array_energy_ratio": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "preview": [
+        0.0
+      ]
+    },
+    "array_flare_ratio": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "preview": [
+        0.0
+      ]
+    },
+    "array_observation_time": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "5b90dfbae852111ac09bf067285a264b3a3fe0c69706b7fb48af6f05c2b03e9c",
+      "preview": [
+        2047.9497852038596
+      ]
+    },
+    "array_per": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "2118da238038211ab0bc5b97b3c45f2b8d19e2db40bf01368d065211efc6ad90",
+      "preview": [
+        3.634182908545727
+      ]
+    },
+    "array_per_err": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "ec5498325d2c23a243313e08926c3e204d8af3508f05da97462f41ef5867c6d9",
+      "preview": [
+        0.5707934102168244
+      ]
+    },
+    "array_starspot": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "073d0ce96b74cce6ccb8548dc05a532b7e9f80c150ce86fb0f40b74eb55700b3",
+      "preview": [
+        3.766098258871633e+22
+      ]
+    },
+    "array_starspot_ratio": {
+      "type": "ndarray",
+      "dtype": "float64",
+      "shape": [
+        1
+      ],
+      "size": 1,
+      "sha256": "ad4b2368713dded684076920b6dde2d881b786c939ee8001505ee924806d1658",
+      "preview": [
+        12390.962890625
+      ]
+    },
+    "average_flare_ratio": {
+      "type": "scalar",
+      "value": 0.0
+    }
+  }
+}

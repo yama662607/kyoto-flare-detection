@@ -54,15 +54,21 @@ class FlareDetector_V889_Her(BaseFlareDetector):
 		flux_diff_lag4_appended = np.append(self.difference_at_lag(flux_ext, n=4), [0, 0, 0, 0])
 		flux_diff_lag5_appended = np.append(self.difference_at_lag(flux_ext, n=5), [0, 0, 0, 0, 0])
 
+		target_len = len(diff_flux)
+		lag2 = flux_diff_lag2_appended[:target_len]
+		lag3 = flux_diff_lag3_appended[:target_len]
+		lag4 = flux_diff_lag4_appended[:target_len]
+		lag5 = flux_diff_lag5_appended[:target_len]
+
 		flare_can_start_candidates = np.where(
 			(
 				(diff_flux > 0.01)
-				| (flux_diff_lag2_appended[:-1] > 0.01)
-				| (flux_diff_lag3_appended[:-2] > 0.01)
-				| (flux_diff_lag4_appended[:-3] > 0.01)
-				| (flux_diff_lag5_appended[:-4] > 0.01)
+				| (lag2 > 0.01)
+				| (lag3 > 0.01)
+				| (lag4 > 0.01)
+				| (lag5 > 0.01)
 			)
-			& (diff_time < 0.005)
+			& (diff_time[:target_len] < 0.005)
 		)[0]
 
 		before_low_flare_list = []
