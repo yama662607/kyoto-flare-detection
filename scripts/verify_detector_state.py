@@ -141,7 +141,7 @@ def summarize_differences(baseline: Dict[str, Any], snapshot: Dict[str, Any]) ->
     return rows
 
 
-def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
+def plot_summary(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool = False) -> None:
     sections = sorted({row["section"] for row in rows})
     status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
     counts = {section: {status: 0 for status in status_order} for section in sections}
@@ -173,9 +173,11 @@ def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
+    if show_plot:
+        fig.show()
 
 
-def plot_detailed(rows: List[Dict[str, Any]], output_path: Path) -> None:
+def plot_detailed(rows: List[Dict[str, Any]], output_path: Path, show_plot: bool = False) -> None:
     rows_sorted = sorted(rows, key=lambda r: (r["section"], r["key"]))
     if not rows_sorted:
         return
@@ -204,6 +206,8 @@ def plot_detailed(rows: List[Dict[str, Any]], output_path: Path) -> None:
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_path, scale=2)
+    if show_plot:
+        fig.show()
 
 
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:
@@ -256,6 +260,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--plot", type=Path, help="集計グラフ (セクション別) の保存先 PNG")
     parser.add_argument("--detail-plot", type=Path, help="変数ごとのステータス可視化グラフの保存先 PNG")
     parser.add_argument("--table-csv", type=Path, help="各変数の比較結果を CSV で保存するパス")
+    parser.add_argument("--show-plot", action="store_true", help="生成した Plotly グラフをブラウザで表示します")
     return parser.parse_args()
 
 
@@ -286,10 +291,10 @@ def main() -> None:
         print(f"比較結果テーブルを出力しました: {args.table_csv}")
 
     if args.plot:
-        plot_summary(summary_rows, args.plot)
+        plot_summary(summary_rows, args.plot, show_plot=args.show_plot)
         print(f"比較結果（集計）を図示しました: {args.plot}")
     if args.detail_plot:
-        plot_detailed(summary_rows, args.detail_plot)
+        plot_detailed(summary_rows, args.detail_plot, show_plot=args.show_plot)
         print(f"比較結果（一覧）を図示しました: {args.detail_plot}")
 
     if args.update_baseline:

@@ -68,6 +68,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="BaseFlareDetector コンストラクタの run_process_data_2 を True にする",
     )
+    parser.add_argument(
+        "--show-plot",
+        action="store_true",
+        help="生成したグラフをブラウザで表示します（Plotly のデフォルトレンダラーを利用）",
+    )
     return parser.parse_args(argv)
 
 
@@ -138,6 +143,8 @@ def save_outputs(df: pd.DataFrame, args: argparse.Namespace) -> tuple[Path, Path
         margin=dict(l=120, r=40, t=60, b=40),
     )
     fig.write_image(fig_path, scale=2)
+    if args.show_plot:
+        fig.show()
     return csv_path, fig_path
 
 

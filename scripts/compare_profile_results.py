@@ -62,7 +62,9 @@ def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: st
     return merged
 
 
-def plot_comparison(df: pd.DataFrame, output_png: Path, label_before: str, label_after: str, top_n: int) -> None:
+def plot_comparison(
+    df: pd.DataFrame, output_png: Path, label_before: str, label_after: str, top_n: int, show_plot: bool = False
+) -> None:
     top = df.head(top_n).copy()
     before_col = f"{label_before}_cumtime"
     after_col = f"{label_after}_cumtime"
@@ -114,6 +116,8 @@ def plot_comparison(df: pd.DataFrame, output_png: Path, label_before: str, label
 
     output_png.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_png, scale=2)
+    if show_plot:
+        fig.show()
 
 
 def parse_args() -> argparse.Namespace:
@@ -124,6 +128,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--label-before", type=str, default="before", help="前データの凡例ラベル")
     parser.add_argument("--label-after", type=str, default="after", help="後データの凡例ラベル")
     parser.add_argument("--top-n", type=int, default=12, help="グラフに表示する関数数")
+    parser.add_argument("--show-plot", action="store_true", help="生成したグラフをブラウザで表示します")
     return parser.parse_args()
 
 
@@ -138,7 +143,7 @@ def main() -> None:
     comparison.to_csv(csv_path, index=False)
 
     png_path = args.output_dir / "base_flare_detector_cumtime_comparison.png"
-    plot_comparison(comparison, png_path, args.label_before, args.label_after, args.top_n)
+    plot_comparison(comparison, png_path, args.label_before, args.label_after, args.top_n, args.show_plot)
 
     print(f"比較 CSV: {csv_path}")
     print(f"比較グラフ: {png_path}")
