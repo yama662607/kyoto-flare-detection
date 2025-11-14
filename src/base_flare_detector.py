@@ -1,13 +1,17 @@
-
 import os
 import re
-import numpy as np
+from pathlib import Path
+
 import astropy.io.fits as fits
-from astropy.timeseries import LombScargle
-from scipy.interpolate import interp1d
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
+import numpy as np
+import plotly.graph_objects as go
+from astropy.timeseries import LombScargle
+from plotly.subplots import make_subplots
+from scipy.interpolate import interp1d
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
 
 
 class BaseFlareDetector:
@@ -24,6 +28,7 @@ class BaseFlareDetector:
     array_data_name = np.array([])
     array_per = np.array([])
     array_per_err = np.array([])
+    average_flare_ratio = 0.0
 
     def __init__(
         self,
@@ -40,6 +45,7 @@ class BaseFlareDetector:
         ene_thres_high=2e40,
         sector_threshold=None,
         process_data=False,
+        run_process_data_2=False,
     ):
         self.file = file
         self.R_sunstar_ratio = R_sunstar_ratio
@@ -52,7 +58,10 @@ class BaseFlareDetector:
         self.buffer_size = buffer_size
         self.f_cut_lowpass = f_cut_lowpass
         self.f_cut_spline = f_cut_spline
-        self.time_offset = 2457000 # For matplotlib plot
+        self.ene_thres_low = ene_thres_low
+        self.ene_thres_high = ene_thres_high
+        self.gap_threshold = 0.1  # デフォルトのギャップ検出閾値
+        self.time_offset = 2457000  # For matplotlib plot
 
         # Initialize data arrays
         self.data_name = None
@@ -93,8 +102,11 @@ class BaseFlareDetector:
 
         self.load_TESS_data()
 
-        if process_data and (self.file is not None):
-            self.process_data(ene_thres_low=ene_thres_low, ene_thres_high=ene_thres_high)
+        if self.file is not None:
+            if run_process_data_2:
+                self.process_data(skip_remove=True)
+            elif process_data:
+                self.process_data()
 
     def load_TESS_data(self):
         if self.atessBJD is not None:
@@ -142,7 +154,6 @@ class BaseFlareDetector:
         self.mPDCSAPflux = self.amPDCSAPflux
         self.mPDCSAPfluxerr = self.amPDCSAPfluxerr
 
-
     def apply_gap_correction(self):
         bjd = self.tessBJD.copy()
         flux = self.mPDCSAPflux.copy()
@@ -150,15 +161,15 @@ class BaseFlareDetector:
         buf_size = self.buffer_size
 
         diff_bjd = np.diff(bjd)
-        gap_indices = np.where(diff_bjd >= 0.05)[0]
+        gap_indices = np.where(diff_bjd >= self.gap_threshold)[0]
 
         for idx in gap_indices:
-            flux[idx+1:] -= (flux[idx+1] - flux[idx])
+            flux[idx + 1 :] -= flux[idx + 1] - flux[idx]
 
         flux_ext = np.hstack([np.full(buf_size, flux[0]), flux, np.full(buf_size, flux[-1])])
         flux_err_ext = np.hstack([np.full(buf_size, 0.0001), flux_err, np.full(buf_size, 0.0001)])
 
-        dt_min = 2 / (24*60)
+        dt_min = 2 / (24 * 60)
         a = np.arange(buf_size) * dt_min
         bjd_ext = np.hstack([(a - a[-1] - dt_min + bjd[0]), bjd, (a + dt_min + bjd[-1])])
 
@@ -222,7 +233,8 @@ class BaseFlareDetector:
 
         i = 0
         while i <= (len(oversigma_idx) - 3):
-            if i >= (len(oversigma_idx) - 1): break
+            if i >= (len(oversigma_idx) - 1):
+                break
             if (oversigma_idx[i + 1] - oversigma_idx[i]) != 1:
                 i += 1
                 continue
@@ -241,24 +253,31 @@ class BaseFlareDetector:
         for idx in range(len(ss_detect)):
             n = ss_detect[idx]
             ss_ind = np.where(overonesigma_idx == n)[0]
-            if len(endtime) > 0 and np.max(endtime) >= bjd[n]: continue
-            if len(ss_ind) == 0: continue
+            if len(endtime) > 0 and np.max(endtime) >= bjd[n]:
+                continue
+            if len(ss_ind) == 0:
+                continue
 
             ss_val = ss_ind[0]
             k, j = 0, 0
-            while (ss_val + k + 1 < len(overonesigma_idx)) and ((overonesigma_idx[ss_val + k + 1] - overonesigma_idx[ss_val + k]) == 1): k += 1
-            while (ss_val + j - 1 >= 0) and ((overonesigma_idx[ss_val + j] - overonesigma_idx[ss_val + j - 1]) == 1): j -= 1
+            while (ss_val + k + 1 < len(overonesigma_idx)) and ((overonesigma_idx[ss_val + k + 1] - overonesigma_idx[ss_val + k]) == 1):
+                k += 1
+            while (ss_val + j - 1 >= 0) and ((overonesigma_idx[ss_val + j] - overonesigma_idx[ss_val + j - 1]) == 1):
+                j -= 1
 
-            if (n + j) <= 30 or (n + k) >= (len(bjd) - 30): continue
+            if (n + j) <= 30 or (n + k) >= (len(bjd) - 30):
+                continue
 
             a = diff_bjd[(n + j - 10) : (n + k + 10)]
-            if len(a) > 0 and np.max(a) >= (2 / (24 * 60)) * 20: continue
+            if len(a) > 0 and np.max(a) >= (2 / (24 * 60)) * 20:
+                continue
 
             starttime.append(bjd[n + j])
             endtime.append(bjd[n + k])
             subbjd = bjd[(n + j) : (n + k + 1)]
             peak_idx = np.where(flux_detrend[(n + j) : (n + k + 1)] == max(flux_detrend[(n + j) : (n + k + 1)]))[0]
-            if len(peak_idx) == 0: continue
+            if len(peak_idx) == 0:
+                continue
             peaktime.append(subbjd[peak_idx[0]])
             count.append(np.sum(flux_detrend[(n + j) : (n + k + 1)]))
 
@@ -266,10 +285,23 @@ class BaseFlareDetector:
         self.energy = self.tess_band_energy(np.array(count))
 
     def flaredetect_check(self):
-        N = min(len(self.detecttime), len(self.starttime), len(self.endtime), len(self.peaktime), len(self.energy) if self.energy is not None else 0)
+        N = min(
+            len(self.detecttime),
+            len(self.starttime),
+            len(self.endtime),
+            len(self.peaktime),
+            len(self.energy) if self.energy is not None else 0,
+        )
         detecttime_new, starttime_new, endtime_new, peaktime_new, count_new, edecay_new, a_array, b_array = [], [], [], [], [], [], [], []
 
-        flux, err, bjd, stime, etime, ptime = self.mPDCSAPflux, self.mPDCSAPfluxerr, self.tessBJD, self.starttime, self.endtime, self.peaktime
+        flux, err, bjd, stime, etime, ptime = (
+            self.mPDCSAPflux,
+            self.mPDCSAPfluxerr,
+            self.tessBJD,
+            self.starttime,
+            self.endtime,
+            self.peaktime,
+        )
 
         flag = 0
         for i in range(N):
@@ -282,7 +314,8 @@ class BaseFlareDetector:
             ss_post = np.where(np.abs(bjd - (etime[i] + 0.05)) <= 0.025)[0]
             val_post = np.median(flux[ss_post]) if len(ss_post) > 0 else np.nan
 
-            if np.isnan(val_pre) or np.isnan(val_post): continue
+            if np.isnan(val_pre) or np.isnan(val_post):
+                continue
 
             t_pre = np.median(bjd[ss_pre]) if len(ss_pre) > 0 else np.nan
             t_post = np.median(bjd[ss_post]) if len(ss_post) > 0 else np.nan
@@ -291,25 +324,32 @@ class BaseFlareDetector:
             flux_diff = flux - (a_val * bjd + b_val)
 
             peak_idx = np.where(bjd == ptime[i])[0]
-            if len(peak_idx) == 0: continue
+            if len(peak_idx) == 0:
+                continue
             n_peak = peak_idx[0]
 
             k, j = 0, 0
-            while (n_peak + k < len(flux_diff)) and (flux_diff[n_peak + k] >= err[n_peak + k]): k += 1
-            while (n_peak + j >= 0) and (flux_diff[n_peak + j] >= err[n_peak + j]): j -= 1
+            while (n_peak + k < len(flux_diff)) and (flux_diff[n_peak + k] >= err[n_peak + k]):
+                k += 1
+            while (n_peak + j >= 0) and (flux_diff[n_peak + j] >= err[n_peak + j]):
+                j -= 1
 
             n_end, n_start = n_peak + k - 1, n_peak + j + 1
-            if n_start < 0 or n_end >= len(flux_diff): continue
+            if n_start < 0 or n_end >= len(flux_diff):
+                continue
 
             ss_flare = np.where((bjd >= bjd[n_start]) & (bjd <= bjd[n_end]))[0]
-            if len(ss_flare) <= 1 or len(np.where((flux_diff[ss_flare] - 3 * err[ss_flare]) >= 0)[0]) <= 1: continue
+            if len(ss_flare) <= 1 or len(np.where((flux_diff[ss_flare] - 3 * err[ss_flare]) >= 0)[0]) <= 1:
+                continue
 
             peak_flux = flux_diff[ss_flare].max()
             peak_loc = ss_flare[np.where(flux_diff[ss_flare] == peak_flux)[0][0]]
 
             ll = 0
-            while ((peak_loc + ll) < len(flux_diff)) and (flux_diff[peak_loc + ll] >= peak_flux * np.exp(-1)): ll += 1
-            if ll == 0: continue
+            while ((peak_loc + ll) < len(flux_diff)) and (flux_diff[peak_loc + ll] >= peak_flux * np.exp(-1)):
+                ll += 1
+            if ll == 0:
+                continue
 
             edecay_new.append(bjd[peak_loc + ll] - bjd[peak_loc])
             a_array.append(a_val)
@@ -320,9 +360,12 @@ class BaseFlareDetector:
             detecttime_new.append(self.detecttime[i])
             count_new.append(np.sum(flux_diff[n_start : n_end + 1]))
 
-            if i < (N - 1) and bjd[n_end] >= stime[i + 1]: flag = 1
+            if i < (N - 1) and bjd[n_end] >= stime[i + 1]:
+                flag = 1
 
-        self.detecttime, self.starttime, self.endtime, self.peaktime, self.a_i, self.b_i, self.edecay = map(np.array, [detecttime_new, starttime_new, endtime_new, peaktime_new, a_array, b_array, edecay_new])
+        self.detecttime, self.starttime, self.endtime, self.peaktime, self.a_i, self.b_i, self.edecay = map(
+            np.array, [detecttime_new, starttime_new, endtime_new, peaktime_new, a_array, b_array, edecay_new]
+        )
         self.energy = self.tess_band_energy(np.array(count_new)) if len(count_new) > 0 else np.array([])
         self.duration = self.endtime - self.starttime + (2 / (24 * 60)) if len(starttime_new) > 0 else np.array([])
 
@@ -332,7 +375,7 @@ class BaseFlareDetector:
 
     def tess_band_energy(self, count):
         try:
-            wave, resp = np.loadtxt("data/tess-response-function-v1.0.csv", delimiter=",").T
+            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
         except FileNotFoundError:
             print("Error: TESS応答関数のCSVファイルが見つかりません。")
             return np.array([])
@@ -344,7 +387,8 @@ class BaseFlareDetector:
 
         star_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
         ref_intensity = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
-        if ref_intensity == 0: return np.array([])
+        if ref_intensity == 0:
+            return np.array([])
 
         area_factor = (np.pi * Rstar**2) * (star_intensity / ref_intensity)
         return sigma * (10000**4) * area_factor * dt * count
@@ -371,42 +415,70 @@ class BaseFlareDetector:
         else:
             self.flare_number, self.sum_flare_energy = 0, 0.0
 
-    def flux_diff(self):
+    def flux_diff(self, min_percent: float = 0.02, max_percent: float = 0.98):
         sorted_flux = sorted(self.mPDCSAPflux)
-        lower_bound = int(len(sorted_flux) * 0.02)
-        upper_bound = int(len(sorted_flux) * 0.98)
+        lower_bound = int(len(sorted_flux) * min_percent)
+        upper_bound = int(len(sorted_flux) * max_percent)
         self.brightness_variation_amplitude = sorted_flux[upper_bound] - sorted_flux[lower_bound]
-        self.starspot = 2 * np.pi *(self.R_sunstar_ratio*695510e3)**2 * (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star)**4)) *self.brightness_variation_amplitude
-        self.starspot_ratio = (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star)**4)) *self.brightness_variation_amplitude
+        self.starspot = (
+            2
+            * np.pi
+            * (self.R_sunstar_ratio * 695510e3) ** 2
+            * (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4))
+            * self.brightness_variation_amplitude
+        )
+        self.starspot_ratio = (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4)) * self.brightness_variation_amplitude
+
+    def show_variables(self):
+        """インスタンス／クラス変数の概要を表示する。"""
+        instance_vars = {
+            "file": self.file,
+            "tessBJD_length": len(self.tessBJD) if self.tessBJD is not None else 0,
+            "flare_number": self.flare_number,
+            "sum_flare_energy": self.sum_flare_energy,
+            "precise_obs_time": self.precise_obs_time,
+            "flare_ratio": getattr(self, "flare_ratio", None),
+        }
+        print("-------- Instance Summary --------")
+        for key, value in instance_vars.items():
+            print(f"{key}: {value}")
+
+        print("\n-------- Class Summary --------")
+        print(f"array_flare_ratio length: {len(BaseFlareDetector.array_flare_ratio)}")
+        print(f"average_flare_ratio: {BaseFlareDetector.average_flare_ratio}")
 
     def rotation_period(self):
-        frequency = 1/np.linspace(1.0, 8.0, 10000)
-        power = LombScargle(self.tessBJD-self.tessBJD[0], self.mPDCSAPflux).power(frequency)
-        self.per = 1/frequency[np.argmax(power)]
-        half_max_power = np.max(power)/2
+        frequency = 1 / np.linspace(1.0, 8.0, 10000)
+        power = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux).power(frequency)
+        self.per = 1 / frequency[np.argmax(power)]
+        half_max_power = np.max(power) / 2
         aa = np.where(power > half_max_power)[0]
-        self.per_err = (1/frequency[aa[-1]]-1/frequency[aa[0]])/2
+        self.per_err = (1 / frequency[aa[-1]] - 1 / frequency[aa[0]]) / 2
 
     def remove(self):
         # This method is intended to be overridden by subclasses for specific data removal.
         pass
 
-    def process_data(self, ene_thres_low, ene_thres_high, skip_remove: bool = False):
+    def process_data(self, ene_thres_low=None, ene_thres_high=None, skip_remove=False):
         """
-        Run the standard flare-processing pipeline.
+        TESS データの読み込みからフレア検出までの一連のプロセスを実行するメソッド。
 
         Parameters
         ----------
-        ene_thres_low : float
-            最小エネルギー閾値 (erg)。
-        ene_thres_high : float
-            最大エネルギー閾値 (erg)。
+        ene_thres_low : float, optional
+            最小エネルギー閾値 (erg)。指定しない場合はインスタンス変数を使用。
+        ene_thres_high : float, optional
+            最大エネルギー閾値 (erg)。指定しない場合はインスタンス変数を使用。
         skip_remove : bool, optional
             True にすると `remove()` をスキップし、トランジット除去を行わない処理流を実行します。
         """
         if self.tessBJD is None or len(self.tessBJD) < 2:
             print("Error: BJD が正しく読み込まれていないか、要素数が不足しています。")
             return
+
+        # エネルギー閾値の設定（引数があれば上書き）
+        low_threshold = ene_thres_low if ene_thres_low is not None else self.ene_thres_low
+        high_threshold = ene_thres_high if ene_thres_high is not None else self.ene_thres_high
 
         if not skip_remove:
             self.remove()
@@ -416,13 +488,14 @@ class BaseFlareDetector:
         self.flaredetect()
         self.flaredetect_check()
         self.calculate_precise_obs_time()
-        self.flare_energy(energy_threshold_low=ene_thres_low, energy_threshold_high=ene_thres_high)
+        self.flare_energy(energy_threshold_low=low_threshold, energy_threshold_high=high_threshold)
         self.flux_diff()
         self.rotation_period()
 
         if self.tessBJD is not None and len(self.tessBJD) > 1 and self.precise_obs_time > 0:
             flare_ratio = self.flare_number / self.precise_obs_time
             BaseFlareDetector.array_flare_ratio = np.append(BaseFlareDetector.array_flare_ratio, flare_ratio)
+            BaseFlareDetector.average_flare_ratio = np.mean(BaseFlareDetector.array_flare_ratio)
             sum_flare_energy_ratio = self.sum_flare_energy / self.precise_obs_time
             BaseFlareDetector.array_energy_ratio = np.append(BaseFlareDetector.array_energy_ratio, sum_flare_energy_ratio)
             BaseFlareDetector.array_observation_time = np.append(BaseFlareDetector.array_observation_time, np.median(self.tessBJD))
@@ -434,26 +507,51 @@ class BaseFlareDetector:
             BaseFlareDetector.array_per_err = np.append(BaseFlareDetector.array_per_err, self.per_err)
 
     def plot_flare(self):
-        if self.tessBJD is None: return
+        if self.tessBJD is None:
+            return
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1)
-        fig.add_trace(go.Scatter(x=self.tessBJD, y=self.mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Normalized Flux"), row=1, col=1)
+        fig.add_trace(
+            go.Scatter(x=self.tessBJD, y=self.mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Normalized Flux"),
+            row=1,
+            col=1,
+        )
         fig.update_yaxes(title_text="Normalized Flux", row=1, col=1)
         if self.s2mPDCSAPflux is not None:
-            fig.add_trace(go.Scatter(x=self.tessBJD, y=self.s2mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Detrended Flux"), row=2, col=1)
+            fig.add_trace(
+                go.Scatter(x=self.tessBJD, y=self.s2mPDCSAPflux, mode="lines", line=dict(color="black", width=1), name="Detrended Flux"),
+                row=2,
+                col=1,
+            )
             if self.peaktime is not None:
                 for peak in self.peaktime:
-                    fig.add_trace(go.Scatter(x=[peak, peak], y=[0.023, 0.0243], mode="lines", line=dict(color="red", width=1, dash="dash"), showlegend=False), row=2, col=1)
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[peak, peak], y=[0.023, 0.0243], mode="lines", line=dict(color="red", width=1, dash="dash"), showlegend=False
+                        ),
+                        row=2,
+                        col=1,
+                    )
             fig.update_xaxes(title_text=f"Time (BJD - {self.time_offset})", row=2, col=1)
             fig.update_yaxes(title_text="Detrended Flux", row=2, col=1)
         fig.update_layout(title_text=f"Flare Detection Graph ({self.data_name})", height=900)
         fig.show()
 
     def plot_energy(self):
-        if self.energy is None or len(self.energy) == 0: return
+        if self.energy is None or len(self.energy) == 0:
+            return
         energy_cor = np.sort(self.energy)
         cumenergy = np.arange(len(energy_cor), 0, -1)
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=energy_cor, y=cumenergy / self.precise_obs_time, mode="lines", line=dict(color="gray", width=2), name="All Sector", line_shape="hv"))
+        fig.add_trace(
+            go.Scatter(
+                x=energy_cor,
+                y=cumenergy / self.precise_obs_time,
+                mode="lines",
+                line=dict(color="gray", width=2),
+                name="All Sector",
+                line_shape="hv",
+            )
+        )
         fig.update_layout(title_text=f"Flare Energy Distribution ({self.data_name})")
         fig.update_xaxes(title_text="Flare Energy [erg]", type="log")
         fig.update_yaxes(title_text=r"Cumulative Number [day$^{-1}$]", type="log")
@@ -473,22 +571,22 @@ class BaseFlareDetector:
             return
 
         # 論文品質の設定を適用
-        plt.rcParams['xtick.major.width'] = 1.5
-        plt.rcParams['ytick.major.width'] = 1.5
-        plt.rcParams['axes.linewidth'] = 1.5
-        plt.rcParams['xtick.major.size'] = 7
-        plt.rcParams['ytick.major.size'] = 7
+        plt.rcParams["xtick.major.width"] = 1.5
+        plt.rcParams["ytick.major.width"] = 1.5
+        plt.rcParams["axes.linewidth"] = 1.5
+        plt.rcParams["xtick.major.size"] = 7
+        plt.rcParams["ytick.major.size"] = 7
         plt.rcParams["xtick.minor.visible"] = True
         plt.rcParams["ytick.minor.visible"] = True
-        plt.rcParams['xtick.minor.width'] = 1.5
-        plt.rcParams['ytick.minor.width'] = 1.5
-        plt.rcParams['xtick.minor.size'] = 4
-        plt.rcParams['ytick.minor.size'] = 4
-        plt.rcParams['xtick.direction'] = 'in'
-        plt.rcParams['ytick.direction'] = 'in'
-        plt.rcParams['font.family'] = 'Arial'
-        plt.rcParams['pdf.fonttype'] = 42  # PDFフォント埋め込み
-        plt.rcParams['ps.fonttype'] = 42
+        plt.rcParams["xtick.minor.width"] = 1.5
+        plt.rcParams["ytick.minor.width"] = 1.5
+        plt.rcParams["xtick.minor.size"] = 4
+        plt.rcParams["ytick.minor.size"] = 4
+        plt.rcParams["xtick.direction"] = "in"
+        plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["font.family"] = "Arial"
+        plt.rcParams["pdf.fonttype"] = 42  # PDFフォント埋め込み
+        plt.rcParams["ps.fonttype"] = 42
 
         # 2つのサブプロットを作成 (生の光度曲線とデトレンド後)
         fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(13, 8))
@@ -508,17 +606,17 @@ class BaseFlareDetector:
                 for peak in self.peaktime:
                     axs[1].axvline(x=peak, ymin=0.8, ymax=0.85, color="red", linestyle="-", linewidth=1.5)
 
-            axs[1].set_xlabel(f'Time (day) (BJD - {self.time_offset})', fontsize=17)
+            axs[1].set_xlabel(f"Time (day) (BJD - {self.time_offset})", fontsize=17)
             axs[1].set_ylabel("Detrended Flux", fontsize=17)
             axs[1].tick_params(labelsize=13)
             plt.tick_params(labelsize=11)
-            leg = plt.legend(loc='upper right', fontsize=11)
+            leg = plt.legend(loc="upper right", fontsize=11)
             leg.get_frame().set_alpha(0)  # 背景を完全に透明にする
 
         # 保存
         if save_path is None:
             save_path = f"{self.data_name}_light_curve.pdf"
-        plt.savefig(save_path, format='pdf', bbox_inches='tight', dpi=dpi)
+        plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=dpi)
 
         plt.show()
 
@@ -537,29 +635,39 @@ class BaseFlareDetector:
             return
 
         # 論文品質の設定を適用
-        plt.rcParams['xtick.major.width'] = 1.5
-        plt.rcParams['ytick.major.width'] = 1.5
-        plt.rcParams['axes.linewidth'] = 1.5
-        plt.rcParams['xtick.major.size'] = 7
-        plt.rcParams['ytick.major.size'] = 7
+        plt.rcParams["xtick.major.width"] = 1.5
+        plt.rcParams["ytick.major.width"] = 1.5
+        plt.rcParams["axes.linewidth"] = 1.5
+        plt.rcParams["xtick.major.size"] = 7
+        plt.rcParams["ytick.major.size"] = 7
         plt.rcParams["xtick.minor.visible"] = True
         plt.rcParams["ytick.minor.visible"] = True
-        plt.rcParams['xtick.minor.width'] = 1.5
-        plt.rcParams['ytick.minor.width'] = 1.5
-        plt.rcParams['xtick.minor.size'] = 4
-        plt.rcParams['ytick.minor.size'] = 4
-        plt.rcParams['xtick.direction'] = 'in'
-        plt.rcParams['ytick.direction'] = 'in'
-        plt.rcParams['font.family'] = 'Arial'
-        plt.rcParams['pdf.fonttype'] = 42
-        plt.rcParams['ps.fonttype'] = 42
+        plt.rcParams["xtick.minor.width"] = 1.5
+        plt.rcParams["ytick.minor.width"] = 1.5
+        plt.rcParams["xtick.minor.size"] = 4
+        plt.rcParams["ytick.minor.size"] = 4
+        plt.rcParams["xtick.direction"] = "in"
+        plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["font.family"] = "Arial"
+        plt.rcParams["pdf.fonttype"] = 42
+        plt.rcParams["ps.fonttype"] = 42
 
         energy_cor = np.sort(self.energy)
         cumenergy = np.arange(len(energy_cor), 0, -1)
 
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.plot(energy_cor, cumenergy / self.precise_obs_time, drawstyle="steps-post", color="black", lw=1.5)
-        ax.plot(energy_cor, cumenergy / self.precise_obs_time, marker="o", ls="none", markerfacecolor="white", markeredgecolor="black", mew=1.5, ms=7, label="Observed Flares")
+        ax.plot(
+            energy_cor,
+            cumenergy / self.precise_obs_time,
+            marker="o",
+            ls="none",
+            markerfacecolor="white",
+            markeredgecolor="black",
+            mew=1.5,
+            ms=7,
+            label="Observed Flares",
+        )
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel("Flare Energy [erg]", fontsize=14)
