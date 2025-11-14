@@ -17,9 +17,14 @@ from astropy.timeseries import LombScargle
 from scipy.interpolate import interp1d
 import os
 import re
+from pathlib import Path
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
+
+MODULE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = MODULE_DIR.parent
+TESS_RESPONSE_PATH = PROJECT_ROOT / "data" / "tess-response-function-v1.0.csv"
 
 
 class FlareDetector:
@@ -697,7 +702,7 @@ class FlareDetector:
         """
         try:
             # TESSの透過率 (応答関数) を読み込み
-            wave, resp = np.loadtxt("./tess-response-function-v1.0.csv", delimiter=",").T
+            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
         except FileNotFoundError:
             print("Error: TESS応答関数のCSVファイルが見つかりません。")
             return np.array([])
@@ -839,10 +844,12 @@ class FlareDetector:
             axs[1].set_ylabel("Detrended Flux", fontsize=17)
             axs[1].tick_params(labelsize=13)
             #axs[1].legend(loc='upper right', fontsize=11).get_frame().set_alpha(0)
-            plt.tick_params(labelsize=11)
-            leg = plt.legend(loc='upper right', fontsize=11)
-            leg.get_frame().set_alpha(0)  # 背景を完全に透明にする
-            plt.savefig('./EKDra/s0014_lightcurve.pdf', format='pdf', bbox_inches='tight')
+        plt.tick_params(labelsize=11)
+        leg = plt.legend(loc='upper right', fontsize=11)
+        leg.get_frame().set_alpha(0)  # 背景を完全に透明にする
+        output_dir = MODULE_DIR / 'EKDra'
+        output_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_dir / 's0014_lightcurve.pdf', format='pdf', bbox_inches='tight')
 
         # グラフタイトル
         #fig.title(title, fontsize=16)
