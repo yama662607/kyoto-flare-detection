@@ -9,6 +9,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+import plotly.express as px
 
 
 def canonical_function_label(func: str) -> str:
@@ -62,49 +63,57 @@ def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: st
 
 
 def plot_comparison(df: pd.DataFrame, output_png: Path, label_before: str, label_after: str, top_n: int) -> None:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    plt.rcParams.update(
-        {
-            "font.size": 12,
-            "axes.titlesize": 16,
-            "axes.labelsize": 13,
-            "legend.fontsize": 11,
-        }
-    )
-
     top = df.head(top_n).copy()
     before_col = f"{label_before}_cumtime"
     after_col = f"{label_after}_cumtime"
-    indices = np.arange(len(top))
-    height = 0.35
 
-    fig_height = max(5, 2.0 + 0.6 * len(top))
-    fig, ax = plt.subplots(figsize=(12, fig_height))
-    ax.barh(indices + height / 2, top[before_col], height=height, label=label_before, color="#1f77b4")
-    ax.barh(indices - height / 2, top[after_col], height=height, label=label_after, color="#ff7f0e")
+    melted = top.melt(
+        id_vars=["function_key", "percent_change"],
+        value_vars=[before_col, after_col],
+        var_name="label",
+        value_name="cumtime",
+    )
+    melted["label"] = melted["label"].replace(
+        {
+            before_col: label_before,
+            after_col: label_after,
+        }
+    )
 
-    max_val = max(top[before_col].max(), top[after_col].max()) or 1.0
-    for idx, (_, row) in enumerate(top.iterrows()):
+    fig = px.bar(
+        melted,
+        x="cumtime",
+        y="function_key",
+        color="label",
+        orientation="h",
+        labels={"cumtime": "Cumulative time [s]", "function_key": "Function"},
+        barmode="group",
+        text=melted["cumtime"].map(lambda v: f"{v:.3f}s"),
+    )
+    fig.update_layout(
+        height=max(500, 80 * len(top)),
+        yaxis=dict(autorange="reversed"),
+        title=f"BaseFlareDetector cumulative time comparison (top {top_n})",
+        margin=dict(l=200, r=120, t=60, b=40),
+    )
+
+    max_val = float(melted["cumtime"].max() or 1.0)
+    for _, row in top.iterrows():
         pct = row["percent_change"]
         if np.isnan(pct):
             continue
-        text = f"{pct:+.1f}%"
-        ax.text(max_val * 1.02, indices[idx], text, va="center", ha="left", fontsize=11)
+        fig.add_annotation(
+            x=max_val * 1.05,
+            y=row["function_key"],
+            text=f"{pct:+.1f}%",
+            showarrow=False,
+            font=dict(size=12),
+            xanchor="left",
+            yanchor="middle",
+        )
 
-    ax.set_yticks(indices)
-    ax.set_yticklabels(top["function_key"])
-    ax.set_xlabel("Cumulative time [s]")
-    ax.set_title(f"BaseFlareDetector cumulative time comparison (top {top_n})")
-    ax.invert_yaxis()
-    ax.legend()
-    plt.tight_layout()
     output_png.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_png, dpi=200)
-    plt.close(fig)
+    fig.write_image(output_png, scale=2)
 
 
 def parse_args() -> argparse.Namespace:

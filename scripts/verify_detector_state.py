@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 import numpy as np
+import pandas as pd
+import plotly.express as px
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASELINE = PROJECT_ROOT / "docs" / "regression" / "base_flare_detector_state.json"
@@ -140,114 +142,68 @@ def summarize_differences(baseline: Dict[str, Any], snapshot: Dict[str, Any]) ->
 
 
 def plot_summary(rows: List[Dict[str, Any]], output_path: Path) -> None:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    plt.rcParams.update(
-        {
-            "font.size": 12,
-            "axes.titlesize": 16,
-            "axes.labelsize": 13,
-            "legend.fontsize": 11,
-        }
-    )
     sections = sorted({row["section"] for row in rows})
     status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
-    colors = {
-        "match": "#2ca02c",
-        "diff": "#d62728",
-        "missing_in_baseline": "#ff7f0e",
-        "missing_in_current": "#1f77b4",
-    }
     counts = {section: {status: 0 for status in status_order} for section in sections}
     for row in rows:
         counts[row["section"]][row["status"]] += 1
 
-    fig_height = max(4.5, 2.0 + 0.8 * len(sections))
-    fig, ax = plt.subplots(figsize=(11, fig_height))
-    bottom = np.zeros(len(sections))
-    y_pos = np.arange(len(sections))
-    for status in status_order:
-        values = np.array([counts[section][status] for section in sections])
-        if np.all(values == 0):
-            continue
-        ax.barh(y_pos, values, left=bottom, label=status, color=colors.get(status, "#999999"))
-        bottom += values
+    data = []
+    for section in sections:
+        for status in status_order:
+            data.append({"section": section, "status": status, "count": counts[section][status]})
+    df = pd.DataFrame(data)
 
-    for idx, total in enumerate(bottom):
-        ax.text(total + 0.2, y_pos[idx], f"{int(total)} vars", va="center", fontsize=12)
-
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(sections)
-    ax.set_xlabel("Number of variables")
-    ax.set_title("BaseFlareDetector state comparison result")
-    ax.legend()
-    plt.tight_layout()
+    fig = px.bar(
+        df,
+        x="count",
+        y="section",
+        color="status",
+        orientation="h",
+        text=df["count"].map(lambda v: f"{int(v)}"),
+        category_orders={"status": status_order},
+        labels={"count": "Number of variables", "section": "Section"},
+    )
+    fig.update_layout(
+        barmode="stack",
+        height=max(400, 80 * len(sections)),
+        yaxis=dict(autorange="reversed"),
+        title="BaseFlareDetector state comparison result",
+        margin=dict(l=140, r=40, t=60, b=40),
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=200)
-    plt.close(fig)
+    fig.write_image(output_path, scale=2)
 
 
 def plot_detailed(rows: List[Dict[str, Any]], output_path: Path) -> None:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    plt.rcParams.update(
-        {
-            "font.size": 10,
-            "axes.titlesize": 16,
-            "axes.labelsize": 12,
-            "legend.fontsize": 10,
-        }
-    )
-
     rows_sorted = sorted(rows, key=lambda r: (r["section"], r["key"]))
-    labels = [f"{row['section']}.{row['key']}" for row in rows_sorted]
-    statuses = [row["status"] for row in rows_sorted]
-
+    if not rows_sorted:
+        return
+    detail_df = pd.DataFrame(rows_sorted)
+    detail_df["label"] = detail_df["section"] + "." + detail_df["key"]
+    detail_df["value"] = 1
     status_order = ["match", "diff", "missing_in_baseline", "missing_in_current"]
-    colors = {
-        "match": "#2ca02c",
-        "diff": "#d62728",
-        "missing_in_baseline": "#ff7f0e",
-        "missing_in_current": "#1f77b4",
-    }
 
-    height = max(6, 3 + 0.2 * len(rows_sorted))
-    fig, ax = plt.subplots(figsize=(14, height))
-    y_pos = np.arange(len(rows_sorted))
-
-    for idx, status in enumerate(statuses):
-        ax.barh(idx, 1, color=colors.get(status, "#999999"))
-
-    ax.set_xlim(0, 1)
-    ax.set_xticks([])
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels)
-    ax.set_title("BaseFlareDetector variable-by-variable status")
-
-    legend_elements = [plt.Rectangle((0, 0), 1, 1, color=colors.get(s, "#999999"), label=s) for s in status_order]
-    ax.legend(handles=legend_elements, loc="upper right")
-
-    for idx, row in enumerate(rows_sorted):
-        ax.text(
-            0.5,
-            idx,
-            row["status"],
-            ha="center",
-            va="center",
-            color="white" if row["status"] == "diff" else "black",
-            fontsize=9,
-        )
-
-    plt.tight_layout()
+    fig = px.bar(
+        detail_df,
+        x="value",
+        y="label",
+        color="status",
+        orientation="h",
+        text="status",
+        category_orders={"status": status_order},
+        labels={"value": "", "label": "Variable"},
+    )
+    fig.update_layout(
+        barmode="stack",
+        height=max(600, 20 * len(detail_df)),
+        yaxis=dict(autorange="reversed"),
+        xaxis=dict(showticklabels=False),
+        title="BaseFlareDetector variable-by-variable status",
+        margin=dict(l=260, r=80, t=60, b=40),
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=200)
-    plt.close(fig)
+    fig.write_image(output_path, scale=2)
 
 
 def capture_state(args: argparse.Namespace) -> Dict[str, Any]:

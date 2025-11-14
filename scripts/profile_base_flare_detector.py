@@ -14,11 +14,8 @@ import pstats
 import sys
 from typing import Sequence
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -126,15 +123,21 @@ def save_outputs(df: pd.DataFrame, args: argparse.Namespace) -> tuple[Path, Path
         top_df = df.nlargest(args.top_n, "cumtime").copy()
 
     fig_path = args.output_dir / f"{args.fits.stem}_profile_top{args.top_n}.png"
-    plt.figure(figsize=(10, max(4, 0.4 * len(top_df))))
-    plt.barh(top_df["function"], top_df["cumtime"], color="#1f77b4")
-    plt.xlabel("Cumulative time [s]")
-    plt.ylabel("Function (file:line:name)")
-    plt.title("BaseFlareDetector cumulative time (top contributors)")
-    plt.gca().invert_yaxis()
-    plt.tight_layout()
-    plt.savefig(fig_path, dpi=200)
-    plt.close()
+    fig = px.bar(
+        top_df,
+        x="cumtime",
+        y="function",
+        orientation="h",
+        title="BaseFlareDetector cumulative time (top contributors)",
+        labels={"cumtime": "Cumulative time [s]", "function": "Function (file:line:name)"},
+        text=top_df["cumtime"].map(lambda v: f"{v:.3f}s"),
+    )
+    fig.update_layout(
+        height=max(400, 60 * len(top_df)),
+        yaxis=dict(autorange="reversed"),
+        margin=dict(l=120, r=40, t=60, b=40),
+    )
+    fig.write_image(fig_path, scale=2)
     return csv_path, fig_path
 
 
