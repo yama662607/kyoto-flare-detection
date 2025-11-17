@@ -26,3 +26,8 @@ indent-style = "tab"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "C4", "UP"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.5",
+]
