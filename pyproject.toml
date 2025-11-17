@@ -19,13 +19,42 @@ dependencies = [
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "src/archive",
+    "**/archive",
+    "data",
+    "outputs",
+    "reports",
+    "daijiro",
+    "hiroto",
+    "notebooks",
+    "*.ipynb",
+]
 
 [tool.ruff.format]
 quote-style = "double"
-indent-style = "tab"
+indent-style = "space"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "C4", "UP"]
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
 
 [dependency-groups]
 dev = [

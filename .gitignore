@@ -16,3 +16,6 @@ data/TESS/**/*.fits
 
 # any pdf file
 *.pdf
+
+# tooling artifacts
+.serena/
