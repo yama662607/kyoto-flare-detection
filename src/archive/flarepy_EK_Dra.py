@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 flare_improved.py
 
@@ -198,7 +197,9 @@ class FlareDetector:
 
         # process_data=True のときのみ、コンストラクタ直後に全ての処理を実行
         if process_data and (self.file is not None):
-            self.process_data(ene_thres_low=ene_thres_low, ene_thres_high=ene_thres_high)
+            self.process_data(
+                ene_thres_low=ene_thres_low, ene_thres_high=ene_thres_high
+            )
 
     def load_TESS_data(self):
         """
@@ -226,7 +227,9 @@ class FlareDetector:
             data_number = int(match.group(1))  # グラフに表示するデータ名
 
         # FITS データを読み込み
-        hdulist = fits.open(fname, memmap=True)  # memmap=True でメモリマップを使用し、メモリ節約
+        hdulist = fits.open(
+            fname, memmap=True
+        )  # memmap=True でメモリマップを使用し、メモリ節約
         hdr1 = hdulist[0].header
         data = hdulist[1].data
 
@@ -278,26 +281,32 @@ class FlareDetector:
 
         # ====== バッファ追加 ======
         # np.full で先頭・末尾にバッファを追加
-        flux_ext = np.hstack([
-            np.full(buf_size, flux[0]),
-            flux,
-            np.full(buf_size, flux[-1]),
-        ])
-        flux_err_ext = np.hstack([
-            np.full(buf_size, 0.0001),
-            flux_err,
-            np.full(buf_size, 0.0001),
-        ])
+        flux_ext = np.hstack(
+            [
+                np.full(buf_size, flux[0]),
+                flux,
+                np.full(buf_size, flux[-1]),
+            ]
+        )
+        flux_err_ext = np.hstack(
+            [
+                np.full(buf_size, 0.0001),
+                flux_err,
+                np.full(buf_size, 0.0001),
+            ]
+        )
 
         # 時刻配列にもバッファを追加
         # 2分間隔を日数に換算 → 2/(24*60)
         dt_min = 2 / (24 * 60)
         a = np.arange(buf_size) * dt_min
-        bjd_ext = np.hstack([
-            (a - a[-1] - dt_min + bjd[0]),
-            bjd,
-            (a + dt_min + bjd[-1]),
-        ])
+        bjd_ext = np.hstack(
+            [
+                (a - a[-1] - dt_min + bjd[0]),
+                bjd,
+                (a + dt_min + bjd[-1]),
+            ]
+        )
 
         self.gmPDCSAPflux = flux_ext
         self.gmPDCSAPfluxerr = flux_err_ext
@@ -350,7 +359,11 @@ class FlareDetector:
 
         # 2) フレア候補点 (フラックスが誤差 * fac 未満) を除外してスプライン補完
         fac = 3
-        ss_flarecan = np.where((s1_flux <= flux_err_ext * fac) | (time_ext < time_ext[10]) | (time_ext > time_ext[-11]))[0]
+        ss_flarecan = np.where(
+            (s1_flux <= flux_err_ext * fac)
+            | (time_ext < time_ext[10])
+            | (time_ext > time_ext[-11])
+        )[0]
 
         # instance variable for test
         self.ss_flarecan = ss_flarecan
@@ -359,7 +372,9 @@ class FlareDetector:
         # スプライン用のベースライン作成
         baseline_spline = interp1d(
             time_ext[ss_flarecan],
-            self.lowpass(time_ext[ss_flarecan], flux_ext[ss_flarecan], fc=self.f_cut_spline),
+            self.lowpass(
+                time_ext[ss_flarecan], flux_ext[ss_flarecan], fc=self.f_cut_spline
+            ),
             kind="cubic",
         )
 
@@ -383,20 +398,22 @@ class FlareDetector:
 
         # 全体の平均スケールを元のエラーに合わせる
         print(np.mean(err))
-        err_constant = np.mean([
-            0.000384864314943702,
-            0.0004424048336559645,
-            0.00040872798534543,
-            0.0004216541882493638,
-            0.0004073989969316659,
-            0.0003649385833756368,
-            0.0004276275012618665,
-            0.0003423306959085268,
-            0.00041515198565203514,
-            0.00037956035591004555,
-            0.000576264495105358,
-            0.00037297277185969937,
-        ])
+        err_constant = np.mean(
+            [
+                0.000384864314943702,
+                0.0004424048336559645,
+                0.00040872798534543,
+                0.0004216541882493638,
+                0.0004073989969316659,
+                0.0003649385833756368,
+                0.0004276275012618665,
+                0.0003423306959085268,
+                0.00041515198565203514,
+                0.00037956035591004555,
+                0.000576264495105358,
+                0.00037297277185969937,
+            ]
+        )
         err *= np.mean(self.mPDCSAPfluxerr) / err_constant
         self.mPDCSAPfluxerr_cor = err
 
@@ -429,7 +446,9 @@ class FlareDetector:
             ss_detect.append(ndetect)
             detecttime.append(bjd[ndetect])
             k = 0
-            while ((i + k + 1) < len(oversigma_idx)) and ((oversigma_idx[i + k + 1] - oversigma_idx[i + k]) == 1):
+            while ((i + k + 1) < len(oversigma_idx)) and (
+                (oversigma_idx[i + k + 1] - oversigma_idx[i + k]) == 1
+            ):
                 k += 1
             i += k
 
@@ -450,10 +469,14 @@ class FlareDetector:
             k = 0
             j = 0
             # 右方向
-            while (ss_val + k + 1 < len(overonesigma_idx)) and ((overonesigma_idx[ss_val + k + 1] - overonesigma_idx[ss_val + k]) == 1):
+            while (ss_val + k + 1 < len(overonesigma_idx)) and (
+                (overonesigma_idx[ss_val + k + 1] - overonesigma_idx[ss_val + k]) == 1
+            ):
                 k += 1
             # 左方向
-            while (ss_val + j - 1 >= 0) and ((overonesigma_idx[ss_val + j] - overonesigma_idx[ss_val + j - 1]) == 1):
+            while (ss_val + j - 1 >= 0) and (
+                (overonesigma_idx[ss_val + j] - overonesigma_idx[ss_val + j - 1]) == 1
+            ):
                 j -= 1
 
             # 十分なデータ数を確保
@@ -469,7 +492,10 @@ class FlareDetector:
             starttime.append(bjd[n + j])
             endtime.append(bjd[n + k])
             subbjd = bjd[(n + j) : (n + k + 1)]
-            peak_idx = np.where(flux_detrend[(n + j) : (n + k + 1)] == max(flux_detrend[(n + j) : (n + k + 1)]))[0]
+            peak_idx = np.where(
+                flux_detrend[(n + j) : (n + k + 1)]
+                == max(flux_detrend[(n + j) : (n + k + 1)])
+            )[0]
             if len(peak_idx) == 0:
                 continue
             peaktime.append(subbjd[peak_idx[0]])
@@ -552,7 +578,9 @@ class FlareDetector:
 
             # 上方向
             k = 0
-            while (n_peak + k < len(flux_diff)) and (flux_diff[n_peak + k] >= err[n_peak + k]):
+            while (n_peak + k < len(flux_diff)) and (
+                flux_diff[n_peak + k] >= err[n_peak + k]
+            ):
                 k += 1
             # 下方向
             j = 0
@@ -580,7 +608,9 @@ class FlareDetector:
             peak_loc = ss_flare[peak_flux_indices[0]]
 
             ll = 0
-            while ((peak_loc + ll) < len(flux_diff)) and (flux_diff[peak_loc + ll] >= peak_flux * np.exp(-1)):
+            while ((peak_loc + ll) < len(flux_diff)) and (
+                flux_diff[peak_loc + ll] >= peak_flux * np.exp(-1)
+            ):
                 ll += 1
             if ll == 0:
                 continue
@@ -605,7 +635,9 @@ class FlareDetector:
         count_new = np.array(count_new)
         if len(count_new) > 0:
             energy_new = self.tess_band_energy(count_new)
-            duration_new = np.array(endtime_new) - np.array(starttime_new) + (2 / (24 * 60))
+            duration_new = (
+                np.array(endtime_new) - np.array(starttime_new) + (2 / (24 * 60))
+            )
             edecay_new = np.array(edecay_new)
             a_array = np.array(a_array)
             b_array = np.array(b_array)
@@ -667,7 +699,9 @@ class FlareDetector:
         """
         try:
             # TESSの透過率 (応答関数) を読み込み
-            wave, resp = np.loadtxt("../data/tess-response-function-v1.0.csv", delimiter=",").T
+            wave, resp = np.loadtxt(
+                "../data/tess-response-function-v1.0.csv", delimiter=","
+            ).T
         except FileNotFoundError:
             print("Error: TESS応答関数のCSVファイルが見つかりません。")
             return np.array([])
@@ -722,21 +756,27 @@ class FlareDetector:
 
         energy_cor = np.sort(self.energy)  # フレアエネルギーを昇順にソート
         cumenergy = np.array([len(energy_cor) - i for i in range(len(energy_cor))])
-        energy2e33_index = np.where((energy_cor >= energy_threshold_low) & (energy_cor <= energy_threshold_high))[
-            0
-        ]  # 2*10^33以上のエネルギーを持つフレアのインデックス
+        energy2e33_index = np.where(
+            (energy_cor >= energy_threshold_low) & (energy_cor <= energy_threshold_high)
+        )[0]  # 2*10^33以上のエネルギーを持つフレアのインデックス
 
         # print(f"ene_min={energy_cor[energy2e33_index[0]]} , ene_max={energy_cor[energy2e33_index[-1]]}")
 
         if len(energy2e33_index) > 0:
-            self.flare_number = cumenergy[energy2e33_index[0]] - cumenergy[energy2e33_index[-1]] + 1
+            self.flare_number = (
+                cumenergy[energy2e33_index[0]] - cumenergy[energy2e33_index[-1]] + 1
+            )
             # print(f"energy={energy_cor[energy2e33_index[0]:energy2e33_index[-1]+1]}{self.flare_number}、{self.precise_obs_time}")
-            self.sum_flare_energy = np.sum(energy_cor[energy2e33_index[0] : energy2e33_index[-1] + 1])
+            self.sum_flare_energy = np.sum(
+                energy_cor[energy2e33_index[0] : energy2e33_index[-1] + 1]
+            )
         else:
             self.flare_number = 0
             self.sum_flare_energy = 0.0
 
-    def flux_diff(self, min_flux=0.02, max_flux=0.98):  ##! このメゾットのみを呼び出しても、現状ではエネルギー情報は更新されない
+    def flux_diff(
+        self, min_flux=0.02, max_flux=0.98
+    ):  ##! このメゾットのみを呼び出しても、現状ではエネルギー情報は更新されない
         """
         フラックスの差分を計算して返すメソッド。
 
@@ -753,7 +793,9 @@ class FlareDetector:
         # brightness_variation_amplitudeを求めるための上下2%を抜く
         lower_bound = int(len(sorted_flux) * 0.02)
         upper_bound = int(len(sorted_flux) * 0.98)
-        self.brightness_variation_amplitude = sorted_flux[upper_bound] - sorted_flux[lower_bound]
+        self.brightness_variation_amplitude = (
+            sorted_flux[upper_bound] - sorted_flux[lower_bound]
+        )
         self.starspot = (
             2
             * np.pi
@@ -761,7 +803,9 @@ class FlareDetector:
             * (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4))
             * self.brightness_variation_amplitude
         )
-        self.starspot_ratio = (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4)) * self.brightness_variation_amplitude
+        self.starspot_ratio = (
+            self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4)
+        ) * self.brightness_variation_amplitude
 
     def plot_flare(self, dpi=300):
         """
@@ -777,37 +821,52 @@ class FlareDetector:
             return
 
         # --- レイアウト設定 ---
-        with plt.style.context({
-            "axes.linewidth": 1.5,
-            "xtick.major.width": 1.5,
-            "ytick.major.width": 1.5,
-            "xtick.minor.width": 1.0,
-            "ytick.minor.width": 1.0,
-            "xtick.major.size": 7,
-            "ytick.major.size": 7,
-            "xtick.minor.size": 4,
-            "ytick.minor.size": 4,
-            "xtick.direction": "in",
-            "ytick.direction": "in",
-            "xtick.minor.visible": True,
-            "ytick.minor.visible": True,
-            "font.family": "Arial",
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }):
+        with plt.style.context(
+            {
+                "axes.linewidth": 1.5,
+                "xtick.major.width": 1.5,
+                "ytick.major.width": 1.5,
+                "xtick.minor.width": 1.0,
+                "ytick.minor.width": 1.0,
+                "xtick.major.size": 7,
+                "ytick.major.size": 7,
+                "xtick.minor.size": 4,
+                "ytick.minor.size": 4,
+                "xtick.direction": "in",
+                "ytick.direction": "in",
+                "xtick.minor.visible": True,
+                "ytick.minor.visible": True,
+                "font.family": "Arial",
+                "pdf.fonttype": 42,
+                "ps.fonttype": 42,
+            }
+        ):
             # 2段組のグラフを作成 (x軸を共有)
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
             fig.suptitle(f"Light Curve of {self.data_name}", fontsize=16)
 
             # 1. 上段: 生の光度曲線
-            ax1.plot(self.tessBJD, self.mPDCSAPflux, marker=".", ls="none", color="darkgray", label="Normalized Flux")
+            ax1.plot(
+                self.tessBJD,
+                self.mPDCSAPflux,
+                marker=".",
+                ls="none",
+                color="darkgray",
+                label="Normalized Flux",
+            )
             ax1.set_ylabel("Normalized Flux", fontsize=14)
             ax1.legend(loc="upper right", frameon=False)
             ax1.tick_params(labelsize=12)
 
             # 2. 下段: デトレンド後の光度曲線
             if self.s2mPDCSAPflux is not None:
-                ax2.plot(self.tessBJD, self.s2mPDCSAPflux, color="black", lw=1, label="Detrended Flux")
+                ax2.plot(
+                    self.tessBJD,
+                    self.s2mPDCSAPflux,
+                    color="black",
+                    lw=1,
+                    label="Detrended Flux",
+                )
 
                 # フレアのピーク位置を線で示す
                 if self.peaktime is not None and len(self.peaktime) > 0:
@@ -825,7 +884,9 @@ class FlareDetector:
             plt.tight_layout(rect=[0, 0, 1, 0.96])  # タイトルとの重なりを回避
 
             # ファイルに保存
-            plt.savefig(f"{self.data_name}_light_curve.pdf", dpi=dpi, bbox_inches="tight")
+            plt.savefig(
+                f"{self.data_name}_light_curve.pdf", dpi=dpi, bbox_inches="tight"
+            )
             plt.show()
 
     def plot_energy(self, dpi=300):
@@ -848,24 +909,26 @@ class FlareDetector:
         cumenergy = np.arange(len(energy_cor), 0, -1)
 
         # --- レイアウト設定 ---
-        with plt.style.context({
-            "axes.linewidth": 1.5,
-            "xtick.major.width": 1.5,
-            "ytick.major.width": 1.5,
-            "xtick.minor.width": 1.0,
-            "ytick.minor.width": 1.0,
-            "xtick.major.size": 7,
-            "ytick.major.size": 7,
-            "xtick.minor.size": 4,
-            "ytick.minor.size": 4,
-            "xtick.direction": "in",
-            "ytick.direction": "in",
-            "xtick.minor.visible": True,
-            "ytick.minor.visible": True,
-            "font.family": "Arial",
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }):
+        with plt.style.context(
+            {
+                "axes.linewidth": 1.5,
+                "xtick.major.width": 1.5,
+                "ytick.major.width": 1.5,
+                "xtick.minor.width": 1.0,
+                "ytick.minor.width": 1.0,
+                "xtick.major.size": 7,
+                "ytick.major.size": 7,
+                "xtick.minor.size": 4,
+                "ytick.minor.size": 4,
+                "xtick.direction": "in",
+                "ytick.direction": "in",
+                "xtick.minor.visible": True,
+                "ytick.minor.visible": True,
+                "font.family": "Arial",
+                "pdf.fonttype": 42,
+                "ps.fonttype": 42,
+            }
+        ):
             fig, ax = plt.subplots(figsize=(8, 6))
 
             # データのプロット
@@ -895,7 +958,9 @@ class FlareDetector:
             # ラベルとタイトル
             ax.set_xlabel("Flare Energy [erg]", fontsize=14)
             ax.set_ylabel(r"Cumulative Frequency [day$^{-1}$]", fontsize=14)
-            ax.set_title(f"Flare Frequency Distribution of {self.data_name}", fontsize=16)
+            ax.set_title(
+                f"Flare Frequency Distribution of {self.data_name}", fontsize=16
+            )
 
             # 凡例 (右下、枠なし)
             leg = ax.legend(loc="lower left", frameon=False, fontsize=12)
@@ -914,7 +979,9 @@ class FlareDetector:
             # 2.4～3.0を1000等分して、その中のどれが自転周期なのかを探す
             frequency = 1 / np.linspace(1.5, 5.0, 10000)
             # 周波数毎にどれくらい強いか(どれくらい周期的であるか)を出す
-            self.power = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux).power(frequency)
+            self.power = LombScargle(
+                self.tessBJD - self.tessBJD[0], self.mPDCSAPflux
+            ).power(frequency)
             # 一番強かった周波数について日数に換算する
             self.per = 1 / frequency[np.argmax(self.power)]
 
@@ -953,7 +1020,9 @@ class FlareDetector:
         self.calculate_precise_obs_time()
 
         # 7) フレアエネルギーに関する計算
-        self.flare_energy(energy_threshold_low=ene_thres_low, energy_threshold_high=ene_thres_high)
+        self.flare_energy(
+            energy_threshold_low=ene_thres_low, energy_threshold_high=ene_thres_high
+        )
 
         # 8) ライトカーブの変動振幅を計算
         self.flux_diff()
@@ -969,30 +1038,46 @@ class FlareDetector:
                 # n_flare = len(self.peaktime) if self.peaktime is not None else 0
                 flare_ratio = self.flare_number / obs_time
                 # リストに追加
-                FlareDetector.array_flare_ratio = np.append(FlareDetector.array_flare_ratio, flare_ratio)
+                FlareDetector.array_flare_ratio = np.append(
+                    FlareDetector.array_flare_ratio, flare_ratio
+                )
 
                 # 観測日数あたりのフレアエネルギーを計算
                 sum_flare_energy_ratio = self.sum_flare_energy / obs_time
-                FlareDetector.array_energy_ratio = np.append(FlareDetector.array_energy_ratio, sum_flare_energy_ratio)
+                FlareDetector.array_energy_ratio = np.append(
+                    FlareDetector.array_energy_ratio, sum_flare_energy_ratio
+                )
 
                 # 観測時間の中央値をリストに追加 tessBJDの中央値を使用
-                FlareDetector.array_observation_time = np.append(FlareDetector.array_observation_time, np.median(self.tessBJD))
+                FlareDetector.array_observation_time = np.append(
+                    FlareDetector.array_observation_time, np.median(self.tessBJD)
+                )
 
                 # ライトカーブの変動振幅をリストに追加
-                FlareDetector.array_amplitude = np.append(FlareDetector.array_amplitude, self.brightness_variation_amplitude)
+                FlareDetector.array_amplitude = np.append(
+                    FlareDetector.array_amplitude, self.brightness_variation_amplitude
+                )
 
-                FlareDetector.array_starspot = np.append(FlareDetector.array_starspot, self.starspot)
+                FlareDetector.array_starspot = np.append(
+                    FlareDetector.array_starspot, self.starspot
+                )
 
-                FlareDetector.array_starspot_ratio = np.append(FlareDetector.array_starspot_ratio, self.starspot_ratio)
+                FlareDetector.array_starspot_ratio = np.append(
+                    FlareDetector.array_starspot_ratio, self.starspot_ratio
+                )
 
                 # データの名前をリストに追加
-                FlareDetector.array_data_name = np.append(FlareDetector.array_data_name, self.data_name)
+                FlareDetector.array_data_name = np.append(
+                    FlareDetector.array_data_name, self.data_name
+                )
 
                 # 自転周期をリストに追加
                 FlareDetector.array_per = np.append(FlareDetector.array_per, self.per)
 
                 # 自転周期の誤差をリストに追加
-                FlareDetector.array_per_err = np.append(FlareDetector.array_per_err, self.per_err)
+                FlareDetector.array_per_err = np.append(
+                    FlareDetector.array_per_err, self.per_err
+                )
 
     def show_variables(self):
         """
@@ -1042,7 +1127,9 @@ class FlareDetector:
             value = getattr(self, var_name)
             if isinstance(value, np.ndarray):
                 # 要素数と簡易情報を表示
-                print(f"{var_name}: {description} | type: np.ndarray | length: {value.size}")
+                print(
+                    f"{var_name}: {description} | type: np.ndarray | length: {value.size}"
+                )
             else:
                 # ndarray 以外はそのまま出力
                 print(f"{var_name}: {description} | value: {value}")
@@ -1052,7 +1139,9 @@ class FlareDetector:
             value = getattr(FlareDetector, var_name)
             if isinstance(value, np.ndarray):
                 # 要素数と簡易情報を表示
-                print(f"{var_name}: {description} | type: np.ndarray | length: {value.size}")
+                print(
+                    f"{var_name}: {description} | type: np.ndarray | length: {value.size}"
+                )
             else:
                 # ndarray 以外はそのまま出力
                 print(f"{var_name}: {description} | value: {value}")

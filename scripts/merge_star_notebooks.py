@@ -1,6 +1,8 @@
 """Merge star notebooks from hiroto/daijiro/notebooks preserving unique cells once but grouped by source."""
-import nbformat
+
 from pathlib import Path
+
+import nbformat
 
 STAR_MAPPINGS = {
     "DS_Tuc_A": [

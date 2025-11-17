@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -33,7 +32,9 @@ def load_profile(path: Path) -> pd.DataFrame:
     return df
 
 
-def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: str, label_after: str) -> pd.DataFrame:
+def build_comparison(
+    before: pd.DataFrame, after: pd.DataFrame, label_before: str, label_after: str
+) -> pd.DataFrame:
     merged = pd.merge(
         before[["key", "function", "cumtime"]],
         after[["key", "function", "cumtime"]],
@@ -43,8 +44,12 @@ def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: st
     )
     for col in ("cumtime_before", "cumtime_after"):
         merged[col] = merged[col].fillna(0.0)
-    merged["function_before"] = merged["function_before"].fillna(merged["function_after"])
-    merged["function_after"] = merged["function_after"].fillna(merged["function_before"])
+    merged["function_before"] = merged["function_before"].fillna(
+        merged["function_after"]
+    )
+    merged["function_after"] = merged["function_after"].fillna(
+        merged["function_before"]
+    )
     merged["delta"] = merged["cumtime_after"] - merged["cumtime_before"]
     merged["percent_change"] = np.where(
         merged["cumtime_before"] > 0,
@@ -65,14 +70,17 @@ def build_comparison(before: pd.DataFrame, after: pd.DataFrame, label_before: st
 
 
 def plot_comparison(
-    df: pd.DataFrame, output_png: Path, label_before: str, label_after: str, top_n: int, show_plot: bool = False
+    df: pd.DataFrame,
+    output_png: Path,
+    label_before: str,
+    label_after: str,
+    top_n: int,
+    show_plot: bool = False,
 ) -> None:
     top = df.head(top_n).copy()
     before_col = f"{label_before}_cumtime"
     after_col = f"{label_after}_cumtime"
     labels = list(top["function_key"])
-    percent_fmt = top["percent_change"].apply(lambda v: f"{v:+.1f}%" if not np.isnan(v) else "N/A").tolist()
-
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -112,9 +120,12 @@ def plot_comparison(
     )
 
     after_total = top[after_col].sum()
-    share_percent = np.where(after_total > 0, top[after_col] / after_total * 100, np.nan)
+    share_percent = np.where(
+        after_total > 0, top[after_col] / after_total * 100, np.nan
+    )
     share_colors = [
-        "#d62728" if pct >= 40 else "#ff7f0e" if pct >= 20 else "#2ca02c" for pct in share_percent
+        "#d62728" if pct >= 40 else "#ff7f0e" if pct >= 20 else "#2ca02c"
+        for pct in share_percent
     ]
     fig.add_trace(
         go.Bar(
@@ -123,7 +134,9 @@ def plot_comparison(
             orientation="h",
             name="After share",
             marker_color=share_colors,
-            text=[f"{pct:.1f}%" if not np.isnan(pct) else "N/A" for pct in share_percent],
+            text=[
+                f"{pct:.1f}%" if not np.isnan(pct) else "N/A" for pct in share_percent
+            ],
             textposition="auto",
             customdata=top["percent_change"],
             hovertemplate="Function: %{y}<br>After share: %{x:.1f}%<br>Δ% vs before: %{customdata:+.1f}%<extra></extra>",
@@ -135,10 +148,15 @@ def plot_comparison(
     fig.update_layout(
         barmode="group",
         height=max(900, 65 * len(labels)),
-        yaxis=dict(autorange="reversed", title="Function"),
-        xaxis=dict(title="Cumulative time [s]"),
-        xaxis2=dict(title="Share of after cumulative time [%]", range=[0, 100], zeroline=True, zerolinecolor="#888"),
-        margin=dict(l=220, r=60, t=80, b=40),
+        yaxis={"autorange": "reversed", "title": "Function"},
+        xaxis={"title": "Cumulative time [s]"},
+        xaxis2={
+            "title": "Share of after cumulative time [%]",
+            "range": [0, 100],
+            "zeroline": True,
+            "zerolinecolor": "#888",
+        },
+        margin={"l": 220, "r": 60, "t": 80, "b": 40},
         title="BaseFlareDetector cumulative time comparison",
     )
 
@@ -149,14 +167,28 @@ def plot_comparison(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="プロファイル CSV を比較し、比率付きグラフを生成します。")
-    parser.add_argument("--before", type=Path, required=True, help="最適化前の profile_full.csv")
-    parser.add_argument("--after", type=Path, required=True, help="最適化後の profile_full.csv")
-    parser.add_argument("--output-dir", type=Path, required=True, help="比較結果の出力ディレクトリ")
-    parser.add_argument("--label-before", type=str, default="before", help="前データの凡例ラベル")
-    parser.add_argument("--label-after", type=str, default="after", help="後データの凡例ラベル")
+    parser = argparse.ArgumentParser(
+        description="プロファイル CSV を比較し、比率付きグラフを生成します。"
+    )
+    parser.add_argument(
+        "--before", type=Path, required=True, help="最適化前の profile_full.csv"
+    )
+    parser.add_argument(
+        "--after", type=Path, required=True, help="最適化後の profile_full.csv"
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, required=True, help="比較結果の出力ディレクトリ"
+    )
+    parser.add_argument(
+        "--label-before", type=str, default="before", help="前データの凡例ラベル"
+    )
+    parser.add_argument(
+        "--label-after", type=str, default="after", help="後データの凡例ラベル"
+    )
     parser.add_argument("--top-n", type=int, default=12, help="グラフに表示する関数数")
-    parser.add_argument("--show-plot", action="store_true", help="生成したグラフをブラウザで表示します")
+    parser.add_argument(
+        "--show-plot", action="store_true", help="生成したグラフをブラウザで表示します"
+    )
     return parser.parse_args()
 
 
@@ -165,13 +197,22 @@ def main() -> None:
     before_df = load_profile(args.before)
     after_df = load_profile(args.after)
 
-    comparison = build_comparison(before_df, after_df, args.label_before, args.label_after)
+    comparison = build_comparison(
+        before_df, after_df, args.label_before, args.label_after
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     csv_path = args.output_dir / "base_flare_detector_cumtime_comparison.csv"
     comparison.to_csv(csv_path, index=False)
 
     png_path = args.output_dir / "base_flare_detector_cumtime_comparison.png"
-    plot_comparison(comparison, png_path, args.label_before, args.label_after, args.top_n, args.show_plot)
+    plot_comparison(
+        comparison,
+        png_path,
+        args.label_before,
+        args.label_after,
+        args.top_n,
+        args.show_plot,
+    )
 
     print(f"比較 CSV: {csv_path}")
     print(f"比較グラフ: {png_path}")

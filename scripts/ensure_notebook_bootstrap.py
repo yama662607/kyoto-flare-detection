@@ -1,5 +1,6 @@
-import nbformat
 from pathlib import Path
+
+import nbformat
 
 COMMON_SETUP = """import os
 import sys
@@ -48,7 +49,7 @@ STAR_CONFIG = [
 
 
 def build_loop_code(cfg):
-    return f"""{cfg['list_name']} = []\nfor file_path in sorted((PROJECT_ROOT / '{cfg['data_dir']}').glob('*.fits')):\n    detector = {cfg['class_name']}(file=str(file_path), process_data=True)\n    {cfg['list_name']}.append(detector)\n\nfor detector in {cfg['list_name']}:\n    print(detector.file, detector.flare_number, detector.sum_flare_energy)\n"""
+    return f"""{cfg["list_name"]} = []\nfor file_path in sorted((PROJECT_ROOT / '{cfg["data_dir"]}').glob('*.fits')):\n    detector = {cfg["class_name"]}(file=str(file_path), process_data=True)\n    {cfg["list_name"]}.append(detector)\n\nfor detector in {cfg["list_name"]}:\n    print(detector.file, detector.flare_number, detector.sum_flare_energy)\n"""
 
 
 def remove_existing_markers(cells, cfg):
@@ -60,7 +61,9 @@ def remove_existing_markers(cells, cfg):
     ]
     filtered = []
     for cell in cells:
-        if cell.cell_type == 'code' and any(marker in cell.source for marker in markers):
+        if cell.cell_type == "code" and any(
+            marker in cell.source for marker in markers
+        ):
             continue
         filtered.append(cell)
     return filtered
@@ -71,30 +74,34 @@ def insert_bootstrap(nb, cfg):
     head = []
     rest_start = 0
     for i, cell in enumerate(cells):
-        if cell.cell_type == 'markdown' and cell.source.startswith('### Source:'):
+        if cell.cell_type == "markdown" and cell.source.startswith("### Source:"):
             head.append(cell)
             rest_start = i + 1
         else:
             break
     rest = cells[rest_start:]
-    new_cells = head + [
-        nbformat.v4.new_code_cell(COMMON_SETUP),
-        nbformat.v4.new_code_cell(cfg['module_code']),
-        nbformat.v4.new_code_cell(build_loop_code(cfg)),
-    ] + rest
+    new_cells = (
+        head
+        + [
+            nbformat.v4.new_code_cell(COMMON_SETUP),
+            nbformat.v4.new_code_cell(cfg["module_code"]),
+            nbformat.v4.new_code_cell(build_loop_code(cfg)),
+        ]
+        + rest
+    )
     nb.cells = new_cells
 
 
 def main():
     for cfg in STAR_CONFIG:
-        path = cfg['path']
+        path = cfg["path"]
         if not path.exists():
             continue
         nb = nbformat.read(path, as_version=4)
         insert_bootstrap(nb, cfg)
         nbformat.write(nb, path)
-        print('updated', path)
+        print("updated", path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

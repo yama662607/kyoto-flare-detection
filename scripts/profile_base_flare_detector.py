@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import argparse
 import cProfile
-from pathlib import Path
 import pstats
 import sys
-from typing import Sequence
+from collections.abc import Sequence
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -21,8 +21,6 @@ import plotly.io as pio
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.base_flare_detector import BaseFlareDetector
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -83,6 +81,8 @@ def profile_detector(args: argparse.Namespace) -> tuple[pd.DataFrame, Path]:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    from src.base_flare_detector import BaseFlareDetector
+
     detector = BaseFlareDetector(
         file=str(args.fits),
         process_data=False,
@@ -135,13 +135,16 @@ def save_outputs(df: pd.DataFrame, args: argparse.Namespace) -> tuple[Path, Path
         y="function",
         orientation="h",
         title="BaseFlareDetector cumulative time (top contributors)",
-        labels={"cumtime": "Cumulative time [s]", "function": "Function (file:line:name)"},
+        labels={
+            "cumtime": "Cumulative time [s]",
+            "function": "Function (file:line:name)",
+        },
         text=top_df["cumtime"].map(lambda v: f"{v:.3f}s"),
     )
     fig.update_layout(
         height=max(400, 60 * len(top_df)),
-        yaxis=dict(autorange="reversed"),
-        margin=dict(l=120, r=40, t=60, b=40),
+        yaxis={"autorange": "reversed"},
+        margin={"l": 120, "r": 40, "t": 60, "b": 40},
     )
     fig.write_image(fig_path, scale=2)
     if args.show_plot:

@@ -1,5 +1,6 @@
-import nbformat
 from pathlib import Path
+
+import nbformat
 
 TEMPLATE_MARKDOWN = {
     "intro": "# Flare Detector Template (EK Dra)\nこのノートブックでは `src.flarepy_EK_Dra.FlareDetector_EK_Dra` の基本的な使い方を示します。",
@@ -28,38 +29,40 @@ CODE_SNIPPETS = {
     "analysis": """print('Rotation period:', detector.per)\nprint('First 5 flare energies:', detector.energy[:5])\npx.box(\n    y=[d.sum_flare_energy for d in detectors],\n    labels={'y': 'Sum Flare Energy'},\n    title='Sum Flare Energy per File'\n)\n""",
 }
 
+
 def build_template():
     nb = nbformat.v4.new_notebook()
     nb.metadata = {
-        'kernelspec': {'name': 'python3', 'display_name': 'Python 3'},
-        'language_info': {'name': 'python', 'version': '3.13'},
+        "kernelspec": {"name": "python3", "display_name": "Python 3"},
+        "language_info": {"name": "python", "version": "3.13"},
     }
     nb.cells = [
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['intro']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['setup']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['setup']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['data']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['data']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['detector']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['detector']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['summary']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['summary']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['px_line']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['px_line']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['px_energy']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['px_energy']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['px_hist']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['px_hist']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['go_line']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['go_line']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['loop']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['loop']),
-        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN['analysis']),
-        nbformat.v4.new_code_cell(CODE_SNIPPETS['analysis']),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["intro"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["setup"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["setup"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["data"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["data"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["detector"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["detector"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["summary"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["summary"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["px_line"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["px_line"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["px_energy"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["px_energy"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["px_hist"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["px_hist"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["go_line"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["go_line"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["loop"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["loop"]),
+        nbformat.v4.new_markdown_cell(TEMPLATE_MARKDOWN["analysis"]),
+        nbformat.v4.new_code_cell(CODE_SNIPPETS["analysis"]),
     ]
-    output = Path('notebooks/flare_detect_template.ipynb')
+    output = Path("notebooks/flare_detect_template.ipynb")
     nbformat.write(nb, output)
-    print('Template updated ->', output)
+    print("Template updated ->", output)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     build_template()

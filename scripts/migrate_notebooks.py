@@ -1,5 +1,5 @@
-import json
 from pathlib import Path
+
 import nbformat
 
 STAR_CONFIG = [
@@ -64,25 +64,31 @@ def build_notebook(config):
     header = TEMPLATE_HEADER
     header += f"\n\nfrom src.{config['module']} import {config['class']}\n"
     nb.cells.append(nbformat.v4.new_code_cell(header))
-    nb.cells.append(nbformat.v4.new_markdown_cell(f"# {config['name']} 軌跡データの処理"))
-    nb.cells.append(nbformat.v4.new_code_cell(CELL_DETECTOR_LOOP.format(
-        class_name=config['class'],
-        data_dir=config['data_dir'],
-        list_name=config['list_name'],
-    )))
+    nb.cells.append(
+        nbformat.v4.new_markdown_cell(f"# {config['name']} 軌跡データの処理")
+    )
+    nb.cells.append(
+        nbformat.v4.new_code_cell(
+            CELL_DETECTOR_LOOP.format(
+                class_name=config["class"],
+                data_dir=config["data_dir"],
+                list_name=config["list_name"],
+            )
+        )
+    )
     nb.metadata.update(CELL_METADATA)
     return nb
 
 
 def main():
-    notebooks_dir = Path('notebooks')
+    notebooks_dir = Path("notebooks")
     notebooks_dir.mkdir(exist_ok=True)
     for config in STAR_CONFIG:
         nb = build_notebook(config)
         target_path = notebooks_dir / f"flare_detect_{config['name']}.ipynb"
         nbformat.write(nb, target_path)
-        print('wrote', target_path)
+        print("wrote", target_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
