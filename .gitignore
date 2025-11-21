@@ -9,13 +9,31 @@ wheels/
 # Virtual environments
 .venv
 
+# IDE and editor files
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data files
 TESS/src/archive/
 data/TESS/**/*.fits
-**/.DS_Store
 
-# any pdf file
-*.pdf
+# Output and report files
+outputs/
+reports/
 
-# tooling artifacts
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Tooling artifacts
 .serena/
+.ruff_cache/
+
+# Any PDF file
+*.pdf
