@@ -20,6 +20,9 @@ class FlareDetector_EK_Dra(BaseFlareDetector):
             flux_mean=249320.35370300722,
             err_constant_mean=0.0004111604805261475,  # Mean of the 12 values
             rot_period=0.2094793179536128,
+            rotation_period_min=1.5,
+            rotation_period_max=5.0,
+            rotation_n_points=10000,
             f_cut_lowpass=3,
             f_cut_spline=6,
             sector_threshold=74,  # Use SAP_FLUX for sectors > 74
