@@ -336,6 +336,13 @@ These files are preserved for historical reference.
    - `__init__` でパラメータ化
    - 科学的根拠のある値はコメントで明記
 
+4. **回転周期推定 (Lomb–Scargle) の方針**
+   - `BaseFlareDetector` に自転周期レンジ用パラメータ `rotation_period_min`, `rotation_period_max`, `rotation_n_points` を追加し、`make_rotation_frequency_grid(period_min, period_max, n_points)` で正則な周波数グリッドと対応する周期配列を生成する。
+   - 既定値は 1〜8 日・10000 点とし、これは旧実装の `1 / np.linspace(1.0, 8.0, 10000)` と同じレンジ・分解能を周波数側から表現したもの（`frequency = np.linspace(1/8, 1, 10000)`）である。
+   - 各星クラスで archive/daijiro 版と同じ周期レンジを明示的に指定する: DS Tuc A は 1.0〜8.0 日、EK Dra は 1.5〜5.0 日、V889 Her は 0.3〜2.0 日。これにより、「どの範囲の自転周期を探索しているか」がコードから直接読み取れる。
+   - Lomb–Scargle の `method` はインスタンス属性 `rotation_ls_method` で切り替え可能とし、デフォルトは `"auto"`。TESS のような等間隔データでは `auto` が内部的に FFT ベースの fast 実装を選び、必要に応じて `"fast"` を明示指定できるようにする。
+   - `scripts/compare_rotation_lomb_methods.py` により、DS Tuc A / EK Dra / V889 Her の全 TESS FITS について `method="auto"` と `method="fast"` の結果を比較し、現状の設定では周期値が完全一致することを確認済み。今後、より疎・非等間隔なデータを扱う場合は、同スクリプトをベースに検証を拡張する。
+
 ### コーディング規約
 
 1. **Docstring**
