@@ -52,10 +52,18 @@ class FlareDetector_V889_Her(BaseFlareDetector):
         diff_time = np.diff(time_ext)
         diff_flux = np.diff(flux_ext)
 
-        flux_diff_lag2_appended = np.append(self.difference_at_lag(flux_ext, n=2), [0, 0])
-        flux_diff_lag3_appended = np.append(self.difference_at_lag(flux_ext, n=3), [0, 0, 0])
-        flux_diff_lag4_appended = np.append(self.difference_at_lag(flux_ext, n=4), [0, 0, 0, 0])
-        flux_diff_lag5_appended = np.append(self.difference_at_lag(flux_ext, n=5), [0, 0, 0, 0, 0])
+        flux_diff_lag2_appended = np.append(
+            self.difference_at_lag(flux_ext, n=2), [0, 0]
+        )
+        flux_diff_lag3_appended = np.append(
+            self.difference_at_lag(flux_ext, n=3), [0, 0, 0]
+        )
+        flux_diff_lag4_appended = np.append(
+            self.difference_at_lag(flux_ext, n=4), [0, 0, 0, 0]
+        )
+        flux_diff_lag5_appended = np.append(
+            self.difference_at_lag(flux_ext, n=5), [0, 0, 0, 0, 0]
+        )
 
         target_len = len(diff_flux)
         lag2 = flux_diff_lag2_appended[:target_len]
@@ -64,7 +72,14 @@ class FlareDetector_V889_Her(BaseFlareDetector):
         lag5 = flux_diff_lag5_appended[:target_len]
 
         flare_can_start_candidates = np.where(
-            ((diff_flux > 0.01) | (lag2 > 0.01) | (lag3 > 0.01) | (lag4 > 0.01) | (lag5 > 0.01)) & (diff_time[:target_len] < 0.005)
+            (
+                (diff_flux > 0.01)
+                | (lag2 > 0.01)
+                | (lag3 > 0.01)
+                | (lag4 > 0.01)
+                | (lag5 > 0.01)
+            )
+            & (diff_time[:target_len] < 0.005)
         )[0]
 
         before_low_flare_list = []
@@ -102,16 +117,24 @@ class FlareDetector_V889_Her(BaseFlareDetector):
                 flux_to_interpolate[mask] = spline_func(time_flare_intervals)
 
         self.flux_splined = flux_to_interpolate
-        self.filtered_flux = self.lowpass(time_ext, self.flux_splined, fc=self.f_cut_lowpass)
+        self.filtered_flux = self.lowpass(
+            time_ext, self.flux_splined, fc=self.f_cut_lowpass
+        )
         s1_flux = flux_ext - self.filtered_flux
 
         fac = 3
-        ss_flarecan = np.where((s1_flux <= flux_err_ext * fac) | (time_ext < time_ext[10]) | (time_ext > time_ext[-11]))[0]
+        ss_flarecan = np.where(
+            (s1_flux <= flux_err_ext * fac)
+            | (time_ext < time_ext[10])
+            | (time_ext > time_ext[-11])
+        )[0]
 
         if len(ss_flarecan) > 3:
             baseline_spline = interp1d(
                 time_ext[ss_flarecan],
-                self.lowpass(time_ext[ss_flarecan], flux_ext[ss_flarecan], fc=self.f_cut_spline),
+                self.lowpass(
+                    time_ext[ss_flarecan], flux_ext[ss_flarecan], fc=self.f_cut_spline
+                ),
                 kind="cubic",
                 bounds_error=False,
                 fill_value="extrapolate",

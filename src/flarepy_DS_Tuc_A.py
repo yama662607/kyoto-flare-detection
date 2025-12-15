@@ -106,7 +106,9 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
             print("Error: 参照強度がゼロです。")
             return np.array([])
 
-        star_intensity = main_intensity * R_primary**2 + companion_intensity * R_companion**2
+        star_intensity = (
+            main_intensity * R_primary**2 + companion_intensity * R_companion**2
+        )
         area_factor = np.pi * (star_intensity / ref_intensity)
         return sigma * (10000**4) * area_factor * dt * count
 
@@ -115,5 +117,10 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
         super().flux_diff(min_percent=min_flux, max_percent=max_flux)
         primary_area = (self.R_sunstar_ratio * 695510e3) ** 2
         companion_area = (0.864 * 695510e3) ** 2
-        area_scale = 2 * np.pi * (primary_area + companion_area) * (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4))
+        area_scale = (
+            2
+            * np.pi
+            * (primary_area + companion_area)
+            * (self.T_star**4 / (self.T_star**4 - (self.T_star - self.d_T_star) ** 4))
+        )
         self.starspot = area_scale * self.brightness_variation_amplitude
