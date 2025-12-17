@@ -63,13 +63,28 @@ data/
 ├── outputs/             # 生成されたグラフや結果の出力先
 ├── src/                 # ソースコード
 │   ├── __init__.py
-│   ├── archive/         # リファクタリング前の旧コード
 │   ├── base_flare_detector.py   # フレア検出の共通ロジックを実装した基底クラス
-│   ├── ds_tuc_a_detector.py     # DS Tuc Aに特化した派生クラス
-│   ├── ek_dra_detector.py       # EK Draに特化した派生クラス
-│   └── v889_her_detector.py     # V889 Herに特化した派生クラス
+│   ├── flarepy_DS_Tuc_A.py     # DS Tuc Aに特化した派生クラス
+│   ├── flarepy_EK_Dra.py       # EK Draに特化した派生クラス
+│   └── flarepy_V889_Her.py     # V889 Herに特化した派生クラス
+├── docs/                 # ドキュメント
+│   ├── method.md               # Methodセクション（基本日本語版）
+│   ├── method_detailed.md      # Methodセクション（詳細日本語版）
+│   ├── method_en.md            # Methodセクション（英語版）
+│   ├── method.tex              # Methodセクション（LaTeX版）
+│   └── ...                     # その他ドキュメント
+├── scripts/              # ユーティリティスクリプト
+│   ├── clear_notebook_outputs.py  # Notebook出力クリア
+│   ├── split_notebook_cells.py    # Notebookセル分割
+│   ├── profile_base_flare_detector.py  # プロファイル用
+│   └── verify_detector_state.py   # 状態検証用
+├── archive/              # アーカイブされた古いファイル
+│   ├── legacy/           # src/から移動した旧実装
+│   ├── daijiro/          # daijiro氏の分析ノートブックと実装
+│   └── hiroto/           # hiroto氏の実装
 ├── .gitignore           # Gitの追跡対象外ファイルを指定
 ├── pyproject.toml       # プロジェクトのメタデータと依存関係
+├── justfile             # タスクランナー設定
 └── uv.lock              # uv用の固定された依存関係ファイル
 ```
 
@@ -124,14 +139,14 @@ uv sync
 主な分析は `notebooks/` ディレクトリ内の Jupyter Notebook から行います。
 
 ```python
-from src.ds_tuc_a_detector import DSTucAFlareDetector
+from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
 # 解析したいFITSファイルのパス
 file_path = "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
 # インスタンスを作成し、データ処理を実行
 # process_data=True にすると、データの読み込みからフレア検出までの一連の処理が自動的に実行されます。
-detector = DSTucAFlareDetector(file=file_path, process_data=True)
+detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
 # 結果をプロット
 detector.plot_flare() # Plotlyによる光度曲線プロット

@@ -21,7 +21,6 @@ wheels/
 Thumbs.db
 
 # Data files
-TESS/src/archive/
 data/TESS/**/*.fits
 
 # Output and report files
