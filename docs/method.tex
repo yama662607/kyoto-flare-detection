@@ -1,0 +1,200 @@
+% Method section (LaTeX-ready) based on the current `src` implementation
+
+\subsection{Method (Implementation-Based)}
+
+\subsubsection{Overview (Analysis Pipeline)}
+
+We detect stellar flares from TESS light curves (FITS light curve; \texttt{\*_lc.fits}) and estimate flare energies, occurrence rates, stellar rotation periods, and spot-related proxies. The analysis follows the pipeline implemented in \texttt{BaseFlareDetector.process\_data()} in \texttt{src/base\_flare\_detector.py}.
+
+Primary implementation sources are:
+\begin{itemize}
+\item Common pipeline: \texttt{src/base\_flare\_detector.py} (\texttt{BaseFlareDetector})
+\item Star-specific overrides:
+  \begin{itemize}
+  \item \texttt{src/flarepy\_DS\_Tuc\_A.py} (\texttt{FlareDetector\_DS\_Tuc\_A})
+  \item \texttt{src/flarepy\_EK\_Dra.py} (\texttt{FlareDetector\_EK\_Dra})
+  \item \texttt{src/flarepy\_V889\_Her.py} (\texttt{FlareDetector\_V889\_Her})
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Processing order}
+
+\texttt{BaseFlareDetector.process\_data(ene\_thres\_low=None, ene\_thres\_high=None, skip\_remove=False)} executes the following steps:
+\begin{enumerate}
+\item \texttt{remove()} (may be overridden; skipped when \texttt{skip\_remove=True})
+\item \texttt{apply\_gap\_correction()} (gap correction and buffer extension)
+\item \texttt{detrend\_flux()} (low-frequency removal and baseline estimation)
+\item \texttt{reestimate\_errors()} (re-estimation of the photometric uncertainties)
+\item \texttt{flaredetect()} (primary detection, coarse segmentation, coarse integration)
+\item \texttt{flaredetect\_check()} (re-validation, refined segmentation, e-folding time, refined integration)
+\item \texttt{calculate\_precise\_obs\_time()} (effective observing time)
+\item \texttt{flare\_energy(energy\_threshold\_low, energy\_threshold\_high)} (event count and total energy within a specified energy range)
+\item \texttt{flux\_diff()} (rotational variability amplitude and spot proxy)
+\item \texttt{rotation\_period()} (rotation period via Lomb--Scargle)
+\end{enumerate}
+
+\subsubsection{Data and Normalization}
+
+\paragraph{Input data (TESS FITS light curve)}
+
+\texttt{BaseFlareDetector.load\_TESS\_data()} reads the input FITS file via \texttt{astropy.io.fits.open(..., memmap=True)} and uses the following columns from extension 1 (\texttt{hdulist[1].data}):
+\begin{itemize}
+\item Time: \texttt{time}
+\item Flux: \texttt{PDCSAP\_FLUX} by default (may switch to \texttt{SAP\_FLUX}; see below)
+\item Flux uncertainty: \texttt{PDCSAP\_FLUX\_ERR} or \texttt{SAP\_FLUX\_ERR}
+\end{itemize}
+Missing flux values are excluded using \texttt{\textasciitilde np.isnan(flux)}.
+
+\paragraph{Switching flux columns by sector threshold}
+
+The sector number is extracted from the filename \texttt{\*_lc.fits}. If and only if \texttt{sector\_threshold} is set (in a subclass) and the extracted sector number is larger than \texttt{sector\_threshold}, the pipeline switches to:
+\begin{itemize}
+\item \texttt{flux\_field = "SAP\_FLUX"}
+\item \texttt{flux\_err\_field = "SAP\_FLUX\_ERR"}
+\end{itemize}
+Otherwise it uses \texttt{PDCSAP\_FLUX} / \texttt{PDCSAP\_FLUX\_ERR}.
+
+\paragraph{Flux normalization}
+
+The loaded flux \texttt{pdcsap\_flux} and its uncertainty \texttt{pdcsap\_flux\_err} are normalized by a star-specific constant \texttt{flux\_mean}:
+\[
+\texttt{norm\_flux} = \frac{\texttt{pdcsap\_flux}}{\texttt{flux\_mean}},\qquad
+\texttt{norm\_flux\_err} = \frac{\texttt{pdcsap\_flux\_err}}{\texttt{flux\_mean}}.
+\]
+
+\subsubsection{Gap Correction and Buffer Extension}
+
+\paragraph{Gap correction}
+
+\texttt{BaseFlareDetector.apply\_gap\_correction()} computes \texttt{diff\_bjd = np.diff(bjd)} for \texttt{bjd = self.tessBJD} and identifies gaps where:
+\[
+\texttt{diff\_bjd} \ge \texttt{gap\_threshold}.
+\]
+For each gap index \texttt{idx}, the flux after the gap is shifted to enforce continuity:
+\[
+\texttt{flux[idx+1:]} \leftarrow \texttt{flux[idx+1:]} - (\texttt{flux[idx+1]} - \texttt{flux[idx]}).
+\]
+The default \texttt{gap\_threshold} is \texttt{0.1} but is overridden per target (Table~\ref{tab:starparams}).
+
+\paragraph{Buffer extension}
+
+A buffer of \texttt{buffer\_size} points is added to both ends of the flux series:
+\begin{itemize}
+\item \texttt{flux\_ext = [flux[0] repeated buffer\_size times] + flux + [flux[-1] repeated buffer\_size times]}
+\item \texttt{flux\_err\_ext = [0.0001 repeated buffer\_size times] + flux\_err + [0.0001 repeated buffer\_size times]}
+\end{itemize}
+Time stamps are extrapolated linearly using \(\texttt{dt\_min} = 2/(24\times 60)\) days (2 minutes) to build \texttt{bjd\_ext}, and the extended arrays are stored as \texttt{gtessBJD}, \texttt{gmPDCSAPflux}, and \texttt{gmPDCSAPfluxerr}.
+
+\subsubsection{Detrending}
+
+\paragraph{FFT-based low-pass filter}
+
+\texttt{BaseFlareDetector.lowpass(x, y, fc)} applies an FFT-based low-pass filter by zeroing Fourier components above the cutoff \texttt{fc} (effectively in units of day$^{-1}$ in the current implementation). The sampling interval is \(\texttt{dt} = 2/(24\times 60)\) days.
+
+\paragraph{Cubic-spline baseline}
+
+\texttt{BaseFlareDetector.detrend\_flux()} constructs a detrended series as follows:
+\begin{enumerate}
+\item Apply low-pass to the extended series:
+  \[\texttt{filtered\_flux} = \texttt{lowpass(time\_ext, flux\_ext, fc=f\_cut\_lowpass)}.\]
+\item Compute residuals:
+  \[\texttt{s1\_flux} = \texttt{flux\_ext} - \texttt{filtered\_flux}.\]
+\item Define baseline candidates (intended to exclude flare-like deviations):
+  \[\texttt{ss\_flarecan} = \texttt{where((s1\_flux <= flux\_err\_ext*fac) | (time\_ext < time\_ext[10]) | (time\_ext > time\_ext[-11]))},\]
+  with \texttt{fac = 3}.
+\item Fit a cubic spline baseline:
+  \[\texttt{baseline\_spline} = \texttt{interp1d(\dots, kind="cubic")} .\]
+\item Evaluate on \texttt{valid\_slice = slice(buffer\_size, buffer\_size + len(self.tessBJD))} and define:
+  \[\texttt{s2mPDCSAPflux} = \texttt{flux\_ext[valid\_slice]} - \texttt{flux\_spline}.\]
+\end{enumerate}
+The detrended series used for flare detection is \texttt{s2mPDCSAPflux}.
+
+\paragraph{Special detrending for V889 Her}
+
+\texttt{FlareDetector\_V889\_Her.detrend\_flux()} first masks flare-like intervals based on steep positive changes (including lagged differences for lags \(n=2..5\)) and interpolates over them using a cubic spline fitted to unmasked points, before applying the standard low-pass + spline baseline procedure.
+
+\subsubsection{Re-estimation of Uncertainties}
+
+\texttt{BaseFlareDetector.reestimate\_errors()} defines quiet samples by \texttt{quiet\_mask = (flux <= 0.005)} and, for each timestamp, estimates the local scatter within a \(\pm 0.5\) day window. The resulting uncertainties are scaled as:
+\[
+\texttt{err} \leftarrow \texttt{err} \times \frac{\mathrm{mean}(\texttt{mPDCSAPfluxerr})}{\texttt{err\_constant\_mean}}.
+\]
+
+\subsubsection{Flare Detection and Re-validation}
+
+\paragraph{Primary detection (approximately 5\,\(\sigma\))}
+
+In \texttt{BaseFlareDetector.flaredetect()}, candidate points are defined by:
+\[
+\texttt{oversigma\_idx} = \texttt{where(flux\_detrend >= err*5)}.
+\]
+Adjacent candidates (index difference of 1) are grouped; the first index in each group is used as a seed \texttt{ss\_detect}.
+
+\paragraph{Event interval (contiguous region above 1\,\(\sigma\))}
+
+Event intervals are defined by expanding around each seed along indices satisfying \texttt{flux\_detrend >= err}. Events too close to the boundaries are discarded, and events with a large nearby cadence gap are rejected if
+\[
+\max(a) \ge \left(\frac{2}{24\times 60}\right)\times 20,\
+\]
+where \texttt{a} is a local slice of \texttt{diff\_bjd}. This corresponds to excluding cases with a nearby gap of approximately \(\gtrsim 40\) minutes.
+
+The peak time \texttt{peaktime} is the time of maximum \texttt{flux\_detrend} within the event interval.
+
+\paragraph{Coarse and refined integration}
+
+A coarse integrated excess is computed as \texttt{count = sum(flux\_detrend[...])}. Then \texttt{flaredetect\_check()} redefines the event using a local linear baseline estimated from pre/post windows and computes a refined integrated excess \texttt{count\_new}.
+
+\paragraph{Acceptance criteria (refined)}
+
+An event is accepted if at least two samples in the refined interval satisfy:
+\[
+\texttt{flux\_diff} - 3\times\texttt{err} \ge 0.
+\]
+
+\paragraph{E-folding decay time}
+
+The e-folding decay time \texttt{edecay} is measured from the peak until \(\texttt{flux\_diff} < \texttt{peak\_flux}\,e^{-1}\).
+
+\subsubsection{Flare Energy Estimation (TESS Band)}
+
+The TESS response function is loaded from \texttt{data/tess-response-function-v1.0.csv}. Using the Planck function \texttt{planck}, response-weighted intensities are computed and the flare energy is estimated as:
+\[
+E = \sigma\,(10^4)^4\,A\,\Delta t\,\texttt{count},
+\]
+where \(\Delta t=120\) s and \(A\) is the effective projected area factor defined by the implementation.
+
+For DS Tuc A, \texttt{tess\_band\_energy()} is overridden to include a companion by using an area-weighted sum of intensities.
+
+\subsubsection{Effective Observing Time}
+
+\texttt{calculate\_precise\_obs\_time()} treats gaps as \texttt{diff\_bjd >= 0.2} days and computes:
+\[
+\texttt{precise\_obs\_time} = (\texttt{bjd[-1]} - \texttt{bjd[0]}) - \sum (\text{gap durations}).
+\]
+
+\subsubsection{Rotation Period Estimation (Lomb--Scargle)}
+
+\texttt{rotation\_period()} computes a Lomb--Scargle periodogram on \texttt{mPDCSAPflux} over a frequency grid corresponding to periods in \([\texttt{period\_min}, \texttt{period\_max}]\). The best period \texttt{per} is the maximum-power period, and \texttt{per\_err} is half the width of the region where the power exceeds half the maximum.
+
+\subsubsection{Star-specific parameters}
+
+\begin{table}[t]
+\centering
+\caption{Star-specific parameters hard-coded in the current \texttt{src/flarepy\_*.py} subclasses.}
+\label{tab:starparams}
+\begin{tabular}{lrrrrrrrrrrl}
+\hline
+Star & $R_{\star}/R_{\odot}$ & $T_{\star}$ & flux\_mean & err\_const & rot\_period & $P_{\min}$ & $P_{\max}$ & $f_{\mathrm{low}}$ & $f_{\mathrm{spline}}$ & sector\_thr & Notes\\
+\hline
+DS Tuc A & 0.87 & 5428 & 119633.9953 & 5.5059\times 10^{-4} & 0.3672 & 1.0 & 8.0 & 3 & 6 & 74 & transit masking; companion in energy and spot proxy\\
+EK Dra & 0.94 & 5700 & 249320.3537 & 4.1116\times 10^{-4} & 0.2095 & 1.5 & 5.0 & 3 & 6 & 74 & gap threshold override\\
+V889 Her & 1.00 & 6550 & 300710.6233 & 3.9696\times 10^{-4} & 0.4398 & 0.3 & 2.0 & 30 & 40 & 90 & custom detrending (mask + interpolation + baseline)\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Reproducibility notes}
+
+The codebase uses Python (\(\ge 3.13\)) with major dependencies including \texttt{astropy}, \texttt{numpy}, \texttt{scipy}, \texttt{matplotlib}, and \texttt{plotly} (see \texttt{pyproject.toml}). Typical usage is either \texttt{BaseFlareDetector(file=..., process\_data=True)} or \texttt{FlareDetector\_*(file=..., process\_data=True)}, which triggers \texttt{process\_data()} and runs the full pipeline.
+
+% End of LaTeX-ready Method section
