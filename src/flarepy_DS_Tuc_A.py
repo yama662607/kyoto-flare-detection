@@ -85,32 +85,41 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
         self.mPDCSAPfluxerr = afluxerr
 
     def tess_band_energy(self, count):
-        """companion を含めた TESS 帯のエネルギーを推定する。"""
-        try:
-            wave, resp = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",").T
-        except FileNotFoundError:
-            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+        """
+        DS Tuc A (主星) と伴星を含めた TESS 帯のエネルギーを推定する。
+        """
+        response = self._get_tess_response()
+        if response is None:
             return np.array([])
 
+        wave, resp, dw = response
         dt = 120.0
-        dw = np.hstack([np.diff(wave), 0])
         Rsun_cm = 695510e5
-        sigma = 5.67e-5
-        R_primary = Rsun_cm * self.R_sunstar_ratio
-        R_companion = Rsun_cm * 0.864
+        sigma_SB = 5.670374419e-5
 
-        main_intensity = np.sum(dw * self.planck(wave * 1e-9, self.T_star) * resp)
-        companion_intensity = np.sum(dw * self.planck(wave * 1e-9, 4700) * resp)
-        ref_intensity = np.sum(dw * self.planck(wave * 1e-9, 10000) * resp)
+        R_primary = Rsun_cm * self.R_sunstar_ratio  # 0.87 Rsun
+        R_companion = Rsun_cm * 0.864  # Rsun
+
+        # TESS帯域での各成分の強度積分
+        planck_star = self.planck(wave * 1e-9, self.T_star)
+        planck_companion = self.planck(wave * 1e-9, 4700)
+        planck_flare = self.planck(wave * 1e-9, 10000)
+
+        main_intensity = np.sum(dw * planck_star * resp)
+        companion_intensity = np.sum(dw * planck_companion * resp)
+        ref_intensity = np.sum(dw * planck_flare * resp)
+
         if ref_intensity == 0:
-            print("Error: 参照強度がゼロです。")
             return np.array([])
 
-        star_intensity = (
-            main_intensity * R_primary**2 + companion_intensity * R_companion**2
-        )
-        area_factor = np.pi * (star_intensity / ref_intensity)
-        return sigma * (10000**4) * area_factor * dt * count
+        # 恒星全体の強度（面積重み付き）
+        total_star_intensity = (main_intensity * R_primary**2 + companion_intensity * R_companion**2)
+
+        # A_flare = C_flare * pi * R_primary^2 * (L_total_star_TESS / L_primary_flare_TESS)
+        # ※フレアは主星で発生すると仮定
+        area_factor = np.pi * (total_star_intensity / ref_intensity)
+
+        return sigma_SB * (10000**4) * area_factor * dt * count
 
     def flux_diff(self, min_flux=0.02, max_flux=0.98):
         """主星＋伴星の面積を使ってスポット面積を更新する。"""
