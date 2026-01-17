@@ -1,0 +1,63 @@
+\subsection{Flare Detection}
+
+% (日本語) 我々は、自動パイプラインを用いて、2分間隔のTESS光度曲線からフレアを検出する。既定ではPDC-SAPフラックスを用い、セクション\ref{sec:tess-data}で述べたとおり後期セクターではSAPフラックスへ切り替える。各光度曲線は、星ごとの一定の平均フラックスで正規化する。
+We detect flares from the 2-min cadence TESS light curves using an automated pipeline. We use PDC-SAP fluxes by default and switch to SAP fluxes for later sectors as described in Section~\ref{sec:tess-data}. Each light curve is normalized by a star-dependent constant mean flux.
+
+% (日本語) まず、時間ギャップにまたがる段差状のオフセットを補正し、低周波変動（主として回転変調）を除去するためにデトレンドを適用する。基線は非フレアのケイデンスから推定して光度曲線から差し引く。次に、静穏ケイデンスの局所散布度から、各ケイデンスを中心とするスライディング窓（$\pm 0.5$~day）内で測光不確かさを再推定し、この不確かさ系列をフレア検出に用いる。
+We first correct step-like offsets across time gaps and apply detrending to remove low-frequency variability (primarily rotational modulation). The baseline is estimated from non-flaring cadences and subtracted from the light curve. We then re-estimate the photometric uncertainties from the local scatter of quiet cadences within a sliding window of $\pm 0.5$~day, and use this uncertainty series for flare detection. We compute the effective observing time by multiplying the number of flaring-searchable cadences by the integration time (2~min).
+
+% (日本語) 我々は、少なくとも2点連続するケイデンスが$5\sigma$を超えるものをフレア候補として同定する。各候補について、残差フラックスが$1\sigma$を超える連続区間をイベント区間として定義する。続いて、イベント前後の区間から推定した局所線形基線を用いて各イベントを再検証し、洗練後のイベント内で少なくとも2点のケイデンスが$3\sigma$を超えることを要求する。
+We identify flare candidates as sequences of at least two adjacent cadences above $5\sigma$. For each candidate, we define the event window as the contiguous interval where the residual flux exceeds $1\sigma$. We then re-validate each event using a local linear baseline estimated from pre- and post-event windows, and require at least two cadences above $3\sigma$ within the refined event.
+
+% (日本語) フレア検出パイプラインの主要パラメータを表\ref{tab:pipeline-params}に示す。
+% \begin{table}
+% \caption{Key parameters of the flare detection pipeline.}
+% \label{tab:pipeline-params}
+% \centering
+% \begin{tabular}{lccc}
+% \hline
+% Parameter & DS Tuc A & EK Dra & V889 Her \\
+% \hline
+% Flux product (late sectors) & SAP for sector $>74$ & SAP for sector $>74$ & SAP for sector $>90$ \\
+% Gap threshold for offset correction (day) & 0.05 & 0.2 & 0.004 \\
+% Low-pass cutoff $f_{\rm cut}$ (day$^{-1}$) & 3 & 3 & 30 \\
+% Spline cutoff $f_{\rm spline}$ (day$^{-1}$) & 6 & 6 & 40 \\
+% Rotation period search range (day) & 1.0--8.0 & 1.5--5.0 & 0.3--2.0 \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+\subsection{Flare Energy}
+
+% (日本語) フレアエネルギーは、装置の応答関数と黒体近似を用いてTESS帯域で推定する。我々はフレアの黒体温度を $T_{\rm flare}=10000$~K と固定する。正規化光度曲線における超過分の時間積分を、帯域積分した光度比と恒星半径を用いてエネルギー（erg）へ換算する。
+We estimate the flare energy in the TESS band using the instrument response function and a blackbody approximation. We assume a fixed flare blackbody temperature of $T_{\rm flare}=10000$~K. The time-integrated excess in the normalized light curve is converted to energy (erg) using the band-integrated luminosity ratio and the stellar radius.
+
+% [TODO] 本文ではフレア温度を $T_{\rm flare}=10000$~K に固定と仮定しているが、下の式には時間変化する $T_{\mathrm{BB}}(t)$ が残っている。表記を整合させるため、固定温度に簡約するか、仮定を明示して両者を整合させるかをチームで決める。
+
+\begin{eqnarray}
+ L'_{\mathrm{star}} = \int R_{\lambda}B_{\lambda(T_{\mathrm{eff}})}d\lambda \cdot \pi R_{\mathrm{star}}^2,
+ \label{eq:Lprime_star}
+\end{eqnarray}
+
+\begin{eqnarray}
+ L'_{\mathrm{flare}} = \int R_{\lambda}B_{\lambda(10000\mathrm{K})}d\lambda \cdot A_{\mathrm{flare}}, \ \mathrm{and}
+ \label{eq:Lprime_flare}
+\end{eqnarray}
+
+\begin{eqnarray}
+ C'_{\mathrm{flare}}(t) = \frac{L'_{\mathrm{flare}}(t)}{L'_{\mathrm{star}}},
+ \label{eq:Cprime_flare}
+\end{eqnarray}
+
+\begin{eqnarray}
+ A_{\mathrm{flare}}(t) = C'_{\mathrm{flare}}(t)\pi R_{\mathrm{star}}^2\frac{\int R_{\lambda}B_{\lambda(T_{\mathrm{eff}})}d\lambda}{\int R_{\lambda}B_{\lambda(10000\mathrm{K})}d\lambda}.
+\end{eqnarray}
+
+\begin{equation}
+L_{\rm flare} = \sigma_{\rm SB} T^4_{\rm flare} A_{\rm flare}
+\label{eq:L_flare}
+\end{equation}
+
+\begin{equation}
+E_{\rm flare} = \int_{\rm flare} L_{\rm flare}(t) dt
+\end{equation}
