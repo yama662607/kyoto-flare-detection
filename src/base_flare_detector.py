@@ -315,7 +315,7 @@ class BaseFlareDetector:
         detecttime = []
 
         i = 0
-        while i <= (len(oversigma_idx) - 3):
+        while i <= (len(oversigma_idx) - 2):
             if i >= (len(oversigma_idx) - 1):
                 break
             if (oversigma_idx[i + 1] - oversigma_idx[i]) != 1:
@@ -511,23 +511,29 @@ class BaseFlareDetector:
         return (2.0 * h * c**2) / ((wav**5) * (np.exp(h * c / (wav * k * T)) - 1.0))
 
     def tess_band_energy(self, count):
+        """
+        TESS帯域でのフレアエネルギー（erg）を推定する。
+        T_flare = 10000K の黒体近似を想定。
+        """
         response = self._get_tess_response()
         if response is None:
             return np.array([])
 
         wave, resp, dw = response
-        dt = 120.0
-        Rstar = 695510e5 * self.R_sunstar_ratio
-        sigma = 5.67e-5
+        dt = 120.0  # TESS 2-min cadence (seconds)
+        Rstar = 695510e5 * self.R_sunstar_ratio  # cm
+        sigma_SB = 5.670374419e-5  # erg cm^-2 s^-1 K^-4
 
-        star_intensity_ratio = self._get_star_intensity_ratio(
-            wave, resp, dw
-        )  # [perf] cached ratio keeps math identical but avoids recompute
+        star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)
         if star_intensity_ratio == 0:
             return np.array([])
 
+        # Eq. 11 in thesis: L_flare = sigma_SB * T_flare^4 * A_flare
+        # A_flare = C_flare * pi * R_star^2 * (L_star_TESS / L_flare_TESS)
+        # E_flare = sum(L_flare * dt) = sigma_SB * T_flare^4 * pi * R_star^2 * (L_star_TESS / L_flare_TESS) * dt * sum(C_flare)
+
         area_factor = (np.pi * Rstar**2) * star_intensity_ratio
-        return sigma * (10000**4) * area_factor * dt * count
+        return sigma_SB * (10000**4) * area_factor * dt * count
 
     @staticmethod
     def _get_tess_response():
@@ -561,11 +567,16 @@ class BaseFlareDetector:
         return star_intensity / _REF_INTENSITY
 
     def calculate_precise_obs_time(self):
-        bjd = self.tessBJD
-        diff_bjd = np.diff(bjd)
-        gap_indices = np.where(diff_bjd >= 0.2)[0]
-        gap_time = sum(bjd[idx + 1] - bjd[idx] for idx in gap_indices)
-        self.precise_obs_time = bjd[-1] - bjd[0] - gap_time
+        """
+        データ点数に基づく有効観測時間（日）を計算する。
+        2分間隔（120秒）のTESSデータを想定。
+        """
+        if self.tessBJD is not None:
+            # 2分 = 2 / (24 * 60) 日
+            cadence_day = 2 / (24 * 60)
+            self.precise_obs_time = len(self.tessBJD) * cadence_day
+        else:
+            self.precise_obs_time = 0.0
 
     def flare_energy(self, energy_threshold_low, energy_threshold_high):
         if self.energy is None or len(self.energy) == 0:
