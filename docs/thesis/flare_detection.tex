@@ -1,46 +1,169 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+\documentclass[]{pasj02}
+
+\usepackage[switch,mathlines]{lineno}
+\usepackage{comment}
+\usepackage{url}
+
+
+
+\jyear{2026}
+\Received{}
+\Accepted{}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{document}
+
+\title{Time-Resolved Connection between Starspots and Flares in Nearby Young Sun-like Stars Observed by TESS}
+
+
+
+\author{
+ Daijiro \textsc{Hitotsuyanagi},\altaffilmark{1}\altemailmark \email{hitotsuyanagi.daijiro.23f@st.kyoto-u.ac.jp}
+ Hiroto \textsc{Yamada},\altaffilmark{1}\altemailmark \email{yamada.hiroto.74h@st.kyoto-u.ac.jp}
+ Daisuke \textsc{Yamashiki},\altaffilmark{1}\altemailmark \email{yamashiki.daisuke.24f@st.kyoto-u.ac.jp}
+ Kazuma \textsc{Ishihara}\altaffilmark{1}\altemailmark \email{k.ishihara@kusastro.kyoto-u.ac.jp}
+ Yosuke \textsc{Yamashiki},\altaffilmark{2,3}\altemailmark \email{yamashiki.yosuke.3u@kyoto-u.ac.jp}
+ and
+ Kosuke \textsc{Namekata}\altaffilmark{4,5,6,7}\altemailmark\orcid{0000-0002-1297-9485} \email{namekata@kusastro.kyoto-uac.jp}
+}
+\altaffiltext{1}{Department of Physics, Faculty of Science, Kyoto University, Kitashirakawa-Oiwake-cho, Sakyo-ku, Kyoto 606-8502, Japan}
+\altaffiltext{2}{Graduate School of Advanced Integrated Studies in Human Survivability (GSAIS), Kyoto University, Yoshida-Nakaadachi-cho, Sakyo-ku, Kyoto 606-8306, Japan}
+\altaffiltext{3}{Unit of Synergetic Studies for Space, Kyoto University, Yoshida-Honmachi, Sakyo-ku, Kyoto 606-8501, Japan}
+\altaffiltext{4}{Heliophysics Science Division, NASA Goddard Space Flight Center, 8800 Greenbelt Road, Greenbelt, MD 20771, USA}
+\altaffiltext{5}{The Catholic University of America, 620 Michigan Avenue, N.E. Washington, DC 20064, USA}
+\altaffiltext{6}{The Hakubi Center for Advanced Research, Kyoto University, Yoshida-Honmachi, Sakyo-ku, Kyoto 606-8501, Japan}
+\altaffiltext{7}{Department of Physics, Kyoto University, Kitashirakawa-Oiwake-cho, Sakyo-ku, Kyoto, 606-8502, Japan}
+
+
+
+
+
+
+
+
+
+\KeyWords{stars: activity --- stars: flare --- stars: late-type --- stars: solar-type --- starspots --- Sun: flares --- sunspots}
+
+\maketitle
+
+\begin{abstract}
+Please read ``IMPORTANT NOTICE'' carefully before preparing a manuscript.
+
+\citet{Airapetian_2016} suggests ...., ... is suggested by \citet{Airapetian_2016}.
+
+Flare is caused by magnetic reconnection \citep{Airapetian_2016}.
+
+Flare is caused by magnetic reconnection \citep{Airapetian_2016,Namekata_2022a}.
+
+Flare is caused by magnetic reconnection (\cite{Airapetian_2016}; Namekata et al. 2022a)
+
+
+\end{abstract}
+
+\pagewiselinenumbers
+
+\section{Introduction}
+
+\noindent IMPORTANT NOTICE\\
+1. Manuscript for submission must be in the same format as a published papers. \\
+2. Line numbers should be added to the manuscript. \\
+3. Do NOT use ``\verb|\def|, \verb|\renewcommand|''.\\
+4. Do NOT redefine commands provided by pasj02.cls.
+
+
+\section{Data and Analysis}\label{sec:2}
+
+\subsection{Target Stars}
+
+\subsection{TESS Data}\label{sec:tess-data}
+
+TESS performs high-precision photometric monitoring with four wide-field cameras equipped with the TESS filter, which covers the optical band from 6000 to 10000 {\AA} \citep{2015JATIS...1a4003R}. Each observing sector spans approximately 27 days. The data used in this study were retrieved from the Mikulski Archive for Space Telescopes (MAST)\footnote{\url{https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html}}.
+
+TESS observed V889 Her and DS Tuc in four sectors each, and EK Dra in twelve sectors with the 2-minute short-cadence mode. EK Dra was not included in the target list for Sector 50 and was observed only in full-frame images; to maintain uniformity, we excluded this sector from our analysis. Although some sectors provide 20-second cadence data, we did not use them because the higher cadence increases photon noise, which can negatively affect flare detection.
+
+We primarily adopted the Presearch Data Conditioning Simple Aperture Photometry (PDC-SAP) light curves. However, beginning with Sector XX in 2024, the photometric scatter in the PDC-SAP data for EK Dra appears to have increased slightly. After comparing the Simple Aperture Photometry (SAP) and PDC-SAP products, we found that the SAP data remain sufficiently reliable for flare analysis, and therefore we used SAP light curves from 2024 onward.
+
 \subsection{Flare Detection}
 
-% (日本語) 我々は、自動パイプラインを用いて、2分間隔のTESS光度曲線からフレアを検出する。既定ではPDC-SAPフラックスを用い、セクション\ref{sec:tess-data}で述べたとおり後期セクターではSAPフラックスへ切り替える。各光度曲線は、星ごとの一定の平均フラックスで正規化する。
-We detect flares from the 2-min cadence TESS light curves using an automated pipeline. We use PDC-SAP fluxes by default and switch to SAP fluxes for later sectors as described in Section~\ref{sec:tess-data}. Each light curve is normalized by a star-dependent constant mean flux.
 
-% (日本語) まず、時間ギャップにまたがる段差状のオフセットを補正し、低周波変動（主として回転変調）を除去するためにデトレンドを適用する。基線は非フレアのケイデンスから推定して光度曲線から差し引く。次に、静穏ケイデンスの局所散布度から、各ケイデンスを中心とするスライディング窓（$\pm 0.5$~day）内で測光不確かさを再推定し、この不確かさ系列をフレア検出に用いる。
-We first correct step-like offsets across time gaps and apply detrending to remove low-frequency variability (primarily rotational modulation). The baseline is estimated from non-flaring cadences and subtracted from the light curve. We then re-estimate the photometric uncertainties from the local scatter of quiet cadences within a sliding window of $\pm 0.5$~day, and use this uncertainty series for flare detection. We compute the effective observing time by multiplying the number of flaring-searchable cadences by the integration time (2~min).
+We detect flares from the 2-min cadence TESS light curves using an automated pipeline.
+The analysis code is available here\footnote{\url{https://github.com/yama662607/kyoto-flare-detection}}.
+We use PDC-SAP fluxes by default and switch to SAP fluxes for later sectors as described in Section~\ref{sec:tess-data}. Each light curve is normalized by a star-dependent constant mean flux.
 
-% (日本語) 我々は、少なくとも2点連続するケイデンスが$5\sigma$を超えるものをフレア候補として同定する。各候補について、残差フラックスが$1\sigma$を超える連続区間をイベント区間として定義する。続いて、イベント前後の区間から推定した局所線形基線を用いて各イベントを再検証し、洗練後のイベント内で少なくとも2点のケイデンスが$3\sigma$を超えることを要求する。
+
+We first correct step-like offsets across time gaps and apply detrending to remove low-frequency variability (primarily rotational modulation). The baseline is estimated from non-flaring cadences and subtracted from the light curve. We then re-estimate the photometric uncertainties from the local scatter of quiet cadences within a sliding window of $\pm 0.5$~day, and use this uncertainty series for flare detection.
+
+
 We identify flare candidates as sequences of at least two adjacent cadences above $5\sigma$. For each candidate, we define the event window as the contiguous interval where the residual flux exceeds $1\sigma$. We then re-validate each event using a local linear baseline estimated from pre- and post-event windows, and require at least two cadences above $3\sigma$ within the refined event.
 
-% (日本語) フレア検出パイプラインの主要パラメータを表\ref{tab:pipeline-params}に示す。
-% \begin{table}
-% \caption{Key parameters of the flare detection pipeline.}
-% \label{tab:pipeline-params}
-% \centering
-% \begin{tabular}{lccc}
-% \hline
-% Parameter & DS Tuc A & EK Dra & V889 Her \\
-% \hline
-% Flux product (late sectors) & SAP for sector $>74$ & SAP for sector $>74$ & SAP for sector $>90$ \\
-% Gap threshold for offset correction (day) & 0.05 & 0.2 & 0.004 \\
-% Low-pass cutoff $f_{\rm cut}$ (day$^{-1}$) & 3 & 3 & 30 \\
-% Spline cutoff $f_{\rm spline}$ (day$^{-1}$) & 6 & 6 & 40 \\
-% Rotation period search range (day) & 1.0--8.0 & 1.5--5.0 & 0.3--2.0 \\
-% \hline
-% \end{tabular}
-% \end{table}
+
+
+It should be noted that DS Tuc is a binary system, where transits can lead to false flare detections.
+The light variations due to transits result in spikes in the detrended residual flux.
+Therefore, we manually removed the data during the times where transits are expected to occur.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \subsection{Flare Energy}
 
-% (日本語) フレアエネルギーは、装置の応答関数と黒体近似を用いてTESS帯域で推定する。我々はフレアの黒体温度を $T_{\rm flare}=10000$~K と固定する。正規化光度曲線における超過分の時間積分を、帯域積分した光度比と恒星半径を用いてエネルギー（erg）へ換算する。
+
 We estimate the flare energy in the TESS band using the instrument response function and a blackbody approximation. We assume a fixed flare blackbody temperature of $T_{\rm flare}=10000$~K. The time-integrated excess in the normalized light curve is converted to energy (erg) using the band-integrated luminosity ratio and the stellar radius.
 
-% [TODO] 本文ではフレア温度を $T_{\rm flare}=10000$~K に固定と仮定しているが、下の式には時間変化する $T_{\mathrm{BB}}(t)$ が残っている。表記を整合させるため、固定温度に簡約するか、仮定を明示して両者を整合させるかをチームで決める。
 
+\begin{comment}
 \begin{eqnarray}
  L'_{\mathrm{star}} = \int R_{\lambda}B_{\lambda(T_{\mathrm{eff}})}d\lambda \cdot \pi R_{\mathrm{star}}^2,
  \label{eq:Lprime_star}
 \end{eqnarray}
 
 \begin{eqnarray}
- L'_{\mathrm{flare}} = \int R_{\lambda}B_{\lambda(10000\mathrm{K})}d\lambda \cdot A_{\mathrm{flare}}, \ \mathrm{and}
+ L'_{\mathrm{flare}}(t) = \int R_{\lambda}B_{\lambda(T_{\mathrm{flare})}}d\lambda \cdot A_{\mathrm{flare}}(t), \ \mathrm{and}
  \label{eq:Lprime_flare}
 \end{eqnarray}
 
@@ -48,16 +171,484 @@ We estimate the flare energy in the TESS band using the instrument response func
  C'_{\mathrm{flare}}(t) = \frac{L'_{\mathrm{flare}}(t)}{L'_{\mathrm{star}}},
  \label{eq:Cprime_flare}
 \end{eqnarray}
+\end{comment}
 
+
+The area of the flare can be derived as
 \begin{eqnarray}
- A_{\mathrm{flare}}(t) = C'_{\mathrm{flare}}(t)\pi R_{\mathrm{star}}^2\frac{\int R_{\lambda}B_{\lambda(T_{\mathrm{eff}})}d\lambda}{\int R_{\lambda}B_{\lambda(10000\mathrm{K})}d\lambda}.
+ A_{\mathrm{flare}}(t) = C'_{\mathrm{flare}}(t)\pi R_{\mathrm{star}}^2\frac{\int R_{\lambda}B_{\lambda(T_{\mathrm{eff}})}d\lambda}{\int R_{\lambda}B_{\lambda(T_{\mathrm{flare}})}d\lambda},
 \end{eqnarray}
 
+where $C'_{\mathrm{flare}}(t)$ is the relative increase in TESS-band luminosity, $R_{\mathrm{star}}$ is the stellar radius,
+$R_{\lambda}$ is the TESS response function and $B_{\lambda}$ is the Planck function.
+
+The luminosity of the flare can be derived as
 \begin{equation}
-L_{\rm flare} = \sigma_{\rm SB} T^4_{\rm flare} A_{\rm flare}
+L_{\rm flare}(t) = \sigma_{\rm SB} T^4_{\rm flare} A_{\rm flare}(t),
 \label{eq:L_flare}
 \end{equation}
+where $\sigma_{\rm SB}$ is the Stefan Boltzman constant.
 
+Consequently, the total flare energy can be derived as
 \begin{equation}
 E_{\rm flare} = \int_{\rm flare} L_{\rm flare}(t) dt
 \end{equation}
+
+\subsection{Spot Area}
+
+
+We estimate the starspot area from the relative amplitude of rotational modulation, $\Delta F/F$, in the light curve.
+
+\begin{align}
+    A_\mathrm{spot} = \left( \dfrac{\Delta F}{F}\right) A_\mathrm{star}  \frac{T_\mathrm{star}^4}{T_\mathrm{star}^4-T_\mathrm{spot}^4}. \label{eq:A-Tspot}
+\end{align}
+
+
+We derived the spot temperature $T_{\rm spot}$ from the empirical equation using the stellar effective temperature $T_\mathrm{star}$:
+\begin{align}
+T_\mathrm{spot} = - 3.58\times10^{-5} T_\mathrm{star}^2 +0.751 {T_\mathrm{star}} + 808, \label{eq:Tspot-Tphot}
+\end{align}
+
+
+
+
+
+
+\subsection{Effective Observing Time}
+
+We compute the effective observing time by multiplying the total number of valid data points used for flare detection by the integration time. Since we use the 2-min cadence TESS light curves, the effective observing time is defined as the number of data points multiplied by 2 minutes.
+
+\subsection{Rotation Period}
+
+We estimate the stellar rotation period from the (non-detrended) normalized light curve using the Lomb--Scargle periodogram. We search over a star-dependent period range and adopt the period corresponding to the maximum power. The period uncertainty is estimated from the half-maximum width of the primary peak.
+
+
+\section{Result}\label{sec:3}
+
+\subsection{Detected Flares}\label{sssec:3-1}
+
+\begin{comment}
+
+
+Figure 1、2、3の上図は、それぞれV889 Her、DS Tuc、EK Draの光度曲線を表している。横軸が時刻、縦軸が正規化したFluxである。TESSの観測データには時々データが途切れている箇所が存在しているが、その箇所は直線で繋げている。また、自転による黒点の見え隠れにより、光度曲線に準周期的な変動が読み取れる。目で見てわかるように、ところどころFluxが跳ね上がっており、その時刻にフレアが発生していると考えられる。Figure 1、2、3の下図は、上図の光度曲線から準周期的な変動を除いたものである。下図中の赤いマークがその時刻でフレアを検出したことを表し、上図で目で確認できていたフレアが自動的に正確に検出されていることがわかる。
+
+\end{comment}
+
+The top panels of Figures~\ref{fig:lc-v889her}, \ref{fig:lc-dstuc}, and \ref{fig:lc-EKDra} show the light curves of V889 Her, DS Tuc, and EK Dra, respectively.
+The horizontal and vertical axes correspond to time and normalized flux.
+These light curves exhibit quasi-periodic variations due to the rotational modulation of starspots.
+Visual inspection also reveals sporadic spikes in flux, which are attributed to stellar flares.
+The bottom panels display the light curves after removing these quasi-periodic variations.
+The red markers in the bottom panels indicate the timings of detected flares, demonstrating that the flares identified visually in the top panels were successfully captured by the automated process.
+
+
+
+\begin{comment}
+
+Figure 4、5、6は、それぞれV889 Her、DS Tuc、EK DraのCumulative Flare Energy Distributionを表している。横軸がフレアのエネルギー、縦軸がCumulative numberである。各図において、それぞれのセクターにおいてのCumulative Flare Energy Distributionがplotされている。フレアのエネルギーが大きいほど、そのフレアが発生する頻度は下がっている。また、同じ恒星でも、セクターによって分布が異なっていることがわかる。ここで、フレアのエネルギーが5.00e33である部分に点線を引いているが、そのエネルギー以下のフレアはsaturationしているとして、それ以上のエネルギーをもつフレアの個数を、各セクターで起きたフレアの個数として数えている。Table 2に、各恒星の各セクターにおける、エネルギーが5.00e33以上のフレアの個数$N_{flare}$、フレアの頻度$Freq_{flare}$をまとめている。
+
+Figures 4, 5, and 6 present the cumulative flare energy distributions for V889 Her, DS Tuc, and EK Dra, respectively.
+The horizontal and vertical axes represent the flare energy and the cumulative number of flares.
+In each figure, the cumulative flare energy distributions are plotted for each observing sector.
+The plots show that the frequency of flare occurrence decreases as the flare energy increases.
+It is also evident that the distributions vary between sectors, even within the same star.
+The vertical dotted line indicates a flare energy of $5.00 \times 10^{33}$~erg.
+Assuming that the detection is saturated (or incomplete) below this energy, we calculated the number of flares for each sector by counting only the events with energies exceeding this threshold.
+Table 2 summarizes the number of flares, $N_{\rm flare}$, and the flare frequency, $Freq_{\rm flare}$, with energies above $5.00 \times 10^{33}$~erg for each sector of each star.
+
+\end{comment}
+
+
+
+
+
+
+\subsection{Relationship between Spot Area and Flare}\label{sssec:3-2}
+
+
+
+
+
+
+
+
+Figure~\ref{fig:spotarea-flarefreq} shows the relationship between the starspot area and the occurrence frequency of flares with energies larger than $5\times10^{33}$~erg, for each star and each TESS sector.
+The horizontal axis represents the starspot area, while the vertical axis denotes the flare occurrence frequency. The blue, black, and red symbols correspond to V889~Her, DS~Tuc, and EK~Dra, respectively. For all stars, a positive correlation between the starspot area and the flare frequency can be seen. We fitted the data for each star with a power-law function of the form $y = ax^{b}$. As a result, we obtained $a = 3.42 \times 10^{-1} \pm 2.58 \times 10^{-2}$ and $b = 0.76 \pm 0.15$ for V889~Her, $a = 1.05 \times 10^{-1} \pm 3.13 \times 10^{-2}$ and $b = 0.84 \pm 0.20$ for DS~Tuc, and $a = 1.96 \times 10^{-1} \pm 2.96 \times 10^{-3}$ and $b = 0.98 \pm 0.04$ for EK~Dra.
+We found that the power-law index $b$ is common  among the stars, while the distribution of flare occurrence frequency at a given starspot area differs from star to star.
+
+Figure~\ref{fig:spotarea-totalene} shows the relationship between the starspot area and the total energy of flares with energies larger than $5\times10^{33}$~erg, plotted in the same manner as in Figure~\ref{fig:spotarea-flarefreq}. For all stars, a positive correlation is observed, and the data were fitted with the same power-law function, $y = ax^{b}$. The best-fit parameters are $a = 2.13 \pm 0.18$  and $b = 1.12 \pm 0.16$ for V889~Her, $a = 0.30 \pm 0.08$  and $b = 1.42 \pm 0.19$ for DS~Tuc, and $a = 0.73 \pm 0.02 $ and $b = 0.99 \pm 0.09$ for EK~Dra.
+While the power-law index $b$ is almost common among the stars, the distribution of the total flare energy as a function of starspot area is also found to differ among the stars.
+
+Figure~\ref{fig:spotarea-maxene} shows the relationship between the starspot area and the maximum flare energy observed in each sector, plotted in the same manner as in Figure~\ref{fig:spotarea-flarefreq}. In contrast to Figures~\ref{fig:spotarea-flarefreq} and~\ref{fig:spotarea-totalene}, no clear correlation between the starspot area and the maximum flare energy is found for any of the stars.
+
+
+
+\subsection{Flare Frequency as a Function of Spot's Rotational Period: Case for EK Dra}
+
+\begin{comment}
+
+motivation: we expect solar-like spot distribution on stars: mid-latitude is flare/spot active.
+
+rotation period is related to latitude due to differential rotation -- latitude v.s spot area $\sim$ rotation period v.s. spot area. Maybe.
+
+Figure 10:
+
+error large, yokuwakaranai.
+
+possible: chuuidotai de spot large?
+
+\end{comment}
+
+
+
+
+
+On the present-day Sun, starspots are known to occur preferentially at mid-latitudes, while spots at high latitudes and near the equator tend to be rarer.
+As a result, solar flares are more frequently observed in the mid-latitude regions.
+
+However, we know little about whether similar behavior can be seen in other active stars.
+On the Sun, differential rotation has been well known, with the rotation period increasing toward higher latitudes. If a similar differential rotation profile applies to active stars, the relative latitudinal distribution of starspots can be inferred from variations in the measured rotation period.
+To investigate this possibility, we analyzed EK~Dra, for which long-term photometric data are available. We derived the rotation period for each observational sector and compared it with the corresponding starspot area, in order to examine which latitudinal regions preferentially host larger starspots.
+
+Figure~\ref{fig:rotper-spotarea} shows the starspot area as a function of the sector-by-sector rotation period. Although the uncertainties in the rotation period are large and prevent any definitive conclusion, the starspot area appears to be enhanced around intermediate values of the rotation period. This trend may indicate that, similar to the Sun, larger starspots on EK~Dra tend to emerge at mid-latitudes.
+
+
+
+\section{Discussion}\label{sec:4}
+
+
+
+
+
+
+
+
+We found in Figures 7 and 8 that the flare occurrence rate and the total flare energy shows a positive correlation with the spot area. This behavior closely resembles the relation observed between solar flares and sunspots, and strongly suggests that, also for young solar-type stars, superflares are produced by releasing magnetic energy stored in large starspot groups. It also implies that temporal variations in the spot area can be accompanied by large changes in the flare energy and occurrence rate.
+
+However, it is apparent from Figures 7 and 8 that the distributions differ from star to star. DS Tuc appears to show either a larger inferred spot area or a lower estimated flare frequency compared to EK Dra and V889 Her, while V889 Her seems to exhibit a slightly lower flare frequency than EK Dra. First, for DS Tuc, the light curve contains contributions from both DS Tuc A and DS Tuc B, and therefore the spot area inferred under the assumption of a single star may be overestimated. Second, the combined flux from the two components increases the observed mean brightness, so the relative brightening produced by low-energy flares becomes smaller than in single stars (e.g., EK Dra and V889 Her). This dilution can cause flare brightenings to be masked by noise, potentially leading to an underestimation of the flare occurrence rate. In addition, DS Tuc is located farther away than the other two targets (Table 1), resulting in a lower apparent brightness; consequently, photon-counting statistics and instrumental noise become relatively more significant. As a result, the detection efficiency for low-energy flares decreases, which may also cause the flare occurrence rate to be underestimated.
+
+Finally, we found no correlation between the spot area and the maximum flare energy. This can be interpreted as a consequence of the fact that light curves alone cannot distinguish whether the observed modulation is produced by a single very large spot group or by an ensemble of moderately sized spots, and thus do not directly provide the area of the largest spot group that could power the most energetic flares. Moreover, as shown in Figures. 4–6, the most energetic flares are rare and the number of such events is limited; therefore, the statistical uncertainty in this study is large, and stochastic effects (small-number statistics) cannot be fully excluded. These factors may contribute to the apparent lack of correlation between the spot area and the maximum flare energy, and longer-term monitoring observations may help to place stronger constraints on these possibilities.
+
+
+\section{Summary and Conclusion}
+
+
+
+
+
+\begin{figure*}
+ \begin{center}
+  \includegraphics[width=14cm]{figures/s0053_V889Her_lightcurve.pdf}
+ \end{center}
+\caption{TESS light curve of V889 Her. (Upper) The light curve normalized by TESS. (Lower) The detrened light curve. Red lines marks the timing of detected flares.
+}\label{fig:lc-v889her}
+\end{figure*}
+
+
+\begin{figure*}
+ \begin{center}
+  \includegraphics[width=14cm]{figures/s0001_DSTucA_lightcurve.pdf}
+ \end{center}
+\caption{The same as Figure \ref{fig:lc-v889her} but for DS Tuc.
+}\label{fig:lc-dstuc}
+\end{figure*}
+
+
+\begin{figure*}
+ \begin{center}
+  \includegraphics[width=14cm]{figures/s0014_lightcurve.pdf}
+ \end{center}
+\caption{The same as Figure \ref{fig:lc-v889her} but for EK Dra.
+}\label{fig:lc-EKDra}
+\end{figure*}
+
+
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/flare_cumenergy_V889Her.pdf}
+ \end{center}
+\caption{Cumulative flare energy distribution of V889 Her.
+}\label{fig:spotarea-flarefreq}
+\end{figure}
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/flare_cumenergy_DSTuc.pdf}
+ \end{center}
+\caption{Cumulative flare energy distribution of DS Tuc.
+}\label{fig:spotarea-flarefreq}
+\end{figure}
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/flare_cumenergy_EKDra.pdf}
+ \end{center}
+\caption{Cumulative flare energy distribution of EK Dra.
+}\label{fig:spotarea-flarefreq}
+\end{figure}
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/analysis_result_freq_plot.pdf}
+ \end{center}
+\caption{Relationship between starspot area and flare frequency ($>5\times10^{33}$ erg). $y = a x^b$, V889 Her: a = $3.42\times10^{-1} \pm2.58\times10^{-2}$, $b = 0.76\pm0.15$, DS Tuc: a = $1.05\times10^{-1} \pm 3.13\times10^{-2}$, b =$0.84\pm0.20$ , EK Dra: a = $1.96\times10^{-1}\pm2.96\times10^{-3}$, b = $0.98\pm0.04$
+}\label{fig:spotarea-flarefreq}
+\end{figure}
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/analysis_result_totalene_plot.pdf}
+ \end{center}
+\caption{Relationship between starspot area and total flare energy ($>5\times10^{33}$).$y = a x^b$, V889 Her: a = $2.13 \pm1.84\times10^{-1}$, $b = 1.12\pm0.16$, DS Tuc: a = $2.97\times10^{-1} \pm 8.42\times10^{-2}$, b =$1.42\pm0.19$ , EK Dra: a = $7.31\times10^{-1}\pm2.33\times10^{-2}$, b = $0.99\pm0.09$
+}\label{fig:spotarea-totalene}
+\end{figure}
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/analysis_result_maxene_plot.pdf}
+ \end{center}
+\caption{Relationship between starspot area and max flare energy
+}\label{fig:spotarea-maxene}
+\end{figure}
+
+
+
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{figures/period_vs_spotarea.pdf}
+ \end{center}
+\caption{Relationship between starspot area and flare frequency ($>5\times10^{33}$ erg).
+}\label{fig:rotper-spotarea}
+\end{figure}
+
+
+\begin{longtable}{lccc}
+  \caption{Stellar parameters.}\label{tab:targets} \\
+  \hline\noalign{\vskip3pt}
+  Parameters & V889 Her (TIC 471000657) & DS Tuc (TIC 410214986) & EK Dra (TIC 159613900) \\ [2pt]
+  \hline\noalign{\vskip3pt}
+\endfirsthead
+
+  \hline\noalign{\vskip3pt}
+  Parameters & V889 Her (TIC 471000657) & DS Tuc (TIC 410214986) & EK Dra (TIC 159613900) \\ [2pt]
+  \hline\noalign{\vskip3pt}
+\endhead
+
+  \hline\noalign{\vskip3pt}
+\endfoot
+
+  \hline\noalign{\vskip3pt}
+  \multicolumn{2}{@{}l@{}}{\hbox to0pt{\parbox{160mm}{\footnotesize
+  \hangindent6pt\noindent
+  \hbox to6pt{\hss}\unskip
+  $^{(V1)}$Table 2 of \cite{2003A&A...411..595S};
+  $^{(2)}$\cite{2020NatAs...4..650B};
+  $^{(E1)}$\cite{2017MNRAS.465.2076W};
+  $^{(4)}$\cite{Hog2000A&A...355L..27H};
+  $^{(5)}$\cite{2000A&A...355L..27H};
+  $^{(6)}$\cite{2018A&A...620A.162J};
+  $^{(7)}$\cite{2005A&A...435..215K};
+  $^{(V2)}$Gaia EDR3 \citep{2021A&A...649A...1G};
+  $^{(9)}$\cite{2018A&A...616A...2L}.\\
+  $^{\S}$Reported ages for EK Dra range from 30–125 Myr depending on the study.\\
+  $^{\dag}$For flare‐energy calculations we adopt $T_{\text{eff}}\!\approx\!5700$ K from \cite{2005A&A...435..215K} for consistency with previous work.\\
+  $^{\rm (D1)}$ \citet{2019ApJ...880L..17N}
+  $^{\rm (D2)}$ \citet{2015MNRAS.454..593B}
+  }\hss}}
+\endlastfoot
+
+Spectral Type              & G0V$^{({\rm V1})}$              &
+
+\textcolor{red}{G6V$\pm 1$/K3V$\pm 1$}$^{\rm (D1)}$
+& G1.5V$^{\rm(E1)}$ \\
+$V_{\rm mag}$              & $7.45\pm0.04^{\rm(V1)}$      &
+
+\textcolor{red}{$8.55\pm0.01/9.65\pm0.03$}$^{\rm (D1)}$
+& $7.60\pm0.01^{(5)}$ \\
+Age (Myr)                  & 30$^{\rm(V1)}$               & \textcolor{red}{$45\pm4$}$^{\rm (D2)}$
+& 50--125$^{\rm(E1)}$\footnotemark[$\S$] \\
+$T_{\text{eff}}$ (K)       & $5830\pm50^{\rm(V1)}$        &
+
+\textcolor{red}{$5430\pm80/4700\pm90$}$^{\rm (D1)}$
+& 5560--5750$^{(3,6,7)}$\footnotemark[$\dag$] \\
+Radius ($R_{\odot}$)       & $1.09\pm0.05^{\rm(V1)}$      & \textcolor{red}{$0.96\pm0.03$/$0.86\pm0.04$} $^{\rm (D1)}$     & $0.94\pm0.07^{(3)}$ \\
+Mass ($M_{\odot}$)         & $1.06\pm0.02^{\rm(V1)}$      &
+
+\textcolor{red}{$1.01\pm0.06/0.84\pm0.06$}$^{\rm (D1)}$
+& $0.95\pm0.04^{(3)}$ \\
+Distance (pc)              & $35.36\pm0.02^{\rm(V2)}$     & $44.78\pm0.03$
+
+& $34.40\pm0.03^{(8)}$ \\
+$P_{\text{rot}}$ (d)       & $1.3371\pm0.0002^{\rm(V1)}$  &
+
+\textcolor{red}{$2.85^{+0.04}_{-0.05}$/-}$^{\rm (D1)}$
+& $2.766\pm0.002^{(3)}$ \\
+$v\sin i$ (km s$^{-1}$)    & $39.0\pm0.5^{\rm(V1)}$       &
+
+\textcolor{red}{$17.8\pm0.2/14.4\pm0.3$}$^{\rm (D1)}$
+& $16.4\pm0.1^{(3)}$ \\
+
+Inclination (deg)          & $\approx55^{\rm(V1)}$        &
+
+\textcolor{red}{$>82^{\circ}/-$}$^{\rm (D1)}$
+& $60\pm5^{(3)}$ \\
+Binarity                   & single$^{\rm(V1)}$           & binary/exoplanet           & low-mass companion$^{(3)}$ \\
+\end{longtable}
+
+
+
+\begin{table*}
+  \tbl{First tabular.\footnotemark[$*$] }{
+  \begin{tabular}{cccccc}
+      \hline
+      Name & Sect. & N$_{\rm flare}$ & Freq$_{\rm flare}$ & $A_{\rm spot}$ & $P_{\rm rot}$  \\
+       &  & ($>5\times10^{33}$ erg) & [d$^{-1}$] & [$10^{21}$ cm$^{2}$] & [d]  \\
+      \hline
+      V889 Her & 26 & 29 & ddd & & \\
+       & 40 & 18 & hhh & &  \\
+       & 53 & 17 & \\
+       & 80 & 10 & \\
+      DS Tuc & 1 & 10 & ddd & & \\
+       & 27 & 13 & hhh & &  \\
+       & 28 & 12 &\\
+       & 67 & 8 &\\
+       & 68 & 11 &....\\
+      EK Dra & 14 & 18 & ddd & & \\
+       & 15 & 19 & hhh & &  \\
+       & 16 & 11 &\\
+       & 21 & 22 &\\
+       & 22 & 11 &\\
+       & 23 & 10 &\\
+       & 41 & 15 &\\
+       & 48 & 13 &\\
+       & 49 & 11 &\\
+       & 75 & 10 &\\
+       & 76 & 15 &\\
+       & 77 & 9  &\\
+      \hline
+    \end{tabular}}\label{tab:flareparam}
+\begin{tabnote}
+\footnotemark[$*$] Brief explanation of this table.  \\
+\footnotemark[$\dag$] Explanation of value 3.
+
+
+
+
+
+
+\end{tabnote}
+\end{table*}
+
+
+
+
+
+\begin{comment}
+\section*{Supplementary data}
+The following supplementary data is available at PASJ online.
+E-table 1
+\end{comment}
+
+\begin{ack}
+This work was supported by JSPS (Japan Society for the Promotion of Science) KAKENHI Grant Numbers 21J00316, 25K01041, 24H00248, and 24K00680 (K.N.).
+This work was supported by the Operation Management Laboratory (OML) of the National Institutes of Natural Sciences (NINS), Japan (K.N.).
+This paper includes data collected with the TESS mission, obtained from the MAST data archive at the Space Telescope Science Institute (STScI). Funding for the TESS mission is provided by the NASA Explorer Program. STScI is operated by the Association of Universities for Research in Astronomy, Inc., under NASA contract NAS 5-26555.
+Some of the data presented in this paper were obtained from the Mikulski Archive for Space Telescopes (MAST) at the Space Telescope Science Institute.
+The authors acknowledge ideas from the participants in the workshop ``Blazing Paths to Observing Stellar and Exoplanet Particle Environments" organized by the W.M. Keck Institute for Space Studies.
+The authors also would like to acknowledge the the relevant discussions in the International Space Science Institute (ISSI)
+Workshop ``Stellar Magnetism and its Impact on (Exo)Planets (\url{https://workshops.issibern.ch/stellar-magnetism/})".
+\end{ack}
+
+\begin{comment}
+\section*{Funding}
+ This research was supported by ...
+
+\section*{Data availability}
+ The data underlying this article are available ...
+
+
+
+
+\appendix
+\section*{Case of single paragraph}
+ No section number is necessary. Add ``*'' after \verb/\section/.
+
+
+\section{Case of two or more paragraphs}
+
+ Text of appendix
+
+\section{Case of two or more paragraphs}
+
+ Text of appendix
+
+
+
+
+
+\end{comment}
+
+
+
+
+
+
+
+
+
+
+\begin{thebibliography}{}
+\bibitem[Airapetian et al.(2016)]{Airapetian_2016} Airapetian, V. S., Glocer, A., Gronoff, G., et al. 2016, Nat. Geosci., 9, 452
+
+\bibitem[Airapetian et al.(2020)]{Airapetian_2020}Airapetian, V. S., Barnes, R., Cohen, O., et al. 2020, IJAsB, 19, 136
+
+\bibitem[Namekata et al.(2022a)]{Namekata_2022a} Namekata, K., Maehara, H., Honda, S., et al. 2022a, NatAs, 6, 241
+
+\bibitem[Namekata et al.(2022b)]{Namekata_2022b} Namekata, K., Maehara, H., Honda, S., et al. 2022b, arXiv:2211.05506.
+
+\bibitem[Newton et al.(2019)]{2019ApJ...880L..17N} Newton, E.~R., Mann, A.~W., Tofflemire, B.~M., et al.\ 2019, \apjl, 880, 1, L17. doi:10.3847/2041-8213/ab2988
+
+\bibitem[Bell et al.(2015)]{2015MNRAS.454..593B} Bell, C.~P.~M., Mamajek, E.~E., \& Naylor, T.\ 2015, \mnras, 454, 1, 593. doi:10.1093/mnras/stv1981
+
+\bibitem[Waite et al.(2017)]{2017MNRAS.465.2076W} Waite, I.~A., Marsden, S.~C., Carter, B.~D., et al.\ 2017, \mnras, 465, 2, 2076. doi:10.1093/mnras/stw2731
+
+\bibitem[Strassmeier et al.(2003)]{2003A&A...411..595S} Strassmeier, K.~G., Pichler, T., Weber, M., et al.\ 2003, \aap, 411, 595. doi:10.1051/0004-6361:20031538
+
+
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+=== Frequently used abbreviation of journal names ===
+\aj         AJ
+\araa       ARA\&A
+\apj        ApJ
+\apjl       ApJL
+\apjs       ApJS
+\apss       Ap\&SS
+\aap        A\&A
+\aapr       A\&AR
+\aaps       A\&AS
+\baas       BAAS
+\icarus     ICARUS
+\mnras      MNRAS
+\prd        Phys.\ Rev.\ D
+\prl        Phys.\ Rev.\ Lett.
+\pasp       PASP
+\pasj       PASJ
+\solphys    Sol.\ Phys.
+\ssr        Space\ Sci.\ Rev.
+\nat        Nature
+\iaucirc    IAU\ Circ.
+\gca        Geochim.\ Cosmochim.\ Acta
+\jgr        J.\ Geophys.\ Res.
+\nphysa     Nucl.\ Phys.\ A
+\procspie   Proc.\ SPIE
+\aip        AIP Conf.\ Proc.
+\asp        ASP Conf.\ Ser.
+=====================================================
