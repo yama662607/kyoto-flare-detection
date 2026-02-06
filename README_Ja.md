@@ -148,7 +148,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
 # 解析したいFITSファイルのパス
-file_path = "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
+file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
 # インスタンスを作成し、データ処理を実行
 # process_data=True にすると、データの読み込みからフレア検出までの一連の処理が自動的に実行されます。

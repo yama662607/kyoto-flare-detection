@@ -84,7 +84,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
-file_path = "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
+file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
 detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
