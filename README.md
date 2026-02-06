@@ -139,3 +139,6 @@ Required to run various project commands (build, check, analysis tasks, etc.).
 
 > [!TIP]
 > After installation, restart your terminal and verify that `just --version` and `uv --version` work correctly.
+
+> [!NOTE]
+> **Windows Compatibility:** This project uses `Pathlib` for all file path operations, ensuring compatibility across macOS, Linux, and Windows. When using `just`, we recommend using a shell that supports standard commands (like Git Bash) for the best experience with the `justfile`'s utility tasks.
