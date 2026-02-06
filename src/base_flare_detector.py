@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from astropy.timeseries import LombScargle
 from plotly.subplots import make_subplots
 from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit
 
 
 def _ensure_native(array, dtype=None):
@@ -72,6 +73,7 @@ class BaseFlareDetector:
         ene_thres_low=5e33,
         ene_thres_high=2e40,
         sector_threshold=None,
+        use_sector_mean=False,
         process_data=False,
         run_process_data_2=False,
     ):
@@ -85,6 +87,7 @@ class BaseFlareDetector:
         self.rotation_period_max = rotation_period_max
         self.rotation_n_points = rotation_n_points
         self.sector_threshold = sector_threshold
+        self.use_sector_mean = use_sector_mean
         self.d_T_star = 3.58e-5 * self.T_star**2 + 0.249 * self.T_star - 808
         self.buffer_size = buffer_size
         self.f_cut_lowpass = f_cut_lowpass
@@ -180,8 +183,14 @@ class BaseFlareDetector:
             data.field(flux_err_field)[mask], dtype=np.float64
         )
 
-        norm_flux = pdcsap_flux / self.flux_mean
-        norm_flux_err = pdcsap_flux_err / self.flux_mean
+        # 正規化: use_sector_meanがTrueの場合は各セクターの平均値を使用
+        if self.use_sector_mean:
+            sector_mean = np.mean(pdcsap_flux)
+            norm_flux = pdcsap_flux / sector_mean
+            norm_flux_err = pdcsap_flux_err / sector_mean
+        else:
+            norm_flux = pdcsap_flux / self.flux_mean
+            norm_flux_err = pdcsap_flux_err / self.flux_mean
 
         self.atessBJD = bjd
         self.amPDCSAPflux = norm_flux
@@ -632,7 +641,30 @@ class BaseFlareDetector:
 
     def rotation_period(
         self,
-    ):  # [perf] regular frequency grid enables LombScargle fast solver
+        use_gaussian_fit: bool = True,
+        show_plot: bool = False,
+        w_min: float = 0.010,
+        w_max: float = 0.050,
+        w_step: float = 0.001,
+        main_window: float = 0.02,
+        frac_edge: float = 0.13,
+    ):
+        """
+        Lomb-Scargleペリオドグラムから自転周期を推定するメソッド。
+
+        Parameters
+        ----------
+        use_gaussian_fit : bool, optional
+            Trueの場合、ガウスフィッティングによる誤差計算を行う。デフォルトはTrue。
+        show_plot : bool, optional
+            Trueの場合、プロットを自動表示（legacy互換）。デフォルトはFalse。
+        w_min, w_max, w_step : float, optional
+            ガウスフィッティングのウィンドウスイープパラメータ
+        main_window : float, optional
+            メインのフィッティングウィンドウ半幅
+        frac_edge : float, optional
+            フィット窓の端でのパワー閾値（ピークの何割以下まで落ちているか）
+        """
         frequency, periods = make_rotation_frequency_grid(
             period_min=self.rotation_period_min,
             period_max=self.rotation_period_max,
@@ -641,11 +673,249 @@ class BaseFlareDetector:
         lomb = LombScargle(self.tessBJD - self.tessBJD[0], self.mPDCSAPflux)
         method = getattr(self, "rotation_ls_method", "auto")
         self.power = lomb.power(frequency, method=method, assume_regular_frequency=True)
+        self.frequency = frequency
+
         idx_max = int(np.argmax(self.power))
-        self.per = periods[idx_max]
-        half_max_power = np.max(self.power) / 2
-        aa = np.where(self.power > half_max_power)[0]
-        self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
+        f0_guess = float(frequency[idx_max])
+
+        if not use_gaussian_fit:
+            # 従来のFWHMベースの誤差推定
+            self.per = periods[idx_max]
+            half_max_power = np.max(self.power) / 2
+            aa = np.where(self.power > half_max_power)[0]
+            self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
+            self.per_err_minus = self.per_err
+            self.per_err_plus = self.per_err
+            return
+
+        # ガウスフィッティングによる誤差計算
+        def gauss_c0(f, A, f0, sigma):
+            """ベースライン0のガウス関数"""
+            return A * np.exp(-0.5 * ((f - f0) / sigma) ** 2)
+
+        def fit_gaussian_peak(freq, power, f0_guess, window, frac_edge=0.05):
+            """ピーク周辺でガウスフィットを行う"""
+            m = (freq > f0_guess - window) & (freq < f0_guess + window)
+            f_fit = freq[m]
+            p_fit = power[m]
+            if f_fit.size < 30:
+                return None
+
+            pmax = float(np.max(p_fit))
+            if pmax <= 0:
+                return None
+            # 端が十分落ちていない窓は捨てる
+            if (p_fit[0] > frac_edge * pmax) or (p_fit[-1] > frac_edge * pmax):
+                return None
+
+            A_guess = pmax
+            sigma_guess = (f_fit.max() - f_fit.min()) / 6.0
+            p0 = [A_guess, f0_guess, sigma_guess]
+
+            try:
+                popt, pcov = curve_fit(
+                    gauss_c0, f_fit, p_fit, p0=p0, maxfev=200000,
+                    bounds=([0.0, f0_guess - window, 1e-8],
+                            [np.inf, f0_guess + window, window])
+                )
+                perr = np.sqrt(np.diag(pcov))
+                resid = p_fit - gauss_c0(f_fit, *popt)
+                resid_rms = np.sqrt(np.mean(resid**2))
+
+                return {
+                    "window": window,
+                    "f_fit": f_fit,
+                    "p_fit": p_fit,
+                    "popt": popt,
+                    "perr": perr,
+                    "resid": resid,
+                    "resid_rms": resid_rms,
+                }
+            except Exception:
+                return None
+
+        # ウィンドウスイープ
+        windows = np.arange(w_min, w_max + 1e-12, w_step)
+        sigma_list = np.full_like(windows, np.nan, dtype=float)
+        results = {}
+
+        for i, w in enumerate(windows):
+            out = fit_gaussian_peak(frequency, self.power, f0_guess, float(w), frac_edge=frac_edge)
+            if out is None:
+                continue
+            A, f0, sigma_f = out["popt"]
+            if (sigma_f <= 0) or (not np.isfinite(sigma_f)):
+                continue
+            sigma_list[i] = sigma_f
+            results[float(w)] = out
+
+        # main_windowを成功しているところに合わせる
+        main_window = float(np.round(main_window / w_step) * w_step)
+        if main_window not in results:
+            ok = np.array(sorted(results.keys()))
+            if ok.size == 0:
+                # フォールバック: 従来のFWHMベースの誤差推定
+                self.per = periods[idx_max]
+                half_max_power = np.max(self.power) / 2
+                aa = np.where(self.power > half_max_power)[0]
+                self.per_err = abs(periods[aa[-1]] - periods[aa[0]]) / 2
+                self.per_err_minus = self.per_err
+                self.per_err_plus = self.per_err
+                return
+            main_window = float(ok[np.argmin(np.abs(ok - main_window))])
+
+        main = results[main_window]
+        A_fit, f0_fit, sigma_f_fit = main["popt"]
+
+        # 周期と1σ誤差を計算
+        self.per = 1.0 / f0_fit
+        P0 = self.per
+        P_low = 1.0 / (f0_fit + sigma_f_fit)   # f↑ -> P↓
+        P_high = 1.0 / (f0_fit - sigma_f_fit)  # f↓ -> P↑
+
+        self.per_err_minus = P0 - P_low
+        self.per_err_plus = P_high - P0
+        self.per_err = 0.5 * (self.per_err_minus + self.per_err_plus)
+
+        # 診断用属性を保存
+        self.f0_fit = f0_fit
+        self.sigma_f = sigma_f_fit
+        self.main_window = main_window
+        self.sigma_list = sigma_list
+        self.windows = windows
+        self._gaussian_fit_results = results
+        self._gaussian_fit_main = main
+
+        # legacy互換: 自動プロット
+        if show_plot:
+            self.plot_power_spectrum()
+            self.plot_rotation_period()
+
+    def plot_power_spectrum(self, save_path: str | None = None, dpi: int = 300):
+        """
+        Lomb-Scargleパワースペクトル全体図を表示する。
+
+        Parameters
+        ----------
+        save_path : str, optional
+            保存先パス。Noneの場合は保存せず表示のみ
+        dpi : int
+            解像度（デフォルト300）
+        """
+        if not hasattr(self, "frequency") or self.frequency is None:
+            print("rotation_period()を先に呼び出してください。")
+            return
+
+        # 論文品質の設定
+        plt.rcParams["xtick.major.width"] = 1.5
+        plt.rcParams["ytick.major.width"] = 1.5
+        plt.rcParams["axes.linewidth"] = 1.5
+        plt.rcParams["xtick.major.size"] = 7
+        plt.rcParams["ytick.major.size"] = 7
+        plt.rcParams["xtick.direction"] = "in"
+        plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["font.family"] = "Arial"
+        plt.rcParams["pdf.fonttype"] = 42
+        plt.rcParams["ps.fonttype"] = 42
+
+        plt.figure(figsize=(9, 3))
+        plt.plot(self.frequency, self.power, lw=1)
+
+        # ピーク位置に垂直線
+        if hasattr(self, "f0_fit"):
+            plt.axvline(self.f0_fit, ls="--", color="red", label=f"f0 = {self.f0_fit:.5f}")
+            plt.legend(loc="upper right")
+
+        plt.xlabel("Frequency [1/day]")
+        plt.ylabel("LS Power")
+        plt.title(f"Lomb-Scargle Power Spectrum ({self.data_name})")
+        plt.tight_layout()
+
+        if save_path is not None:
+            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+            print(f"保存しました: {save_path}")
+
+        plt.show()
+
+    def plot_rotation_period(self, save_path: str | None = None, dpi: int = 300):
+        """
+        自転周期推定の診断プロット（3段）を表示する。
+
+        Parameters
+        ----------
+        save_path : str, optional
+            保存先パス。Noneの場合は保存せず表示のみ
+        dpi : int
+            解像度（デフォルト300）
+        """
+        if not hasattr(self, "_gaussian_fit_main") or self._gaussian_fit_main is None:
+            print("ガウスフィッティングが実行されていません。rotation_period(use_gaussian_fit=True)を先に呼び出してください。")
+            return
+
+        main = self._gaussian_fit_main
+        freq = self.frequency
+        power = self.power
+
+        # 論文品質の設定
+        plt.rcParams["xtick.major.width"] = 1.5
+        plt.rcParams["ytick.major.width"] = 1.5
+        plt.rcParams["axes.linewidth"] = 1.5
+        plt.rcParams["xtick.major.size"] = 7
+        plt.rcParams["ytick.major.size"] = 7
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams["xtick.direction"] = "in"
+        plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["font.family"] = "Arial"
+        plt.rcParams["pdf.fonttype"] = 42
+        plt.rcParams["ps.fonttype"] = 42
+
+        fig, ax = plt.subplots(3, 1, figsize=(10, 10))
+
+        # ガウス関数
+        def gauss_c0(f, A, f0, sigma):
+            return A * np.exp(-0.5 * ((f - f0) / sigma) ** 2)
+
+        A_fit, f0_fit, sigma_f_fit = main["popt"]
+
+        # 1) パワースペクトル + ガウスフィット
+        ax[0].plot(freq, power, lw=1, label="LS power")
+        ax[0].plot(main["f_fit"], main["p_fit"], ".", ms=3,
+                   label=f"Fit region (±{self.main_window:.3f})")
+        ax[0].axvline(f0_fit, ls="--", color="red", label=f"f0 = {f0_fit:.5f}")
+        ax[0].axvline(f0_fit - sigma_f_fit, ls=":", color="orange")
+        ax[0].axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label=f"f0±σ_f")
+        # フィット曲線
+        f_dense = np.linspace(f0_fit - 2*sigma_f_fit, f0_fit + 2*sigma_f_fit, 200)
+        ax[0].plot(f_dense, gauss_c0(f_dense, A_fit, f0_fit, sigma_f_fit),
+                   "r-", lw=2, label="Gaussian fit")
+        ax[0].set_xlabel("Frequency [1/day]")
+        ax[0].set_ylabel("LS Power")
+        ax[0].set_title(f"Rotation Period: P = {self.per:.4f} (+{self.per_err_plus:.4f} / -{self.per_err_minus:.4f}) day")
+        ax[0].legend(loc="upper right", fontsize=9)
+
+        # 2) 残差
+        ax[1].plot(main["f_fit"], main["resid"], lw=1, color="blue")
+        ax[1].axhline(0, ls="--", color="gray")
+        ax[1].set_xlabel("Frequency [1/day]")
+        ax[1].set_ylabel("Residual")
+        ax[1].set_title(f"Residuals (window=±{self.main_window:.3f}); RMS={main['resid_rms']:.5f}")
+
+        # 3) σ_f vs window
+        ax[2].plot(self.windows, self.sigma_list, lw=1, marker="o", ms=3, label="σ_f")
+        ax[2].axvline(self.main_window, ls="--", color="red", label=f"Main window = {self.main_window:.3f}")
+        ax[2].set_xlabel("Window half-width")
+        ax[2].set_ylabel("σ_f")
+        ax[2].set_title("σ_f vs Window (stability check)")
+        ax[2].legend(loc="upper right", fontsize=9)
+
+        plt.tight_layout()
+
+        if save_path is not None:
+            plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+            print(f"保存しました: {save_path}")
+
+        plt.show()
 
     def remove(self):
         # This method is intended to be overridden by subclasses for specific data removal.
@@ -727,6 +997,86 @@ class BaseFlareDetector:
             BaseFlareDetector.array_per_err = np.append(
                 BaseFlareDetector.array_per_err, self.per_err
             )
+
+    def plt_flare(self, title: str | None = None, save_path: str | None = None):
+        """
+        データ全体の光度曲線をmatplotlibでプロット（legacy互換）。
+
+        Parameters
+        ----------
+        title : str, optional
+            グラフタイトル。Noneの場合はdata_nameを使用
+        save_path : str, optional
+            保存先パス。Noneの場合は保存せず表示のみ
+        """
+        if self.tessBJD is None:
+            return
+
+        # legacy完全互換のスタイル設定
+        plt.rcParams["xtick.major.width"] = 1.5
+        plt.rcParams["ytick.major.width"] = 1.5
+        plt.rcParams["axes.linewidth"] = 1.5
+        plt.rcParams["xtick.major.size"] = 7
+        plt.rcParams["ytick.major.size"] = 7
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams["xtick.minor.width"] = 1.5
+        plt.rcParams["ytick.minor.width"] = 1.5
+        plt.rcParams["xtick.minor.size"] = 4
+        plt.rcParams["ytick.minor.size"] = 4
+        plt.rcParams["xtick.direction"] = "in"
+        plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["font.family"] = "Arial"
+        plt.rcParams["pdf.fonttype"] = 42
+        plt.rcParams["ps.fonttype"] = 42
+
+        # legacyと同じfigsize
+        fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 7))
+        fig.subplots_adjust(hspace=0.1)
+
+        # 1つ目のサブプロット: 生の光度曲線
+        axs[0].plot(
+            self.tessBJD, self.mPDCSAPflux,
+            color="black", linestyle="-", label="Normalized Flux", lw=0.5
+        )
+        axs[0].set_ylabel("Normalized Flux", fontsize=17)
+        axs[0].tick_params(labelsize=13)
+
+        # 2つ目のサブプロット: デトレンド後
+        if self.s2mPDCSAPflux is not None:
+            axs[1].plot(
+                self.tessBJD, self.s2mPDCSAPflux,
+                color="black", linestyle="-", lw=0.5
+            )
+
+            # フレアのピーク位置を線で示す
+            if self.peaktime is not None:
+                for peak in self.peaktime:
+                    axs[1].axvline(
+                        x=peak, ymin=0.8, ymax=0.85,
+                        color="red", linestyle="-", linewidth=1.5
+                    )
+
+            axs[1].set_xlabel(f"Time (day) (BJD - {self.time_offset})", fontsize=17)
+            axs[1].set_ylabel("Detrended Flux", fontsize=17)
+            axs[1].tick_params(labelsize=13)
+            plt.tick_params(labelsize=13)
+            leg = plt.legend(loc="upper right", fontsize=11)
+            leg.get_frame().set_alpha(0)
+
+        # y軸ラベルの位置を揃える
+        axs[0].yaxis.set_label_coords(-0.05, 0.5)
+        axs[1].yaxis.set_label_coords(-0.05, 0.5)
+
+        # タイトル
+        plot_title = title if title else self.data_name
+        fig.suptitle(plot_title, fontsize=17, y=0.93)
+
+        if save_path is not None:
+            plt.savefig(save_path, format="pdf", bbox_inches="tight")
+            print(f"保存しました: {save_path}")
+
+        plt.show()
 
     def plot_flare(self):
         if self.tessBJD is None:
