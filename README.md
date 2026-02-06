@@ -67,8 +67,6 @@ data/
 │   └── learning/               # 実験・学習・検証用ノートブック
 ├── outputs/                    # 生成されたグラフや結果の出力先
 │   └── figures/                # [Thesis] 論文用PDF図版の出力先
-├── reports/                    # 分析レポート・検証ログ
-│   └── validation/             # 自動検証プロセスのログ出力
 ├── src/                        # ソースコード
 │   ├── base_flare_detector.py  # [CORE] フレア検出のメインロジック
 │   ├── flarepy_*.py            # [STAR] 各恒星用設定・実装 (DS_Tuc_A, EK_Dra, V889_Her)
