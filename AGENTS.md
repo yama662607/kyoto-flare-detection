@@ -72,9 +72,17 @@ just fix    # まず自動修正を試行
 kyoto-flare-detection/
 ├── justfile              # タスクランナー設定
 ├── pyproject.toml        # Pythonプロジェクト設定
-├── src/                  # ソースコード（Ruff対象）
-├── tests/                # テストコード（pytest対象）
+├── src/                  # ソースコード
+│   ├── base_flare_detector.py  # 基底クラス
+│   ├── flarepy_DS_Tuc_A.py     # DS Tuc A 用実装
+│   ├── flarepy_EK_Dra.py       # EK Dra 用実装
+│   └── flarepy_V889_Her.py     # V889 Her 用実装
+├── tests/                # テストコード
 ├── docs/                 # ドキュメント
+├── notebooks/            # Jupyter Notebook
+│   ├── flare_create_graphs.ipynb # メイン分析・グラフ生成
+│   └── flare_detect_*.ipynb      # 各恒星のフレア検出・解析
+├── outputs/              # 出力ファイル (figures/ 等)
 └── scripts/              # ユーティリティスクリプト
 ```
 

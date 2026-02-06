@@ -21,7 +21,12 @@ wheels/
 Thumbs.db
 
 # Data files
-data/TESS/**/*.fits
+# Ignore everything in TESS data directory
+data/TESS/**/*
+# But allow directories to be tracked (so we can enforce structure)
+!data/TESS/**/
+# And allow .gitkeep files (to keep otherwise empty directories)
+!data/TESS/**/*.gitkeep
 
 # Output and report files
 outputs/
@@ -39,3 +44,5 @@ outputs/
 
 #legacy code
 legacy/
+# Temporary executed notebooks
+*_exec.ipynb

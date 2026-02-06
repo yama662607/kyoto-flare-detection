@@ -56,36 +56,30 @@ data/
 
 ```
 /
-├── data/                # データファイル (Gitの追跡対象外)
-│   ├── TESS/            # TESSの.fitsファイルを恒星ごとに格納
+├── data/                       # データファイル (Gitの追跡対象外)
+│   ├── TESS/                   # TESSの.fitsファイルを恒星ごとに格納
 │   └── tess-response-function-v1.0.csv # TESSの応答関数
-├── notebooks/           # 分析用Jupyter Notebook
-├── outputs/             # 生成されたグラフや結果の出力先
-├── src/                 # ソースコード
-│   ├── __init__.py
-│   ├── base_flare_detector.py   # フレア検出の共通ロジックを実装した基底クラス
-│   ├── flarepy_DS_Tuc_A.py     # DS Tuc Aに特化した派生クラス
-│   ├── flarepy_EK_Dra.py       # EK Draに特化した派生クラス
-│   └── flarepy_V889_Her.py     # V889 Herに特化した派生クラス
-├── docs/                 # ドキュメント
-│   ├── method.md               # Methodセクション（基本日本語版）
-│   ├── method_detailed.md      # Methodセクション（詳細日本語版）
-│   ├── method_en.md            # Methodセクション（英語版）
-│   ├── method.tex              # Methodセクション（LaTeX版）
-│   └── ...                     # その他ドキュメント
-├── scripts/              # ユーティリティスクリプト
-│   ├── clear_notebook_outputs.py  # Notebook出力クリア
-│   ├── split_notebook_cells.py    # Notebookセル分割
-│   ├── profile_base_flare_detector.py  # プロファイル用
-│   └── verify_detector_state.py   # 状態検証用
-├── archive/              # アーカイブされた古いファイル
-│   ├── legacy/           # src/から移動した旧実装
-│   ├── daijiro/          # daijiro氏の分析ノートブックと実装
-│   └── hiroto/           # hiroto氏の実装
-├── .gitignore           # Gitの追跡対象外ファイルを指定
-├── pyproject.toml       # プロジェクトのメタデータと依存関係
-├── justfile             # タスクランナー設定
-└── uv.lock              # uv用の固定された依存関係ファイル
+├── notebooks/                  # 分析用Jupyter Notebook
+│   ├── flare_create_graphs.ipynb   # [MAIN] 統合グラフ生成・分析ノートブック
+│   ├── flare_detect_*.ipynb    # [STAR] 各恒星のフレア検出・解析 (DS_Tuc_A, EK_Dra, V889_Her)
+│   └── learning/               # 実験・学習・検証用ノートブック
+├── outputs/                    # 生成されたグラフや結果の出力先
+│   └── figures/                # [Thesis] 論文用PDF図版の出力先
+├── reports/                    # 分析レポート・検証ログ
+│   └── validation/             # 自動検証プロセスのログ出力
+├── src/                        # ソースコード
+│   ├── base_flare_detector.py  # [CORE] フレア検出のメインロジック
+│   ├── flarepy_*.py            # [STAR] 各恒星用設定・実装 (DS_Tuc_A, EK_Dra, V889_Her)
+│   └── visualization/          # [NEW] 論文用可視化モジュール
+│       ├── flare_plots.py      # グラフ描画関数群
+│       └── paper_style.py      # Matplotlib スタイル設定
+├── docs/                       # プロジェクトドキュメント
+├── scripts/                    # ユーティリティ・保守スクリプト
+├── archive/                    # アーカイブされた旧実装・ノートブック
+├── .gitignore                  # Git除外設定
+├── pyproject.toml              # プロジェクト依存関係・設定
+├── justfile                    # タスクランナー (CI/CD, 検証用)
+└── uv.lock                     # 依存パッケージロックファイル
 ```
 
 ## セットアップ
