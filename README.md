@@ -7,7 +7,7 @@
 Follow these steps to quickly set up and start your analysis.
 
 ### 1. Prerequisites
-Install `uv` and `just` if you haven't already (see [Setup Guide](#-setup-guide) below for detailed instructions).
+Install `uv` if you haven't already (see [Setup Guide](#-setup-guide) below for detailed instructions).
 
 ### 2. Setup the Project
 Clone the repository and install dependencies using the following commands:
@@ -147,9 +147,9 @@ Used for fast and reliable Python environment management.
     -   macOS (Homebrew): `brew install uv`
     -   Windows (winget): `winget install astral-sh.uv`
 
-### 2. Install Just
+### 2. Install Just (Optional)
 
-Required to run various project commands (build, check, analysis tasks, etc.).
+Highly recommended for development and automated maintenance tasks (build, check, analysis tasks, etc.).
 
 -   **macOS (Homebrew):** `brew install just`
 *   **Windows (winget):** `winget install casey.just`
