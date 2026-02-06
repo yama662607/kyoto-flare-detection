@@ -1,7 +1,5 @@
 # Kyoto Flare Detection Project
 
-[日本語のREADMEはこちら](./README_Ja.md)
-
 ## Overview
 
 This project provides a Python framework to detect stellar flares in TESS light curves and analyze their energies and occurrence rates.

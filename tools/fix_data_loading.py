@@ -1,6 +1,6 @@
 import json
 
-notebook_path = r"c:\Users\81803\Documents\フレア\kyoto-flare-detection\notebooks\flare_notebook_integrated.ipynb"
+notebook_path = "notebooks/flare_notebook_integrated.ipynb"
 
 # Complete Data Loading Cell - will be inserted after the imports cell
 data_loading_source = [
@@ -16,7 +16,7 @@ data_loading_source = [
     "# Historical compatibility\n",
     "STAR_CLASS_MAP = {k: v['class'] for k, v in STAR_INFO.items()}\n",
     "\n",
-    "BASE_STARS_FOLDER = \"C:/Users/81803/Documents/フレア/Kyoto_Student_Flare_Project/all_stars/\"\n",
+    "BASE_STARS_FOLDER = \"data/TESS/\"\n",
     "all_stars_detectors = {}\n",
     "\n",
     "print(f\"Loading star data from: {BASE_STARS_FOLDER}\")\n",

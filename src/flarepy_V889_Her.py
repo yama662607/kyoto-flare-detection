@@ -41,7 +41,7 @@ class FlareDetector_V889_Her(BaseFlareDetector):
             ene_thres_high=ene_thres_high,
             use_sector_mean=True,
         )
-        # V889 Her固有のギャップ検出閾値を設定
+        # V889 Her-specific gap detection threshold.
         self.gap_threshold = 0.004
 
         if process_data:
@@ -55,13 +55,13 @@ class FlareDetector_V889_Her(BaseFlareDetector):
         return arr[n:] - arr[:-n]
 
     def detrend_flux(self):
-        # ローカル変数を短く
+        # Shorten local variable names for readability.
         time_ext = self.gtessBJD
         flux_ext = self.gmPDCSAPflux
         flux_err_ext = self.gmPDCSAPfluxerr
         buf_size = self.buffer_size
 
-        # flare_canにstart～endにあるindex全てを入れる
+        # Collect all indices between start and end for flare candidates.
         diff_time = np.diff(time_ext)
         diff_flux = np.diff(flux_ext)
 

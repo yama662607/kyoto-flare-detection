@@ -13,7 +13,7 @@ from scipy.optimize import curve_fit
 
 
 def _ensure_native(array, dtype=None):
-    """Plotly などに渡す前にエンディアンをネイティブに揃える。"""
+    """Normalize endianness to native before passing to Plotly, etc."""
     arr = np.asarray(array, dtype=dtype)
     if arr.dtype.byteorder not in ("=", "|"):
         arr = arr.astype(arr.dtype.newbyteorder("="), copy=False)
@@ -42,7 +42,7 @@ _REF_INTENSITY: float | None = None
 
 class BaseFlareDetector:
     """
-    TESS光度データからのフレア検出とエネルギー推定を行う基本的なクラス。
+    Base class for flare detection and energy estimation from TESS light curves.
     """
 
     array_flare_number = np.array([])
@@ -99,7 +99,7 @@ class BaseFlareDetector:
         self.f_cut_spline = f_cut_spline
         self.ene_thres_low = ene_thres_low
         self.ene_thres_high = ene_thres_high
-        self.gap_threshold = 0.1  # デフォルトのギャップ検出閾値
+        self.gap_threshold = 0.1  # Default gap detection threshold.
         self.time_offset = 2457000  # For matplotlib plot
 
         self.debug_print = "hello"
@@ -156,21 +156,21 @@ class BaseFlareDetector:
 
     def load_TESS_data(self):
         """
-        TESS の FITS ファイルを読み込み、フラックスを正規化するメソッド。
-        Lazy Loading：まだデータが存在しない場合にのみ実行する。
+        Load a TESS FITS file and normalize flux.
+        Lazy loading: runs only when data is not already loaded.
         """
         if self.tessBJD is not None:
-            # すでに読み込み済み
+            # Already loaded.
             return
 
         if self.file is None:
-            print("Error: ファイルパスが指定されていません。")
+            print("Error: file path is not specified.")
             return
 
         fname = self.file
         fname_base = os.path.basename(fname)
 
-        # 正規表現で必要な部分を抽出
+        # Extract required parts via regex.
         match = re.match(r"(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         if match:
             self.data_name = match.group(1)
@@ -178,12 +178,12 @@ class BaseFlareDetector:
         match = re.match(r"[a-z]+\d+-s00(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         data_number = int(match.group(1)) if match else 0
 
-        # FITS データを読み込み
+        # Load FITS data.
         hdulist = fits.open(fname, memmap=True)
         self.tessheader1 = hdulist[0].header
         data = hdulist[1].data
 
-        # NaN を含む行を除外
+        # Drop rows containing NaN.
         if self.sector_threshold is not None and data_number > self.sector_threshold:
             flux_field, flux_err_field = "SAP_FLUX", "SAP_FLUX_ERR"
         else:
@@ -194,13 +194,13 @@ class BaseFlareDetector:
         pdcsap_flux = data.field(flux_field)[mask]
         pdcsap_flux_err = data.field(flux_err_field)[mask]
 
-        # 光度データの正規化
+        # Normalize flux.
         flux_mean = np.mean(pdcsap_flux) if self.use_sector_mean else self.flux_mean
 
         norm_flux = pdcsap_flux / flux_mean
         norm_flux_err = pdcsap_flux_err / flux_mean
 
-        # インスタンス変数へ格納
+        # Store on instance.
         self.tessBJD = bjd
         self.mPDCSAPflux = norm_flux
         self.mPDCSAPfluxerr = norm_flux_err
@@ -235,22 +235,22 @@ class BaseFlareDetector:
 
     def apply_gap_correction(self):
         """
-        時系列データ内のギャップを補正し、データの前後にバッファ領域を追加するメソッド。
+        Correct gaps in the time series and add buffer regions before/after the data.
         """
         bjd = self.tessBJD.copy()
         flux = self.mPDCSAPflux.copy()
         flux_err = self.mPDCSAPfluxerr.copy()
         buf_size = self.buffer_size
 
-        # ギャップ検出
+        # Gap detection.
         diff_bjd = np.diff(bjd)
         gap_indices = np.where(diff_bjd >= self.gap_threshold)[0]
 
-        # ====== ギャップ補正 ======
+        # ====== Gap correction ======
         for idx in gap_indices:
             flux[idx + 1 :] -= flux[idx + 1] - flux[idx]
 
-        # ====== バッファ追加 ======
+        # ====== Buffer padding ======
         flux_ext = np.hstack(
             [
                 np.full(buf_size, flux[0]),
@@ -321,10 +321,10 @@ class BaseFlareDetector:
 
     def reestimate_errors(self):
         """
-        フラックスの誤差をローカルスキャッターから再推定するメソッド。
+        Re-estimate flux errors from local scatter.
 
-        legacy 実装と同等の計算を行うため、各点ごとに
-        0.5日窓かつフラックス<=0.005の点で標準偏差を評価する。
+        To match the legacy implementation, evaluate the standard deviation
+        in a 0.5-day window using points with flux <= 0.005.
         """
         bjd = self.tessBJD
         flux = self.s2mPDCSAPflux
@@ -334,7 +334,7 @@ class BaseFlareDetector:
             nearby = (np.abs(bjd - bjd[i]) <= 0.5) & (flux <= 0.005)
             err[i] = np.std(flux[nearby])
 
-        # 全体の平均スケールを元のエラーに合わせる
+        # Match the overall mean scale to the original errors.
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
 
@@ -545,8 +545,8 @@ class BaseFlareDetector:
 
     def tess_band_energy(self, count):
         """
-        TESS帯域でのフレアエネルギー（erg）を推定する。
-        T_flare = 10000K の黒体近似を想定。
+        Estimate flare energy (erg) in the TESS band.
+        Assume a 10000 K blackbody (T_flare = 10000 K).
         """
         response = self._get_tess_response()
         if response is None:
@@ -576,7 +576,7 @@ class BaseFlareDetector:
         try:
             data = np.loadtxt(TESS_RESPONSE_PATH, delimiter=",")
         except FileNotFoundError:
-            print("Error: TESS応答関数のCSVファイルが見つかりません。")
+            print("Error: TESS response function CSV was not found.")
             return None
         wave = data[:, 0]
         resp = data[:, 1]
@@ -601,11 +601,11 @@ class BaseFlareDetector:
 
     def calculate_precise_obs_time(self):
         """
-        データ点数に基づく有効観測時間（日）を計算する。
-        2分間隔（120秒）のTESSデータを想定。
+        Compute effective observation time (days) based on data points.
+        Assumes 2-minute cadence (120 seconds).
         """
         if self.tessBJD is not None:
-            # 2分 = 2 / (24 * 60) 日
+            # 2 minutes = 2 / (24 * 60) days
             cadence_day = 2 / (24 * 60)
             self.precise_obs_time = len(self.tessBJD) * cadence_day
         else:
@@ -646,7 +646,7 @@ class BaseFlareDetector:
         ) * self.brightness_variation_amplitude
 
     def show_variables(self):
-        """インスタンス／クラス変数の概要を表示する。"""
+        """Print a summary of instance/class variables."""
         instance_vars = {
             "file": self.file,
             "tessBJD_length": len(self.tessBJD) if self.tessBJD is not None else 0,
@@ -674,20 +674,20 @@ class BaseFlareDetector:
         frac_edge: float = 0.13,
     ):
         """
-        Lomb-Scargleペリオドグラムから自転周期を推定するメソッド。
+        Estimate rotation period from a Lomb-Scargle periodogram.
 
         Parameters
         ----------
         use_gaussian_fit : bool, optional
-            Trueの場合、ガウスフィッティングによる誤差計算を行う。デフォルトはTrue。
+            If True, estimate errors via Gaussian fitting. Default is True.
         show_plot : bool, optional
-            Trueの場合、プロットを自動表示（legacy互換）。デフォルトはFalse。
+            If True, auto-plot (legacy-compatible). Default is False.
         w_min, w_max, w_step : float, optional
-            ガウスフィッティングのウィンドウスイープパラメータ
+            Window sweep parameters for Gaussian fitting.
         main_window : float, optional
-            メインのフィッティングウィンドウ半幅
+            Half-width of the main fitting window.
         frac_edge : float, optional
-            フィット窓の端でのパワー閾値（ピークの何割以下まで落ちているか）
+            Power threshold at window edges (fraction of the peak).
         """
         frequency, periods = make_rotation_frequency_grid(
             period_min=self.rotation_period_min,
@@ -703,7 +703,7 @@ class BaseFlareDetector:
         f0_guess = float(frequency[idx_max])
 
         if not use_gaussian_fit:
-            # 従来のFWHMベースの誤差推定
+            # Legacy FWHM-based error estimate.
             self.per = periods[idx_max]
             half_max_power = np.max(self.power) / 2
             aa = np.where(self.power > half_max_power)[0]
@@ -712,13 +712,13 @@ class BaseFlareDetector:
             self.per_err_plus = self.per_err
             return
 
-        # ガウスフィッティングによる誤差計算
+        # Error estimation via Gaussian fitting.
         def gauss_c0(f, A, f0, sigma):
-            """ベースライン0のガウス関数"""
+            """Gaussian with zero baseline."""
             return A * np.exp(-0.5 * ((f - f0) / sigma) ** 2)
 
         def fit_gaussian_peak(freq, power, f0_guess, window, frac_edge=0.05):
-            """ピーク周辺でガウスフィットを行う"""
+            """Fit a Gaussian around the peak."""
             m = (freq > f0_guess - window) & (freq < f0_guess + window)
             f_fit = freq[m]
             p_fit = power[m]
@@ -728,7 +728,7 @@ class BaseFlareDetector:
             pmax = float(np.max(p_fit))
             if pmax <= 0:
                 return None
-            # 端が十分落ちていない窓は捨てる
+            # Discard windows that do not drop enough at the edges.
             if (p_fit[0] > frac_edge * pmax) or (p_fit[-1] > frac_edge * pmax):
                 return None
 
@@ -764,7 +764,7 @@ class BaseFlareDetector:
             except Exception:
                 return None
 
-        # ウィンドウスイープ
+        # Window sweep.
         windows = np.arange(w_min, w_max + 1e-12, w_step)
         sigma_list = np.full_like(windows, np.nan, dtype=float)
         results = {}
@@ -781,12 +781,12 @@ class BaseFlareDetector:
             sigma_list[i] = sigma_f
             results[float(w)] = out
 
-        # main_windowを成功しているところに合わせる
+        # Align main_window to successful fits.
         main_window = float(np.round(main_window / w_step) * w_step)
         if main_window not in results:
             ok = np.array(sorted(results.keys()))
             if ok.size == 0:
-                # フォールバック: 従来のFWHMベースの誤差推定
+                # Fallback: legacy FWHM-based error estimate.
                 self.per = periods[idx_max]
                 half_max_power = np.max(self.power) / 2
                 aa = np.where(self.power > half_max_power)[0]
@@ -799,7 +799,7 @@ class BaseFlareDetector:
         main = results[main_window]
         A_fit, f0_fit, sigma_f_fit = main["popt"]
 
-        # 周期と1σ誤差を計算
+        # Compute period and 1-sigma error.
         self.per = 1.0 / f0_fit
         P0 = self.per
         P_low = 1.0 / (f0_fit + sigma_f_fit)  # f↑ -> P↓
@@ -809,7 +809,7 @@ class BaseFlareDetector:
         self.per_err_plus = P_high - P0
         self.per_err = 0.5 * (self.per_err_minus + self.per_err_plus)
 
-        # 診断用属性を保存
+        # Store diagnostic attributes.
         self.f0_fit = f0_fit
         self.sigma_f = sigma_f_fit
         self.main_window = main_window
@@ -818,27 +818,27 @@ class BaseFlareDetector:
         self._gaussian_fit_results = results
         self._gaussian_fit_main = main
 
-        # legacy互換: 自動プロット
+        # Legacy-compatible auto-plot.
         if show_plot:
             self.plot_power_spectrum()
             self.plot_rotation_period()
 
     def plot_power_spectrum(self, save_path: str | None = None, dpi: int = 300):
         """
-        Lomb-Scargleパワースペクトル全体図を表示する。
+        Plot the full Lomb-Scargle power spectrum.
 
         Parameters
         ----------
         save_path : str, optional
-            保存先パス。Noneの場合は保存せず表示のみ
+            Output path. If None, only display.
         dpi : int
-            解像度（デフォルト300）
+            Resolution (default 300).
         """
         if not hasattr(self, "frequency") or self.frequency is None:
-            print("rotation_period()を先に呼び出してください。")
+            print("Call rotation_period() first.")
             return
 
-        # 論文品質の設定
+        # Paper-quality styling.
         plt.rcParams["xtick.major.width"] = 1.5
         plt.rcParams["ytick.major.width"] = 1.5
         plt.rcParams["axes.linewidth"] = 1.5
@@ -853,7 +853,7 @@ class BaseFlareDetector:
         plt.figure(figsize=(9, 3))
         plt.plot(self.frequency, self.power, lw=1)
 
-        # ピーク位置に垂直線
+        # Vertical line at the peak.
         if hasattr(self, "f0_fit"):
             plt.axvline(
                 self.f0_fit, ls="--", color="red", label=f"f0 = {self.f0_fit:.5f}"
@@ -867,24 +867,25 @@ class BaseFlareDetector:
 
         if save_path is not None:
             plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
-            print(f"保存しました: {save_path}")
+            print(f"Saved: {save_path}")
 
         plt.show()
 
     def plot_rotation_period(self, save_path: str | None = None, dpi: int = 300):
         """
-        自転周期推定の診断プロット（3段）を表示する。
+        Show diagnostic plots (3 panels) for rotation period estimation.
 
         Parameters
         ----------
         save_path : str, optional
-            保存先パス。Noneの場合は保存せず表示のみ
+            Output path. If None, only display.
         dpi : int
-            解像度（デフォルト300）
+            Resolution (default 300).
         """
         if not hasattr(self, "_gaussian_fit_main") or self._gaussian_fit_main is None:
             print(
-                "ガウスフィッティングが実行されていません。rotation_period(use_gaussian_fit=True)を先に呼び出してください。"
+                "Gaussian fitting has not been executed. Call "
+                "rotation_period(use_gaussian_fit=True) first."
             )
             return
 
@@ -892,7 +893,7 @@ class BaseFlareDetector:
         freq = self.frequency
         power = self.power
 
-        # 論文品質の設定
+        # Paper-quality styling.
         plt.rcParams["xtick.major.width"] = 1.5
         plt.rcParams["ytick.major.width"] = 1.5
         plt.rcParams["axes.linewidth"] = 1.5
@@ -908,13 +909,13 @@ class BaseFlareDetector:
 
         fig, ax = plt.subplots(3, 1, figsize=(10, 10))
 
-        # ガウス関数
+        # Gaussian function.
         def gauss_c0(f, A, f0, sigma):
             return A * np.exp(-0.5 * ((f - f0) / sigma) ** 2)
 
         A_fit, f0_fit, sigma_f_fit = main["popt"]
 
-        # 1) パワースペクトル + ガウスフィット
+        # 1) Power spectrum + Gaussian fit.
         ax[0].plot(freq, power, lw=1, label="LS power")
         ax[0].plot(
             main["f_fit"],
@@ -926,7 +927,7 @@ class BaseFlareDetector:
         ax[0].axvline(f0_fit, ls="--", color="red", label=f"f0 = {f0_fit:.5f}")
         ax[0].axvline(f0_fit - sigma_f_fit, ls=":", color="orange")
         ax[0].axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label="f0±σ_f")
-        # フィット曲線
+        # Fit curve.
         f_dense = np.linspace(f0_fit - 2 * sigma_f_fit, f0_fit + 2 * sigma_f_fit, 200)
         ax[0].plot(
             f_dense,
@@ -942,7 +943,7 @@ class BaseFlareDetector:
         )
         ax[0].legend(loc="upper right", fontsize=9)
 
-        # 2) 残差
+        # 2) Residuals.
         ax[1].plot(main["f_fit"], main["resid"], lw=1, color="blue")
         ax[1].axhline(0, ls="--", color="gray")
         ax[1].set_xlabel("Frequency [1/day]")
@@ -968,7 +969,7 @@ class BaseFlareDetector:
 
         if save_path is not None:
             plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
-            print(f"保存しました: {save_path}")
+            print(f"Saved: {save_path}")
 
         plt.show()
 
@@ -978,22 +979,22 @@ class BaseFlareDetector:
 
     def process_data(self, ene_thres_low=None, ene_thres_high=None, skip_remove=False):
         """
-        TESS データの読み込みからフレア検出までの一連のプロセスを実行するメソッド。
+        Run the full pipeline from loading TESS data to flare detection.
 
         Parameters
         ----------
         ene_thres_low : float, optional
-            最小エネルギー閾値 (erg)。指定しない場合はインスタンス変数を使用。
+            Minimum energy threshold (erg). If omitted, use instance value.
         ene_thres_high : float, optional
-            最大エネルギー閾値 (erg)。指定しない場合はインスタンス変数を使用。
+            Maximum energy threshold (erg). If omitted, use instance value.
         skip_remove : bool, optional
-            True にすると `remove()` をスキップし、トランジット除去を行わない処理流を実行します。
+            If True, skip `remove()` and run without transit removal.
         """
         if self.tessBJD is None or len(self.tessBJD) < 2:
-            print("Error: BJD が正しく読み込まれていないか、要素数が不足しています。")
+            print("Error: BJD is not loaded correctly or has insufficient length.")
             return
 
-        # エネルギー閾値の設定（引数があれば上書き）
+        # Set energy thresholds (override if provided).
         low_threshold = (
             ene_thres_low if ene_thres_low is not None else self.ene_thres_low
         )
@@ -1064,19 +1065,19 @@ class BaseFlareDetector:
 
     def plt_flare(self, title: str | None = None, save_path: str | None = None):
         """
-        データ全体の光度曲線をmatplotlibでプロット（legacy互換）。
+        Plot the full light curve with matplotlib (legacy-compatible).
 
         Parameters
         ----------
         title : str, optional
-            グラフタイトル。Noneの場合はdata_nameを使用
+            Plot title. If None, use data_name.
         save_path : str, optional
-            保存先パス。Noneの場合は保存せず表示のみ
+            Output path. If None, only display.
         """
         if self.tessBJD is None:
             return
 
-        # legacy完全互換のスタイル設定
+        # Fully legacy-compatible styling.
         plt.rcParams["xtick.major.width"] = 1.5
         plt.rcParams["ytick.major.width"] = 1.5
         plt.rcParams["axes.linewidth"] = 1.5
@@ -1094,11 +1095,11 @@ class BaseFlareDetector:
         plt.rcParams["pdf.fonttype"] = 42
         plt.rcParams["ps.fonttype"] = 42
 
-        # legacyと同じfigsize
+        # Same figsize as legacy.
         fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(14, 7))
         fig.subplots_adjust(hspace=0.1)
 
-        # 1つ目のサブプロット: 生の光度曲線
+        # First subplot: raw light curve.
         axs[0].plot(
             self.tessBJD,
             self.mPDCSAPflux,
@@ -1110,13 +1111,13 @@ class BaseFlareDetector:
         axs[0].set_ylabel("Normalized Flux", fontsize=17)
         axs[0].tick_params(labelsize=13)
 
-        # 2つ目のサブプロット: デトレンド後
+        # Second subplot: detrended data.
         if self.s2mPDCSAPflux is not None:
             axs[1].plot(
                 self.tessBJD, self.s2mPDCSAPflux, color="black", linestyle="-", lw=0.5
             )
 
-            # フレアのピーク位置を線で示す
+            # Mark flare peaks with vertical lines.
             if self.peaktime is not None:
                 for peak in self.peaktime:
                     axs[1].axvline(
@@ -1135,17 +1136,17 @@ class BaseFlareDetector:
             leg = plt.legend(loc="upper right", fontsize=11)
             leg.get_frame().set_alpha(0)
 
-        # y軸ラベルの位置を揃える
+        # Align y-axis label positions.
         axs[0].yaxis.set_label_coords(-0.05, 0.5)
         axs[1].yaxis.set_label_coords(-0.05, 0.5)
 
-        # タイトル
+        # Title.
         plot_title = title if title else self.data_name
         fig.suptitle(plot_title, fontsize=17, y=0.93)
 
         if save_path is not None:
             plt.savefig(save_path, format="pdf", bbox_inches="tight")
-            print(f"保存しました: {save_path}")
+            print(f"Saved: {save_path}")
 
         plt.show()
 
@@ -1224,19 +1225,19 @@ class BaseFlareDetector:
 
     def plot_flare_matplotlib(self, save_path=None, dpi=300):
         """
-        論文投稿用の高品質なmatplotlibプロット
+        Paper-quality matplotlib plot for publication.
 
         Parameters
         ----------
         save_path : str, optional
-            保存先パス。Noneの場合はデフォルトで "{data_name}_light_curve.pdf" に保存
+            Output path. If None, save to "{data_name}_light_curve.pdf".
         dpi : int
-            解像度（デフォルト300）
+            Resolution (default 300).
         """
         if self.tessBJD is None:
             return
 
-        # 論文品質の設定を適用
+        # Apply paper-quality styling.
         plt.rcParams["xtick.major.width"] = 1.5
         plt.rcParams["ytick.major.width"] = 1.5
         plt.rcParams["axes.linewidth"] = 1.5
@@ -1251,14 +1252,14 @@ class BaseFlareDetector:
         plt.rcParams["xtick.direction"] = "in"
         plt.rcParams["ytick.direction"] = "in"
         plt.rcParams["font.family"] = "Arial"
-        plt.rcParams["pdf.fonttype"] = 42  # PDFフォント埋め込み
+        plt.rcParams["pdf.fonttype"] = 42  # Embed fonts in PDF.
         plt.rcParams["ps.fonttype"] = 42
 
-        # 2つのサブプロットを作成 (生の光度曲線とデトレンド後)
+        # Create two subplots (raw and detrended light curves).
         fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(13, 8))
-        fig.subplots_adjust(hspace=0.1)  # サブプロット間の垂直方向のスペースを調整
+        fig.subplots_adjust(hspace=0.1)  # Adjust vertical spacing.
 
-        # 1つ目のサブプロット: 生の光度曲線
+        # First subplot: raw light curve.
         axs[0].plot(
             self.tessBJD,
             self.mPDCSAPflux,
@@ -1270,7 +1271,7 @@ class BaseFlareDetector:
         axs[0].set_ylabel("Normalized Flux", fontsize=17)
         axs[0].tick_params(labelsize=13)
 
-        # 2つ目のサブプロット: デトレンド後
+        # Second subplot: detrended data.
         if self.s2mPDCSAPflux is not None:
             axs[1].plot(
                 self.tessBJD,
@@ -1281,7 +1282,7 @@ class BaseFlareDetector:
                 lw=0.5,
             )
 
-            # フレアのピーク位置を線で示す
+            # Mark flare peaks with vertical lines.
             if self.peaktime is not None:
                 for peak in self.peaktime:
                     axs[1].axvline(
@@ -1298,9 +1299,9 @@ class BaseFlareDetector:
             axs[1].tick_params(labelsize=13)
             plt.tick_params(labelsize=11)
             leg = plt.legend(loc="upper right", fontsize=11)
-            leg.get_frame().set_alpha(0)  # 背景を完全に透明にする
+            leg.get_frame().set_alpha(0)  # Fully transparent background.
 
-        # 保存
+        # Save.
         if save_path is None:
             save_path = f"{self.data_name}_light_curve.pdf"
         plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=dpi)
@@ -1309,19 +1310,19 @@ class BaseFlareDetector:
 
     def plot_energy_matplotlib(self, save_path=None, dpi=300):
         """
-        論文投稿用のエネルギー分布プロット
+        Paper-quality energy distribution plot.
 
         Parameters
         ----------
         save_path : str, optional
-            保存先パス。Noneの場合はデフォルトで "{data_name}_ffd.pdf" に保存
+            Output path. If None, save to "{data_name}_ffd.pdf".
         dpi : int
-            解像度（デフォルト300）
+            Resolution (default 300).
         """
         if self.energy is None or len(self.energy) == 0:
             return
 
-        # 論文品質の設定を適用
+        # Apply paper-quality styling.
         plt.rcParams["xtick.major.width"] = 1.5
         plt.rcParams["ytick.major.width"] = 1.5
         plt.rcParams["axes.linewidth"] = 1.5

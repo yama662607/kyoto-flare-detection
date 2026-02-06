@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""BaseFlareDetector 用の簡易プロファイルスクリプト。
+"""Lightweight profiling script for BaseFlareDetector.
 
-指定した TESS FITS ファイルに対して `BaseFlareDetector.process_data` を実行し、
-``cProfile`` の結果を CSV／グラフとして出力する。
+Runs `BaseFlareDetector.process_data` on a specified TESS FITS file and
+exports ``cProfile`` results to CSV and plots.
 """
 
 from __future__ import annotations
@@ -25,59 +25,59 @@ if str(PROJECT_ROOT) not in sys.path:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="BaseFlareDetector.process_data のプロファイル取得とグラフ化を行います。"
+        description="Profile BaseFlareDetector.process_data and generate plots."
     )
     parser.add_argument(
         "--fits",
         type=Path,
         required=True,
-        help="解析対象の TESS light curve FITS ファイル",
+        help="TESS light curve FITS file to analyze",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=PROJECT_ROOT / "reports" / "performance",
-        help="結果ファイル (CSV / PNG / .prof) の出力先ディレクトリ",
+        help="Output directory for results (CSV / PNG / .prof)",
     )
     parser.add_argument(
         "--top-n",
         type=int,
         default=12,
-        help="グラフに表示する関数数 (累積時間順)",
+        help="Number of functions to show (sorted by cumulative time)",
     )
     parser.add_argument(
         "--skip-remove",
         action="store_true",
-        help="BaseFlareDetector.process_data の skip_remove 引数を True にする",
+        help="Set BaseFlareDetector.process_data skip_remove=True",
     )
     parser.add_argument(
         "--ene-thres-low",
         type=float,
         default=None,
-        help="process_data に渡す最小エネルギー閾値 (指定が無い場合はデフォルト値を使用)",
+        help="Minimum energy threshold for process_data (defaults if omitted)",
     )
     parser.add_argument(
         "--ene-thres-high",
         type=float,
         default=None,
-        help="process_data に渡す最大エネルギー閾値 (指定が無い場合はデフォルト値を使用)",
+        help="Maximum energy threshold for process_data (defaults if omitted)",
     )
     parser.add_argument(
         "--run-process-data-2",
         action="store_true",
-        help="BaseFlareDetector コンストラクタの run_process_data_2 を True にする",
+        help="Set BaseFlareDetector constructor run_process_data_2=True",
     )
     parser.add_argument(
         "--show-plot",
         action="store_true",
-        help="生成したグラフをブラウザで表示します（Plotly のデフォルトレンダラーを利用）",
+        help="Open the generated plot in a browser (Plotly default renderer)",
     )
     return parser.parse_args(argv)
 
 
 def profile_detector(args: argparse.Namespace) -> tuple[pd.DataFrame, Path]:
     if not args.fits.exists():
-        raise FileNotFoundError(f"FITS ファイルが存在しません: {args.fits}")
+        raise FileNotFoundError(f"FITS file not found: {args.fits}")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -160,12 +160,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     filtered = df[df["function"].str.contains("base_flare_detector.py")]
     top = filtered.nlargest(args.top_n, "cumtime")
     summary = top[["function", "ncalls", "tottime", "cumtime"]]
-    print("=== プロファイル結果 (base_flare_detector.py の上位関数) ===")
+    print("=== Profile results (top functions in base_flare_detector.py) ===")
     print(summary.to_string(index=False))
     print()
-    print(f"プロファイルデータ: {prof_path}")
-    print(f"CSV 出力:          {csv_path}")
-    print(f"グラフ出力:        {fig_path}")
+    print(f"Profile data: {prof_path}")
+    print(f"CSV output:  {csv_path}")
+    print(f"Plot output: {fig_path}")
 
 
 if __name__ == "__main__":
