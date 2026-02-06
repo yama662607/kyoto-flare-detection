@@ -531,7 +531,7 @@ class BaseFlareDetector:
         wave, resp, dw = response
         dt = 120.0  # TESS 2-min cadence (seconds)
         Rstar = 695510e5 * self.R_sunstar_ratio  # cm
-        sigma_SB = 5.670374419e-5  # erg cm^-2 s^-1 K^-4
+        sigma_SB = 5.67e-5  # erg cm^-2 s^-1 K^-4
 
         star_intensity_ratio = self._get_star_intensity_ratio(wave, resp, dw)
         if star_intensity_ratio == 0:

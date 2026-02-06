@@ -21,7 +21,14 @@ class FlareDetector_V889_Her(BaseFlareDetector):
             R_sunstar_ratio=1.0,
             T_star=6550,
             flux_mean=300710.62334465684,
-            err_constant_mean=0.0003969586415453296,  # Mean of the 4 values
+            err_constant_mean=np.mean(
+                [
+                    0.000327511843591592,
+                    0.0002949516133656024,
+                    0.0005806540022277836,
+                    0.0003847150867966205,
+                ]
+            ),
             rot_period=0.4398277479138892,
             rotation_period_min=0.3,
             rotation_period_max=2.0,
@@ -32,6 +39,7 @@ class FlareDetector_V889_Her(BaseFlareDetector):
             process_data=process_data,
             ene_thres_low=ene_thres_low,
             ene_thres_high=ene_thres_high,
+            use_sector_mean=True,
         )
         # V889 Her固有のギャップ検出閾値を設定
         self.gap_threshold = 0.004
