@@ -4,11 +4,28 @@
 
 ## 🚀 Quick Start
 
-1. Install `uv` and `just` (see [Setup Guide](#-setup-guide) below)
-2. Clone the repository
-3. Run `uv sync` to install dependencies
-4. Place TESS FITS data in `data/TESS/<star_name>/`
-5. Start analysis with notebooks in `notebooks/`
+Follow these steps to quickly set up and start your analysis.
+
+### 1. Prerequisites
+Install `uv` and `just` if you haven't already (see [Setup Guide](#-setup-guide) below for detailed instructions).
+
+### 2. Setup the Project
+Clone the repository and install dependencies using the following commands:
+
+```bash
+# Clone the repository
+git clone https://github.com/yama662607/kyoto-flare-detection.git
+cd kyoto-flare-detection
+
+# Install dependencies and setup the environment
+uv sync
+```
+
+### 3. Start Analysis
+1. **Prepare Data**:
+   Place your TESS FITS data in `data/TESS/<star_name>/`.
+2. **Run Notebooks**:
+   Open and execute any analysis notebook in the `notebooks/` directory.
 
 
 ## Overview
