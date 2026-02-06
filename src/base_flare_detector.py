@@ -45,15 +45,20 @@ class BaseFlareDetector:
     TESS光度データからのフレア検出とエネルギー推定を行う基本的なクラス。
     """
 
+    array_flare_number = np.array([])
+    array_precise_obs_time = np.array([])
     array_flare_ratio = np.array([])
     array_observation_time = np.array([])
     array_energy_ratio = np.array([])
+    array_energy_ave = np.array([])
     array_amplitude = np.array([])
     array_starspot = np.array([])
     array_starspot_ratio = np.array([])
     array_data_name = np.array([])
     array_per = np.array([])
     array_per_err = np.array([])
+    array_sum_energy = np.array([])
+    array_max_energy = np.array([])
     average_flare_ratio = 0.0
 
     def __init__(
@@ -139,6 +144,8 @@ class BaseFlareDetector:
 
         self.rotation_ls_method = "auto"
 
+        self._ensure_class_arrays()
+
         self.load_TESS_data()
 
         if self.file is not None:
@@ -183,17 +190,12 @@ class BaseFlareDetector:
             flux_field, flux_err_field = "PDCSAP_FLUX", "PDCSAP_FLUX_ERR"
 
         mask = ~np.isnan(data.field(flux_field))
-        bjd = _ensure_native(data.field("time")[mask], dtype=np.float64)
-        pdcsap_flux = _ensure_native(data.field(flux_field)[mask], dtype=np.float64)
-        pdcsap_flux_err = _ensure_native(
-            data.field(flux_err_field)[mask], dtype=np.float64
-        )
+        bjd = data.field("time")[mask]
+        pdcsap_flux = data.field(flux_field)[mask]
+        pdcsap_flux_err = data.field(flux_err_field)[mask]
 
         # 光度データの正規化
-        if self.use_sector_mean:
-            flux_mean = np.mean(pdcsap_flux)
-        else:
-            flux_mean = self.flux_mean
+        flux_mean = np.mean(pdcsap_flux) if self.use_sector_mean else self.flux_mean
 
         norm_flux = pdcsap_flux / flux_mean
         norm_flux_err = pdcsap_flux_err / flux_mean
@@ -206,6 +208,30 @@ class BaseFlareDetector:
         self.atessBJD = bjd
         self.amPDCSAPflux = norm_flux
         self.amPDCSAPfluxerr = norm_flux_err
+
+    def _ensure_class_arrays(self):
+        """Ensure per-subclass class arrays exist (legacy-compatible)."""
+        cls = self.__class__
+        for name in (
+            "array_flare_number",
+            "array_precise_obs_time",
+            "array_flare_ratio",
+            "array_observation_time",
+            "array_energy_ratio",
+            "array_energy_ave",
+            "array_amplitude",
+            "array_starspot",
+            "array_starspot_ratio",
+            "array_data_name",
+            "array_per",
+            "array_per_err",
+            "array_sum_energy",
+            "array_max_energy",
+        ):
+            if name not in cls.__dict__:
+                setattr(cls, name, np.array([]))
+        if "average_flare_ratio" not in cls.__dict__:
+            cls.average_flare_ratio = 0.0
 
     def apply_gap_correction(self):
         """
@@ -295,48 +321,18 @@ class BaseFlareDetector:
 
     def reestimate_errors(self):
         """
-        フラックスの誤差をローカルスキャッターから再推定するメソッド（最適化版）。
+        フラックスの誤差をローカルスキャッターから再推定するメソッド。
+
+        legacy 実装と同等の計算を行うため、各点ごとに
+        0.5日窓かつフラックス<=0.005の点で標準偏差を評価する。
         """
         bjd = self.tessBJD
         flux = self.s2mPDCSAPflux
         err = np.ones(len(self.mPDCSAPfluxerr))
-        quiet_mask = flux <= 0.005
-        quiet_bjd = bjd[quiet_mask]
-        quiet_flux = flux[quiet_mask]
 
-        if len(quiet_bjd) == 0:
-            err[:] = np.nan
-        else:
-            window = 0.5
-            n_quiet = len(quiet_bjd)
-            start_idx = 0
-            end_idx = 0
-            prefix = np.concatenate(([0.0], np.cumsum(quiet_flux, dtype=float)))
-            prefix_sq = np.concatenate(([0.0], np.cumsum(quiet_flux**2, dtype=float)))
-            for i, center in enumerate(bjd):
-                left = center - window
-                right = center + window
-
-                while start_idx < n_quiet and quiet_bjd[start_idx] < left:
-                    start_idx += 1
-                if end_idx < start_idx:
-                    end_idx = start_idx
-                while end_idx < n_quiet and quiet_bjd[end_idx] <= right:
-                    end_idx += 1
-
-                if start_idx == end_idx:
-                    err[i] = np.nan
-                    continue
-
-                samples = end_idx - start_idx
-                if samples == 1:
-                    err[i] = 0.0
-                    continue
-                sum_val = prefix[end_idx] - prefix[start_idx]
-                sum_sq = prefix_sq[end_idx] - prefix_sq[start_idx]
-                mean_val = sum_val / samples
-                var = max((sum_sq / samples) - mean_val**2, 0.0)
-                err[i] = np.sqrt(var)
+        for i in range(len(err)):
+            nearby = (np.abs(bjd - bjd[i]) <= 0.5) & (flux <= 0.005)
+            err[i] = np.std(flux[nearby])
 
         # 全体の平均スケールを元のエラーに合わせる
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
@@ -742,9 +738,15 @@ class BaseFlareDetector:
 
             try:
                 popt, pcov = curve_fit(
-                    gauss_c0, f_fit, p_fit, p0=p0, maxfev=200000,
-                    bounds=([0.0, f0_guess - window, 1e-8],
-                            [np.inf, f0_guess + window, window])
+                    gauss_c0,
+                    f_fit,
+                    p_fit,
+                    p0=p0,
+                    maxfev=200000,
+                    bounds=(
+                        [0.0, f0_guess - window, 1e-8],
+                        [np.inf, f0_guess + window, window],
+                    ),
                 )
                 perr = np.sqrt(np.diag(pcov))
                 resid = p_fit - gauss_c0(f_fit, *popt)
@@ -768,7 +770,9 @@ class BaseFlareDetector:
         results = {}
 
         for i, w in enumerate(windows):
-            out = fit_gaussian_peak(frequency, self.power, f0_guess, float(w), frac_edge=frac_edge)
+            out = fit_gaussian_peak(
+                frequency, self.power, f0_guess, float(w), frac_edge=frac_edge
+            )
             if out is None:
                 continue
             A, f0, sigma_f = out["popt"]
@@ -798,7 +802,7 @@ class BaseFlareDetector:
         # 周期と1σ誤差を計算
         self.per = 1.0 / f0_fit
         P0 = self.per
-        P_low = 1.0 / (f0_fit + sigma_f_fit)   # f↑ -> P↓
+        P_low = 1.0 / (f0_fit + sigma_f_fit)  # f↑ -> P↓
         P_high = 1.0 / (f0_fit - sigma_f_fit)  # f↓ -> P↑
 
         self.per_err_minus = P0 - P_low
@@ -851,7 +855,9 @@ class BaseFlareDetector:
 
         # ピーク位置に垂直線
         if hasattr(self, "f0_fit"):
-            plt.axvline(self.f0_fit, ls="--", color="red", label=f"f0 = {self.f0_fit:.5f}")
+            plt.axvline(
+                self.f0_fit, ls="--", color="red", label=f"f0 = {self.f0_fit:.5f}"
+            )
             plt.legend(loc="upper right")
 
         plt.xlabel("Frequency [1/day]")
@@ -877,7 +883,9 @@ class BaseFlareDetector:
             解像度（デフォルト300）
         """
         if not hasattr(self, "_gaussian_fit_main") or self._gaussian_fit_main is None:
-            print("ガウスフィッティングが実行されていません。rotation_period(use_gaussian_fit=True)を先に呼び出してください。")
+            print(
+                "ガウスフィッティングが実行されていません。rotation_period(use_gaussian_fit=True)を先に呼び出してください。"
+            )
             return
 
         main = self._gaussian_fit_main
@@ -908,18 +916,30 @@ class BaseFlareDetector:
 
         # 1) パワースペクトル + ガウスフィット
         ax[0].plot(freq, power, lw=1, label="LS power")
-        ax[0].plot(main["f_fit"], main["p_fit"], ".", ms=3,
-                   label=f"Fit region (±{self.main_window:.3f})")
+        ax[0].plot(
+            main["f_fit"],
+            main["p_fit"],
+            ".",
+            ms=3,
+            label=f"Fit region (±{self.main_window:.3f})",
+        )
         ax[0].axvline(f0_fit, ls="--", color="red", label=f"f0 = {f0_fit:.5f}")
         ax[0].axvline(f0_fit - sigma_f_fit, ls=":", color="orange")
-        ax[0].axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label=f"f0±σ_f")
+        ax[0].axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label="f0±σ_f")
         # フィット曲線
-        f_dense = np.linspace(f0_fit - 2*sigma_f_fit, f0_fit + 2*sigma_f_fit, 200)
-        ax[0].plot(f_dense, gauss_c0(f_dense, A_fit, f0_fit, sigma_f_fit),
-                   "r-", lw=2, label="Gaussian fit")
+        f_dense = np.linspace(f0_fit - 2 * sigma_f_fit, f0_fit + 2 * sigma_f_fit, 200)
+        ax[0].plot(
+            f_dense,
+            gauss_c0(f_dense, A_fit, f0_fit, sigma_f_fit),
+            "r-",
+            lw=2,
+            label="Gaussian fit",
+        )
         ax[0].set_xlabel("Frequency [1/day]")
         ax[0].set_ylabel("LS Power")
-        ax[0].set_title(f"Rotation Period: P = {self.per:.4f} (+{self.per_err_plus:.4f} / -{self.per_err_minus:.4f}) day")
+        ax[0].set_title(
+            f"Rotation Period: P = {self.per:.4f} (+{self.per_err_plus:.4f} / -{self.per_err_minus:.4f}) day"
+        )
         ax[0].legend(loc="upper right", fontsize=9)
 
         # 2) 残差
@@ -927,11 +947,18 @@ class BaseFlareDetector:
         ax[1].axhline(0, ls="--", color="gray")
         ax[1].set_xlabel("Frequency [1/day]")
         ax[1].set_ylabel("Residual")
-        ax[1].set_title(f"Residuals (window=±{self.main_window:.3f}); RMS={main['resid_rms']:.5f}")
+        ax[1].set_title(
+            f"Residuals (window=±{self.main_window:.3f}); RMS={main['resid_rms']:.5f}"
+        )
 
         # 3) σ_f vs window
         ax[2].plot(self.windows, self.sigma_list, lw=1, marker="o", ms=3, label="σ_f")
-        ax[2].axvline(self.main_window, ls="--", color="red", label=f"Main window = {self.main_window:.3f}")
+        ax[2].axvline(
+            self.main_window,
+            ls="--",
+            color="red",
+            label=f"Main window = {self.main_window:.3f}",
+        )
         ax[2].set_xlabel("Window half-width")
         ax[2].set_ylabel("σ_f")
         ax[2].set_title("σ_f vs Window (stability check)")
@@ -993,38 +1020,47 @@ class BaseFlareDetector:
             and len(self.tessBJD) > 1
             and self.precise_obs_time > 0
         ):
+            self._ensure_class_arrays()
+            cls = self.__class__
+
             flare_ratio = self.flare_number / self.precise_obs_time
-            BaseFlareDetector.array_flare_ratio = np.append(
-                BaseFlareDetector.array_flare_ratio, flare_ratio
+            cls.array_flare_number = np.append(
+                cls.array_flare_number, self.flare_number
             )
-            BaseFlareDetector.average_flare_ratio = np.mean(
-                BaseFlareDetector.array_flare_ratio
+            cls.array_precise_obs_time = np.append(
+                cls.array_precise_obs_time, self.precise_obs_time
             )
+            cls.array_flare_ratio = np.append(cls.array_flare_ratio, flare_ratio)
+            cls.average_flare_ratio = np.mean(cls.array_flare_ratio)
+
             sum_flare_energy_ratio = self.sum_flare_energy / self.precise_obs_time
-            BaseFlareDetector.array_energy_ratio = np.append(
-                BaseFlareDetector.array_energy_ratio, sum_flare_energy_ratio
+            cls.array_energy_ratio = np.append(
+                cls.array_energy_ratio, sum_flare_energy_ratio
             )
-            BaseFlareDetector.array_observation_time = np.append(
-                BaseFlareDetector.array_observation_time, np.median(self.tessBJD)
+            cls.array_sum_energy = np.append(
+                cls.array_sum_energy, self.sum_flare_energy
             )
-            BaseFlareDetector.array_amplitude = np.append(
-                BaseFlareDetector.array_amplitude, self.brightness_variation_amplitude
+
+            max_flare_energy = (
+                float(np.max(self.energy))
+                if self.energy is not None and len(self.energy) > 0
+                else np.nan
             )
-            BaseFlareDetector.array_starspot = np.append(
-                BaseFlareDetector.array_starspot, self.starspot
+            cls.array_max_energy = np.append(cls.array_max_energy, max_flare_energy)
+
+            cls.array_observation_time = np.append(
+                cls.array_observation_time, np.median(self.tessBJD)
             )
-            BaseFlareDetector.array_starspot_ratio = np.append(
-                BaseFlareDetector.array_starspot_ratio, self.starspot_ratio
+            cls.array_amplitude = np.append(
+                cls.array_amplitude, self.brightness_variation_amplitude
             )
-            BaseFlareDetector.array_data_name = np.append(
-                BaseFlareDetector.array_data_name, self.data_name
+            cls.array_starspot = np.append(cls.array_starspot, self.starspot)
+            cls.array_starspot_ratio = np.append(
+                cls.array_starspot_ratio, self.starspot_ratio
             )
-            BaseFlareDetector.array_per = np.append(
-                BaseFlareDetector.array_per, self.per
-            )
-            BaseFlareDetector.array_per_err = np.append(
-                BaseFlareDetector.array_per_err, self.per_err
-            )
+            cls.array_data_name = np.append(cls.array_data_name, self.data_name)
+            cls.array_per = np.append(cls.array_per, self.per)
+            cls.array_per_err = np.append(cls.array_per_err, self.per_err)
 
     def plt_flare(self, title: str | None = None, save_path: str | None = None):
         """
@@ -1064,8 +1100,12 @@ class BaseFlareDetector:
 
         # 1つ目のサブプロット: 生の光度曲線
         axs[0].plot(
-            self.tessBJD, self.mPDCSAPflux,
-            color="black", linestyle="-", label="Normalized Flux", lw=0.5
+            self.tessBJD,
+            self.mPDCSAPflux,
+            color="black",
+            linestyle="-",
+            label="Normalized Flux",
+            lw=0.5,
         )
         axs[0].set_ylabel("Normalized Flux", fontsize=17)
         axs[0].tick_params(labelsize=13)
@@ -1073,16 +1113,19 @@ class BaseFlareDetector:
         # 2つ目のサブプロット: デトレンド後
         if self.s2mPDCSAPflux is not None:
             axs[1].plot(
-                self.tessBJD, self.s2mPDCSAPflux,
-                color="black", linestyle="-", lw=0.5
+                self.tessBJD, self.s2mPDCSAPflux, color="black", linestyle="-", lw=0.5
             )
 
             # フレアのピーク位置を線で示す
             if self.peaktime is not None:
                 for peak in self.peaktime:
                     axs[1].axvline(
-                        x=peak, ymin=0.8, ymax=0.85,
-                        color="red", linestyle="-", linewidth=1.5
+                        x=peak,
+                        ymin=0.8,
+                        ymax=0.85,
+                        color="red",
+                        linestyle="-",
+                        linewidth=1.5,
                     )
 
             axs[1].set_xlabel(f"Time (day) (BJD - {self.time_offset})", fontsize=17)

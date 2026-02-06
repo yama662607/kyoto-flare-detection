@@ -66,9 +66,15 @@ class FlareDetector_V889_Her(BaseFlareDetector):
         diff_flux = np.diff(flux_ext)
 
         flux_diff_lag2_appended = np.append(self.difference_at_lag(flux_ext, n=2), 0)
-        flux_diff_lag3_appended = np.append(self.difference_at_lag(flux_ext, n=3), [0, 0])
-        flux_diff_lag4_appended = np.append(self.difference_at_lag(flux_ext, n=4), [0, 0, 0])
-        flux_diff_lag5_appended = np.append(self.difference_at_lag(flux_ext, n=5), [0, 0, 0, 0])
+        flux_diff_lag3_appended = np.append(
+            self.difference_at_lag(flux_ext, n=3), [0, 0]
+        )
+        flux_diff_lag4_appended = np.append(
+            self.difference_at_lag(flux_ext, n=4), [0, 0, 0]
+        )
+        flux_diff_lag5_appended = np.append(
+            self.difference_at_lag(flux_ext, n=5), [0, 0, 0, 0]
+        )
 
         flare_can_start_candidates = np.where(
             (
@@ -103,11 +109,10 @@ class FlareDetector_V889_Her(BaseFlareDetector):
         time_valid = time_ext[~mask]
         flux_valid = flux_ext[~mask]
 
-        if len(time_valid) > 3:
-            spline_func = interp1d(time_valid, flux_valid, kind="cubic")
-            time_flare_intervals = time_ext[mask]
-            if len(time_flare_intervals) > 0:
-                flux_to_interpolate[mask] = spline_func(time_flare_intervals)
+        spline_func = interp1d(time_valid, flux_valid, kind="cubic")
+        time_flare_intervals = time_ext[mask]
+        if len(time_flare_intervals) > 0:
+            flux_to_interpolate[mask] = spline_func(time_flare_intervals)
 
         self.flux_splined = flux_to_interpolate
         self.filtered_flux = self.lowpass(

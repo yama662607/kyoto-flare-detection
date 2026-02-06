@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base_flare_detector import TESS_RESPONSE_PATH, BaseFlareDetector
+from .base_flare_detector import BaseFlareDetector
 
 
 class FlareDetector_DS_Tuc_A(BaseFlareDetector):
@@ -18,10 +18,18 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
     ):
         super().__init__(
             file=file,
-            R_sunstar_ratio=0.87,
+            R_sunstar_ratio=0.964,
             T_star=5428,
             flux_mean=119633.99533564149,
-            err_constant_mean=0.0005505874029881446,  # Mean of the 5 values
+            err_constant_mean=np.mean(
+                [
+                    0.0005519882005171186,
+                    0.0005789426404572392,
+                    0.0005975980849639832,
+                    0.0005009879446873866,
+                    0.0005225201442198351,
+                ]
+            ),
             rot_period=0.3672257916463397,
             rotation_period_min=1.0,
             rotation_period_max=8.0,
@@ -33,6 +41,7 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
             run_process_data_2=run_process_data_2,
             ene_thres_low=ene_thres_low,
             ene_thres_high=ene_thres_high,
+            use_sector_mean=True,
         )
         # DS Tuc A固有のギャップ検出閾値を設定
         self.gap_threshold = 0.05
@@ -95,7 +104,7 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
         wave, resp, dw = response
         dt = 120.0
         Rsun_cm = 695510e5
-        sigma_SB = 5.670374419e-5
+        sigma_SB = 5.67e-5
 
         R_primary = Rsun_cm * self.R_sunstar_ratio  # 0.87 Rsun
         R_companion = Rsun_cm * 0.864  # Rsun
@@ -113,7 +122,9 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
             return np.array([])
 
         # 恒星全体の強度（面積重み付き）
-        total_star_intensity = (main_intensity * R_primary**2 + companion_intensity * R_companion**2)
+        total_star_intensity = (
+            main_intensity * R_primary**2 + companion_intensity * R_companion**2
+        )
 
         # A_flare = C_flare * pi * R_primary^2 * (L_total_star_TESS / L_primary_flare_TESS)
         # ※フレアは主星で発生すると仮定

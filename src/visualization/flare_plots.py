@@ -5,17 +5,18 @@ This module provides publication-quality plotting functions for stellar flare an
 including scatter plots with power-law fits and cumulative energy distributions.
 """
 
-from typing import Dict, Optional, List, Any
-import numpy as np
+from typing import Any
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import pearsonr
 
 from src.visualization.paper_style import (
+    CUMULATIVE_COLORS,
     apply_paper_style,
     get_star_style,
-    CUMULATIVE_COLORS,
 )
 
 
@@ -25,12 +26,12 @@ def _power_law(x, a, b):
 
 
 def plot_flare_frequency(
-    all_stars_detectors: Dict[str, Dict[str, Any]],
+    all_stars_detectors: dict[str, dict[str, Any]],
     output_filename: str = "analysis_result_freq_with_error_plot.pdf",
     show_fit: bool = True,
     show_legend: bool = True,
     figsize: tuple = (8, 6),
-) -> Optional[plt.Figure]:
+) -> plt.Figure | None:
     """
     Plot Flare Frequency vs Starspot Area with error bars and power-law fit.
 
@@ -47,9 +48,9 @@ def plot_flare_frequency(
     apply_paper_style()
 
     # Attribute names
-    x_axis_attribute = 'array_starspot'
-    n_axis_attribute = 'array_flare_number'
-    t_axis_attribute = 'array_precise_obs_time'
+    x_axis_attribute = "array_starspot"
+    n_axis_attribute = "array_flare_number"
+    t_axis_attribute = "array_precise_obs_time"
 
     MARKER_SIZE = 8
     CAPSIZE = 2
@@ -63,7 +64,10 @@ def plot_flare_frequency(
         x_all, y_all, yerr_all = [], [], []
 
         for det in detectors_dict.values():
-            if not all(hasattr(det, attr) for attr in [x_axis_attribute, n_axis_attribute, t_axis_attribute]):
+            if not all(
+                hasattr(det, attr)
+                for attr in [x_axis_attribute, n_axis_attribute, t_axis_attribute]
+            ):
                 continue
 
             x_arr = np.asarray(getattr(det, x_axis_attribute), dtype=float)
@@ -82,8 +86,13 @@ def plot_flare_frequency(
             # Scale and mask
             x_scaled = x_arr / 1e17
             mask = (
-                np.isfinite(x_scaled) & np.isfinite(y_calc) & np.isfinite(yerr_arr) &
-                (x_scaled > 0) & (y_calc > 0) & (T_arr > 0) & (N_arr >= 0)
+                np.isfinite(x_scaled)
+                & np.isfinite(y_calc)
+                & np.isfinite(yerr_arr)
+                & (x_scaled > 0)
+                & (y_calc > 0)
+                & (T_arr > 0)
+                & (N_arr >= 0)
             )
 
             if np.any(mask):
@@ -103,22 +112,29 @@ def plot_flare_frequency(
 
         # Plot error bars
         ax.errorbar(
-            x_all, y_all, yerr=yerr_all,
-            fmt=style['marker'], linestyle='None',
-            color=style['color'],
+            x_all,
+            y_all,
+            yerr=yerr_all,
+            fmt=style["marker"],
+            linestyle="None",
+            color=style["color"],
             markersize=MARKER_SIZE,
             capsize=CAPSIZE,
             elinewidth=ELINEWIDTH,
             alpha=0.9,
-            label=f"{star_name} Data"
+            label=f"{star_name} Data",
         )
 
         # Power-law fit
         if show_fit:
             try:
                 popt, pcov = curve_fit(
-                    _power_law, x_all, y_all,
-                    sigma=yerr_all, absolute_sigma=True, maxfev=10000
+                    _power_law,
+                    x_all,
+                    y_all,
+                    sigma=yerr_all,
+                    absolute_sigma=True,
+                    maxfev=10000,
                 )
                 a, b = popt
                 a_err, b_err = np.sqrt(np.diag(pcov))
@@ -126,10 +142,18 @@ def plot_flare_frequency(
                 x_fit = np.linspace(x_all.min(), x_all.max(), 200)
                 y_fit = _power_law(x_fit, a, b)
 
-                ax.plot(x_fit, y_fit, color=style['color'], linestyle=style['linestyle'], label="_nolegend_")
+                ax.plot(
+                    x_fit,
+                    y_fit,
+                    color=style["color"],
+                    linestyle=style["linestyle"],
+                    label="_nolegend_",
+                )
                 plot_successful = True
 
-                print(f"{star_name}: a = {a:.2e} ± {a_err:.2e}, b = {b:.2f} ± {b_err:.2f}")
+                print(
+                    f"{star_name}: a = {a:.2e} ± {a_err:.2e}, b = {b:.2f} ± {b_err:.2f}"
+                )
             except Exception as e:
                 print(f"Could not perform power-law curve_fit for {star_name}: {e}")
         else:
@@ -141,8 +165,8 @@ def plot_flare_frequency(
 
         ax.set_xlim(0.5, 8)
         ax.set_ylim(0.04, 1.0)
-        ax.set_xscale('log')
-        ax.set_yscale('log')
+        ax.set_xscale("log")
+        ax.set_yscale("log")
 
         ax.set_xticks([0.5, 1.0, 2.0, 3.0, 5.0])
         ax.set_yticks([0.05, 0.1, 0.2, 0.3, 0.5, 1.0])
@@ -150,20 +174,26 @@ def plot_flare_frequency(
         ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
         ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, pos: f"{y:g}"))
 
-        ax.xaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
-        ax.yaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
+        ax.xaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
+        ax.yaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
         ax.xaxis.set_minor_formatter(mticker.NullFormatter())
         ax.yaxis.set_minor_formatter(mticker.NullFormatter())
 
-        ax.tick_params(axis='both', which='both', direction='in', top=False, right=False)
-        ax.tick_params(axis='both', which='major', length=7, width=1.5, labelsize=16)
-        ax.tick_params(axis='both', which='minor', length=4, width=1.2)
+        ax.tick_params(
+            axis="both", which="both", direction="in", top=False, right=False
+        )
+        ax.tick_params(axis="both", which="major", length=7, width=1.5, labelsize=16)
+        ax.tick_params(axis="both", which="minor", length=4, width=1.2)
 
         if show_legend:
-            ax.legend(loc='lower right', fontsize=15, frameon=False)
+            ax.legend(loc="lower right", fontsize=15, frameon=False)
 
         fig.tight_layout()
-        plt.savefig(output_filename, format='pdf', bbox_inches='tight')
+        plt.savefig(output_filename, format="pdf", bbox_inches="tight")
         print(f"\nPlot saved as '{output_filename}'")
         return fig
     else:
@@ -172,12 +202,12 @@ def plot_flare_frequency(
 
 
 def plot_total_energy(
-    all_stars_detectors: Dict[str, Dict[str, Any]],
+    all_stars_detectors: dict[str, dict[str, Any]],
     output_filename: str = "analysis_result_totalene_plot.pdf",
     show_fit: bool = True,
     show_legend: bool = True,
     figsize: tuple = (8, 6),
-) -> Optional[plt.Figure]:
+) -> plt.Figure | None:
     """
     Plot Total Flare Energy vs Starspot Area with power-law fit.
 
@@ -193,8 +223,8 @@ def plot_total_energy(
     """
     apply_paper_style()
 
-    x_axis_attribute = 'array_starspot'
-    y_axis_attribute = 'array_sum_energy'
+    x_axis_attribute = "array_starspot"
+    y_axis_attribute = "array_sum_energy"
     marker_size = 100
 
     fig, ax = plt.subplots(figsize=figsize)
@@ -206,10 +236,16 @@ def plot_total_energy(
         y_data_for_star = []
 
         for det_instance in detectors_dict.values():
-            if hasattr(det_instance, x_axis_attribute) and hasattr(det_instance, y_axis_attribute):
+            if hasattr(det_instance, x_axis_attribute) and hasattr(
+                det_instance, y_axis_attribute
+            ):
                 x_array = getattr(det_instance, x_axis_attribute)
                 y_array = getattr(det_instance, y_axis_attribute)
-                if isinstance(x_array, (list, np.ndarray)) and isinstance(y_array, (list, np.ndarray)) and len(x_array) == len(y_array):
+                if (
+                    isinstance(x_array, (list, np.ndarray))
+                    and isinstance(y_array, (list, np.ndarray))
+                    and len(x_array) == len(y_array)
+                ):
                     x_data_for_star.extend(x_array)
                     y_data_for_star.extend(y_array)
 
@@ -220,12 +256,13 @@ def plot_total_energy(
             y_data_scaled = y_data / 1e35
 
             ax.scatter(
-                x_data_scaled, y_data_scaled,
-                label=f'{star_name} Data',
-                color=style['color'],
+                x_data_scaled,
+                y_data_scaled,
+                label=f"{star_name} Data",
+                color=style["color"],
                 alpha=0.9,
-                marker=style['marker'],
-                s=marker_size
+                marker=style["marker"],
+                s=marker_size,
             )
 
             if show_fit:
@@ -241,10 +278,14 @@ def plot_total_energy(
                     x_fit = np.linspace(x_fit_data.min(), x_fit_data.max(), 200)
                     y_fit = _power_law(x_fit, a, b)
 
-                    ax.plot(x_fit, y_fit, color=style['color'], linestyle=style['linestyle'])
+                    ax.plot(
+                        x_fit, y_fit, color=style["color"], linestyle=style["linestyle"]
+                    )
                     plot_successful = True
 
-                    print(f"{star_name}: a = {a:.2e} ± {a_err:.2e}, b = {b:.2f} ± {b_err:.2f}")
+                    print(
+                        f"{star_name}: a = {a:.2e} ± {a_err:.2e}, b = {b:.2f} ± {b_err:.2f}"
+                    )
                 except Exception as e:
                     print(f"Could not perform power-law curve_fit for {star_name}: {e}")
             else:
@@ -252,12 +293,14 @@ def plot_total_energy(
 
     if plot_successful:
         ax.set_xlabel(r"Starspot Area [10$^{21}$ cm$^2$]", fontsize=17)
-        ax.set_ylabel(r"Total Flare Energy (>5×10$^{33}$erg) [10$^{35}$ erg]", fontsize=17)
+        ax.set_ylabel(
+            r"Total Flare Energy (>5×10$^{33}$erg) [10$^{35}$ erg]", fontsize=17
+        )
 
         ax.set_xlim(0.5, 8)
         ax.set_ylim(0.1, 7)
-        ax.set_xscale('log')
-        ax.set_yscale('log')
+        ax.set_xscale("log")
+        ax.set_yscale("log")
 
         ax.set_xticks([0.5, 1.0, 2.0, 3.0, 5.0])
         ax.set_yticks([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0])
@@ -265,20 +308,26 @@ def plot_total_energy(
         ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
         ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, pos: f"{y:g}"))
 
-        ax.xaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
-        ax.yaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
+        ax.xaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
+        ax.yaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
         ax.xaxis.set_minor_formatter(mticker.NullFormatter())
         ax.yaxis.set_minor_formatter(mticker.NullFormatter())
 
-        ax.tick_params(axis='both', which='both', direction='in', top=False, right=False)
-        ax.tick_params(axis='both', which='major', length=7, width=1.5, labelsize=16)
-        ax.tick_params(axis='both', which='minor', length=4, width=1.2)
+        ax.tick_params(
+            axis="both", which="both", direction="in", top=False, right=False
+        )
+        ax.tick_params(axis="both", which="major", length=7, width=1.5, labelsize=16)
+        ax.tick_params(axis="both", which="minor", length=4, width=1.2)
 
         if show_legend:
-            ax.legend(loc='lower right', fontsize=15, frameon=False)
+            ax.legend(loc="lower right", fontsize=15, frameon=False)
 
         fig.tight_layout()
-        plt.savefig(output_filename, format='pdf', bbox_inches='tight')
+        plt.savefig(output_filename, format="pdf", bbox_inches="tight")
         print(f"\nPlot saved as '{output_filename}'")
         return fig
     else:
@@ -287,12 +336,12 @@ def plot_total_energy(
 
 
 def plot_max_energy(
-    all_stars_detectors: Dict[str, Dict[str, Any]],
+    all_stars_detectors: dict[str, dict[str, Any]],
     output_filename: str = "analysis_result_maxene_plot.pdf",
     show_pearson: bool = False,
     show_legend: bool = True,
     figsize: tuple = (8, 6),
-) -> Optional[plt.Figure]:
+) -> plt.Figure | None:
     """
     Plot Max Flare Energy vs Starspot Area.
 
@@ -308,8 +357,8 @@ def plot_max_energy(
     """
     apply_paper_style()
 
-    x_axis_attribute = 'array_starspot'
-    y_axis_attribute = 'array_max_energy'
+    x_axis_attribute = "array_starspot"
+    y_axis_attribute = "array_max_energy"
     marker_size = 100
 
     fig, ax = plt.subplots(figsize=figsize)
@@ -321,10 +370,16 @@ def plot_max_energy(
         y_data_for_star = []
 
         for det_instance in detectors_dict.values():
-            if hasattr(det_instance, x_axis_attribute) and hasattr(det_instance, y_axis_attribute):
+            if hasattr(det_instance, x_axis_attribute) and hasattr(
+                det_instance, y_axis_attribute
+            ):
                 x_array = getattr(det_instance, x_axis_attribute)
                 y_array = getattr(det_instance, y_axis_attribute)
-                if isinstance(x_array, (list, np.ndarray)) and isinstance(y_array, (list, np.ndarray)) and len(x_array) == len(y_array):
+                if (
+                    isinstance(x_array, (list, np.ndarray))
+                    and isinstance(y_array, (list, np.ndarray))
+                    and len(x_array) == len(y_array)
+                ):
                     x_data_for_star.extend(x_array)
                     y_data_for_star.extend(y_array)
 
@@ -341,21 +396,28 @@ def plot_max_energy(
 
             # Calculate Pearson correlation if requested
             label = f"{star_name} Data"
-            if show_pearson and len(x_data_scaled) >= 2:
-                if np.nanstd(x_data_scaled) > 0 and np.nanstd(y_data_scaled) > 0:
-                    try:
-                        r, p = pearsonr(x_data_scaled, y_data_scaled)
-                        label = f"{star_name} (r={r:.2f}, p={p:.2e}, N={len(x_data_scaled)})"
-                    except Exception:
-                        pass
+            if (
+                show_pearson
+                and len(x_data_scaled) >= 2
+                and np.nanstd(x_data_scaled) > 0
+                and np.nanstd(y_data_scaled) > 0
+            ):
+                try:
+                    r, p = pearsonr(x_data_scaled, y_data_scaled)
+                    label = (
+                        f"{star_name} (r={r:.2f}, p={p:.2e}, N={len(x_data_scaled)})"
+                    )
+                except Exception:
+                    pass
 
             ax.scatter(
-                x_data_scaled, y_data_scaled,
+                x_data_scaled,
+                y_data_scaled,
                 label=label,
-                color=style['color'],
+                color=style["color"],
                 alpha=0.9,
-                marker=style['marker'],
-                s=marker_size
+                marker=style["marker"],
+                s=marker_size,
             )
 
             plot_successful = True
@@ -366,8 +428,8 @@ def plot_max_energy(
 
         ax.set_xlim(0.5, 8)
         ax.set_ylim(0.5, 45)
-        ax.set_xscale('log')
-        ax.set_yscale('log')
+        ax.set_xscale("log")
+        ax.set_yscale("log")
 
         ax.set_xticks([0.5, 1.0, 2.0, 3.0, 5.0])
         ax.set_yticks([0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0])
@@ -375,20 +437,26 @@ def plot_max_energy(
         ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
         ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, pos: f"{y:g}"))
 
-        ax.xaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
-        ax.yaxis.set_minor_locator(mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1))
+        ax.xaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
+        ax.yaxis.set_minor_locator(
+            mticker.LogLocator(base=10, subs=np.arange(2, 10) * 0.1)
+        )
         ax.xaxis.set_minor_formatter(mticker.NullFormatter())
         ax.yaxis.set_minor_formatter(mticker.NullFormatter())
 
-        ax.tick_params(axis='both', which='both', direction='in', top=False, right=False)
-        ax.tick_params(axis='both', which='major', length=7, width=1.5, labelsize=16)
-        ax.tick_params(axis='both', which='minor', length=4, width=1.2)
+        ax.tick_params(
+            axis="both", which="both", direction="in", top=False, right=False
+        )
+        ax.tick_params(axis="both", which="major", length=7, width=1.5, labelsize=16)
+        ax.tick_params(axis="both", which="minor", length=4, width=1.2)
 
         if show_legend:
-            ax.legend(loc='lower right', fontsize=15, frameon=False)
+            ax.legend(loc="lower right", fontsize=15, frameon=False)
 
         fig.tight_layout()
-        plt.savefig(output_filename, format='pdf', bbox_inches='tight')
+        plt.savefig(output_filename, format="pdf", bbox_inches="tight")
         print(f"\nPlot saved as '{output_filename}'")
         return fig
     else:
@@ -397,17 +465,17 @@ def plot_max_energy(
 
 
 def plot_cumulative_energy(
-    detectors_dict: Dict[str, Any],
+    detectors_dict: dict[str, Any],
     star_name: str,
-    output_filename: Optional[str] = None,
+    output_filename: str | None = None,
     show_threshold: bool = True,
     threshold_energy: float = 5.0,
     figsize: tuple = (8, 6),
-    xlim: Optional[tuple] = None,
-    xticks: Optional[List[float]] = None,
-    yticks: Optional[List[float]] = None,
-    colors: Optional[List[str]] = None,
-) -> Optional[plt.Figure]:
+    xlim: tuple | None = None,
+    xticks: list[float] | None = None,
+    yticks: list[float] | None = None,
+    colors: list[str] | None = None,
+) -> plt.Figure | None:
     """
     Plot cumulative flare energy distribution for a single star.
 
@@ -434,8 +502,17 @@ def plot_cumulative_energy(
 
     detector_items = list(detectors_dict.items())
 
-    # Use provided colors or default cumulative colors
-    plot_colors = colors if colors else CUMULATIVE_COLORS
+    # Use provided colors or legacy-matching defaults per star
+    if colors:
+        plot_colors = colors
+    else:
+        star_key = star_name.replace("_", " ").strip()
+        if star_key == "V889 Her":
+            plot_colors = CUMULATIVE_COLORS[:4]
+        elif star_key == "DS Tuc":
+            plot_colors = CUMULATIVE_COLORS[:5]
+        else:
+            plot_colors = CUMULATIVE_COLORS
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -481,7 +558,7 @@ def plot_cumulative_energy(
             linestyle="dotted",
             linewidth=1.5,
             label="Energy threshold",
-            zorder=0
+            zorder=0,
         )
 
     # Set custom or default X ticks
@@ -490,7 +567,7 @@ def plot_cumulative_energy(
     else:
         ax.set_xticks([0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100, 200])
 
-    ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(mticker.FormatStrFormatter("%.1f"))
     ax.xaxis.set_minor_formatter(mticker.NullFormatter())
 
     # Set custom or default Y ticks
@@ -499,7 +576,7 @@ def plot_cumulative_energy(
     else:
         ax.set_yticks([0.05, 0.1, 0.2, 0.3, 0.5, 1])
 
-    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.1f'))
+    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.1f"))
 
     # Set X limits if provided
     if xlim:
