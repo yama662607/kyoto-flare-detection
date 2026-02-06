@@ -1,100 +1,100 @@
 # =============================================================================
-# ⚙️ Configuration & Variables
+# ⚙️ 設定と変数
 # =============================================================================
 
 set dotenv-load := true
 set shell := ["bash", "-c"]
 
-# Python project variables
+# Python プロジェクト変数
+
 src_dir := "src"
 test_dir := "tests"
 
 # =============================================================================
-# 🤖 Standard Interface (AI Agent Protocol)
+# 🤖 標準インターフェース (AI エージェントプロトコル)
 # =============================================================================
 
-# Default: run read-only full checks
+# デフォルト: 読み取り専用の全件チェックを実行
 default: check
 
-# Environment setup: install dependencies and toolchain
+# 環境セットアップ: 依存関係とツールチェーンをインストール
 setup:
-    @echo "📦 Setting up environment..."
+    @echo "📦 環境をセットアップ中..."
     uv sync --all-extras
 
-# Full quality verification without code changes (CI gate)
+# 完全な品質確認 (CI ゲート)
 check: fmt-check lint test
-    @echo "✅ All quality checks passed!"
+    @echo "✅ すべての品質チェックに合格しました！"
 
-# Auto-fix: apply formatting and lint fixes (agent's first response)
+# 自動修正: フォーマットとリンターの修正を適用
 fix: fmt lint-fix
-    @echo "✨ Auto-fixes applied!"
+    @echo "✨ 自動修正を適用しました！"
 
 # =============================================================================
-# 🧪 Testing & Verification
+# 🧪 テストと検証
 # =============================================================================
+# ユニット/統合テスト: 引数の受け渡しに対応
 
-# Unit/integration tests: supports argument passthrough
-# Usage: just test (all) | just test path/to/file (specific)
+# 使用例: just test (全件) | just test path/to/file (特定ファイル)
 test *args="":
-    @echo "🧪 Running unit tests..."
-    @if [ -d "{{test_dir}}" ]; then \
-        uv run pytest {{args}}; \
+    @echo "🧪 ユニットテストを実行中..."
+    @if [ -d "{{ test_dir }}" ]; then \
+        uv run pytest {{ args }}; \
     else \
-        echo "⚠️  No tests directory found. Skipping tests."; \
+        echo "⚠️  テストディレクトリが見つかりません。テストをスキップします。"; \
     fi
 
-# E2E tests: supports argument passthrough
+# E2E テスト: 引数の受け渡しに対応
 e2e *args="":
-    @echo "🎭 Running E2E tests..."
-    @echo "⚠️  E2E tests not configured for this project."
+    @echo "🎭 E2E テストを実行中..."
+    @echo "⚠️  このプロジェクトには E2E テストが設定されていません。"
 
 # =============================================================================
-# 🧩 Granular Tasks (Components of 'check' & 'fix')
+# 🧩 詳細タスク ('check' と 'fix' の構成要素)
 # =============================================================================
-
-# --- Format ---
+# --- フォーマット ---
 
 fmt-check:
-    @echo "📏 Checking formatting..."
-    uv run ruff format --check {{src_dir}}
+    @echo "📏 フォーマットをチェック中..."
+    uv run ruff format --check {{ src_dir }}
 
 fmt:
-    @echo "💅 Formatting code..."
-    uv run ruff format {{src_dir}}
+    @echo "💅 コードを整形中..."
+    uv run ruff format {{ src_dir }}
 
-# --- Lint ---
+# --- リンター ---
 
 lint:
-    @echo "🔍 Linting..."
-    uv run ruff check {{src_dir}}
+    @echo "🔍 静的解析を実行中..."
+    uv run ruff check {{ src_dir }}
 
 lint-fix:
-    @echo "🧹 Fixing lint errors..."
-    uv run ruff check --fix {{src_dir}}
+    @echo "🧹 リンターによる自動修正を実行中..."
+    uv run ruff check --fix {{ src_dir }}
 
-# --- Typecheck ---
+# --- 型チェック ---
 
 typecheck:
-    @echo "📐 Checking types..."
-    @echo "⚠️  Type checking not configured (mypy not in dependencies)."
+    @echo "📐 型をチェック中..."
+    @echo "⚠️  型チェックが設定されていません (mypy が依存関係にありません)。"
 
 # =============================================================================
-# 🛠️ Operations & Utilities
+# 🛠️ 運用とユーティリティ
 # =============================================================================
 
-# Start dev server
+# 開発サーバーの起動
 dev:
-    @echo "🚀 Starting dev server..."
-    @echo "⚠️  No dev server configured for this project."
+    @echo "🚀 開発サーバーを起動中..."
+    @echo "⚠️  開発サーバーは設定されていません。"
 
-# Production build
+# 本番ビルド
 build:
-    @echo "🏗️ Building artifact..."
-    @echo "⚠️  No build process configured for this project."
+    @echo "🏗️ アーティファクトをビルド中..."
+    @echo "⚠️  ビルドプロセスは設定されていません。"
 
-# Remove artifacts
+# アーティファクトの削除
 clean:
-    @echo "🗑️ Cleaning artifacts..."
+    @echo "🗑️ キャッシュと生成物を削除中..."
     rm -rf .ruff_cache .pytest_cache .mypy_cache __pycache__ .coverage htmlcov
     find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
     find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
