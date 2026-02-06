@@ -1,4 +1,7 @@
+[日本語 (Japanese)](README_Ja.md)
+
 # Kyoto Flare Detection Project
+
 
 ## Overview
 
