@@ -45,3 +45,5 @@ outputs/debug/
 
 # Temporary executed notebooks
 *_exec.ipynb
+
+legacy/
