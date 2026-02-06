@@ -4,12 +4,11 @@
 
 ## 🚀 Quick Start
 
-1. Install `uv` and `just` (see [Setup Guide](#-セットアップガイド-setup-guide) below)
+1. Install `uv` and `just` (see [Setup Guide](#-setup-guide) below)
 2. Clone the repository
 3. Run `uv sync` to install dependencies
 4. Place TESS FITS data in `data/TESS/<star_name>/`
 5. Start analysis with notebooks in `notebooks/`
-
 
 
 ## Overview
@@ -99,11 +98,11 @@ See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
 
 ---
 
-## 🔧 セットアップガイド (Setup Guide)
+## 🔧 Setup Guide
 
-### 1. uv のインストール
+### 1. Install uv
 
-Python の環境構築を高速かつ確実に行うために使用します。
+Used for fast and reliable Python environment management.
 
 -   **macOS / Linux:**
     ```bash
@@ -113,17 +112,17 @@ Python の環境構築を高速かつ確実に行うために使用します。
     ```powershell
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
--   **その他パッケージマネージャー:**
+-   **Other Package Managers:**
     -   macOS (Homebrew): `brew install uv`
     -   Windows (winget): `winget install astral-sh.uv`
 
-### 2. Just のインストール
+### 2. Install Just
 
-プロジェクト内の様々なコマンド（ビルド、チェック、サーバー起動など）を実行するために必要です。
+Required to run various project commands (build, check, analysis tasks, etc.).
 
 -   **macOS (Homebrew):** `brew install just`
 *   **Windows (winget):** `winget install casey.just`
 *   **Linux (Ubuntu/Debian):** `sudo apt install just`
 
 > [!TIP]
-> インストール後、ターミナルを再起動して `just --version` および `uv --version` が動作することを確認してください。
+> After installation, restart your terminal and verify that `just --version` and `uv --version` work correctly.
