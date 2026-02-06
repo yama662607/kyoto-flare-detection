@@ -1,5 +1,14 @@
 # Kyoto Flare Detection Project
 
+## 🚀 クイックスタート
+
+1. `uv` と `just` をインストールする（[セットアップガイド](#-セットアップガイド-setup-guide)参照）
+2. リポジトリをクローンする
+3. `uv sync` を実行して依存関係をインストールする
+4. TESS の FITS データを `data/TESS/<star_name>/` に配置する
+5. `notebooks/` 内のノートブックで解析を開始する
+
+
 ## 概要
 
 この日本語版は `japanese` ブランチにオリジナルを保持しています。日本語の内容を参照したい場合は `japanese` ブランチを確認してください。
@@ -84,35 +93,6 @@ data/
 └── uv.lock                     # 依存パッケージロックファイル
 ```
 
-## セットアップ
-
-本プロジェクトは、Python のパッケージ管理ツールとして `uv` を使用します。
-
-### 1. `uv` のインストール
-
-`uv`がインストールされていない場合は、お使いの OS に応じて以下のコマンドを実行してください。
-
-**macOS / Linux:**
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-**Windows (PowerShell):**
-
-```powershell
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-インストール後、ターミナルを再起動してください。
-
-### 2. 仮想環境の作成と依存関係のインストール
-
-プロジェクトのルートディレクトリで以下のコマンドを実行すると、`.venv` という名前の仮想環境が作成され、`uv.lock`に基づいて依存パッケージがインストールされます。
-
-```bash
-uv sync
-```
 
 ## 使用方法
 
@@ -163,3 +143,34 @@ detector.plot_energy_matplotlib() # Matplotlibによるエネルギー分布プ�
 ## Outputs
 
 See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
+
+---
+
+## 🔧 セットアップガイド (Setup Guide)
+
+### 1. uv のインストール
+
+Python の環境構築を高速かつ確実に行うために使用します。
+
+-   **macOS / Linux:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+-   **Windows:**
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+-   **その他パッケージマネージャー:**
+    -   macOS (Homebrew): `brew install uv`
+    -   Windows (winget): `winget install astral-sh.uv`
+
+### 2. Just のインストール
+
+プロジェクト内の様々なコマンド（ビルド、チェック、サーバー起動など）を実行するために必要です。
+
+-   **macOS (Homebrew):** `brew install just`
+*   **Windows (winget):** `winget install casey.just`
+*   **Linux (Ubuntu/Debian):** `sudo apt install just`
+
+> [!TIP]
+> インストール後、ターミナルを再起動して `just --version` および `uv --version` が動作することを確認してください。

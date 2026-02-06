@@ -2,6 +2,15 @@
 
 # Kyoto Flare Detection Project
 
+## 🚀 Quick Start
+
+1. Install `uv` and `just` (see [Setup Guide](#-セットアップガイド-setup-guide) below)
+2. Clone the repository
+3. Run `uv sync` to install dependencies
+4. Place TESS FITS data in `data/TESS/<star_name>/`
+5. Start analysis with notebooks in `notebooks/`
+
+
 
 ## Overview
 
@@ -59,13 +68,6 @@ data/
 └── uv.lock
 ```
 
-## Setup
-
-This project uses `uv`.
-
-```bash
-uv sync
-```
 
 ## Usage
 
@@ -94,3 +96,34 @@ detector.plot_flare()
 ## Outputs
 
 See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
+
+---
+
+## 🔧 セットアップガイド (Setup Guide)
+
+### 1. uv のインストール
+
+Python の環境構築を高速かつ確実に行うために使用します。
+
+-   **macOS / Linux:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+-   **Windows:**
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+-   **その他パッケージマネージャー:**
+    -   macOS (Homebrew): `brew install uv`
+    -   Windows (winget): `winget install astral-sh.uv`
+
+### 2. Just のインストール
+
+プロジェクト内の様々なコマンド（ビルド、チェック、サーバー起動など）を実行するために必要です。
+
+-   **macOS (Homebrew):** `brew install just`
+*   **Windows (winget):** `winget install casey.just`
+*   **Linux (Ubuntu/Debian):** `sudo apt install just`
+
+> [!TIP]
+> インストール後、ターミナルを再起動して `just --version` および `uv --version` が動作することを確認してください。
