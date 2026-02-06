@@ -1,39 +1,39 @@
-[日本語 (Japanese)](README_Ja.md)
-
 # Kyoto Flare Detection Project
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
-1. Install `uv` and `just` (see [Setup Guide](#-setup-guide) below)
-2. Clone the repository
-3. Run `uv sync` to install dependencies
-4. Place TESS FITS data in `data/TESS/<star_name>/`
-5. Start analysis with notebooks in `notebooks/`
+1. `uv` と `just` をインストールする（[セットアップガイド](#-セットアップガイド-setup-guide)参照）
+2. リポジトリをクローンする
+3. `uv sync` を実行して依存関係をインストールする
+4. TESS の FITS データを `data/TESS/<star_name>/` に配置する
+5. `notebooks/` 内のノートブックで解析を開始する
 
 
-## Overview
+## 概要
 
-This project provides a Python framework to detect stellar flares in TESS light curves and analyze their energies and occurrence rates.
+`japanese` ブランチに、文章やコメントが日本語版のコードベースがあります。master ブランチは英語版です。
 
-### Key Features
+このプロジェクトは、TESS (Transiting Exoplanet Survey Satellite) の光度曲線データから恒星のフレアを検出し、そのエネルギーや頻度を分析するための Python フレームワークです。
 
-- Load light curves from TESS FITS files
-- Gap correction and detrending
-- Automatic flare detection
-- Estimate flare energy, duration, and peak times
-- Visualization with Plotly and Matplotlib
-- Cross-platform support (macOS, Linux, Windows)
+### 主な機能
 
-## Data Setup
+- TESS の FITS ファイルから光度曲線データを読み込み
+- データのギャップ補正、デトレンド処理
+- フレア現象の自動検出
+- フレアのエネルギー、継続時間、ピーク時刻などの物理量を推定
+- Plotly および Matplotlib による結果の可視化
+- クロスプラットフォーム対応 (macOS, Linux, Windows)
 
-TESS data are large and excluded from Git. Place FITS files under `data/`.
-Also place the TESS response file at `data/tess-response-function-v1.0.csv`.
+## 重要
 
-Example structure (filenames vary by sector and target):
+- TESS 衛星のデータは非常に大きいため、Git の追跡対象から除外しています。`data/`ディレクトリに TESS の FITS ファイルを配置して使用してください。
+- `data/tess-response-function-v1.0.csv` に TESS 応答関数ファイルを配置してください。
+
+構成例（ファイル名はセクターや対象により異なります）
 
 ```
 data/
-├── TESS/
+└── TESS/
     ├── DS_Tuc_A/
     │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
     ├── EK_Dra/
@@ -43,88 +43,122 @@ data/
 └── tess-response-function-v1.0.csv
 ```
 
-## Project Structure
+## コードの構成
+
+このプロジェクトは、オブジェクト指向の設計パターンを採用しており、共通の処理を行う「基底クラス」と、星ごとに特化した処理を行う「派生クラス」に分かれています。
+
+### `src/base_flare_detector.py`
+
+`BaseFlareDetector` クラスを定義しています。このクラスは、フレア検出のコアとなる engine 部分です。
+
+- **役割**: 星の種類によらない共通のアルゴリズム（データの読み込み、ギャップ補正、デトレンド、フレア検出、エネルギー計算など）を実装します。
+- **主なメソッド**:
+  - `process_data()`: データ処理のパイプライン全体を実行します。
+  - `plot_flare()`: `Plotly` を使用して光度曲線と検出されたフレアをインタラクティブに表示します。
+  - `plot_flare_matplotlib()`: `Matplotlib` を使用して静的な光度曲線のグラフを生成します。
+
+### `src/*_detector.py` (例: `src/ds_tuc_a_detector.py`)
+
+特定の恒星に特化した派生クラスを定義しています。これらは `BaseFlareDetector` を継承して作成されます。
+
+- **役割**: 各恒星の物理的特性（半径、温度など）や、データに見られる特有のノイズ（例: トランジット）に対応するための設定ファイルとして機能します。
+- **実装**:
+  - `__init__`メソッドをオーバーライドし、`super()`を通じて基底クラスにその星固有のパラメータを渡します。
+  - 必要に応じて、`remove()` (データ除去) や `detrend_flux()` (デトレンド) などのメソッドをオーバーライドし、その星に特化したアルゴリズムを実装します。
+
+## プロジェクト構成
 
 ```
 /
-├── data/                       # Data files (not tracked)
-│   ├── TESS/                   # FITS files per star
-│   └── tess-response-function-v1.0.csv
-├── notebooks/                  # Analysis notebooks
-│   ├── flare_create_graphs.ipynb
-│   ├── flare_detect_*.ipynb
-│   └── learning/
-├── outputs/                    # Generated figures and results
-│   └── figures/
-├── docs/                       # Documentation
-├── tools/                      # Utility scripts
-├── src/                        # Source code
-│   ├── base_flare_detector.py
-│   ├── flarepy_*.py
-│   └── visualization/
-├── .gitignore
-├── pyproject.toml
-├── justfile
-└── uv.lock
+├── data/                       # データファイル (Gitの追跡対象外)
+│   ├── TESS/                   # TESSの.fitsファイルを恒星ごとに格納
+│   └── tess-response-function-v1.0.csv # TESSの応答関数
+├── notebooks/                  # 分析用Jupyter Notebook
+│   ├── flare_create_graphs.ipynb   # [MAIN] 統合グラフ生成・分析ノートブック
+│   ├── flare_detect_*.ipynb    # [STAR] 各恒星のフレア検出・解析 (DS_Tuc_A, EK_Dra, V889_Her)
+│   └── learning/               # 実験・学習・検証用ノートブック
+├── outputs/                    # 生成されたグラフや結果の出力先
+│   └── figures/                # [Thesis] 論文用PDF図版の出力先
+├── src/                        # ソースコード
+│   ├── base_flare_detector.py  # [CORE] フレア検出のメインロジック
+│   ├── flarepy_*.py            # [STAR] 各恒星用設定・実装 (DS_Tuc_A, EK_Dra, V889_Her)
+│   └── visualization/          # [NEW] 論文用可視化モジュール
+│       ├── flare_plots.py      # グラフ描画関数群
+│       └── paper_style.py      # Matplotlib スタイル設定
+├── docs/                       # ドキュメント
+├── tools/                      # ユーティリティ・保守スクリプト
+├── .gitignore                  # Git除外設定
+|── pyproject.toml              # プロジェクト依存関係・設定
+├── justfile                    # タスクランナー (CI/CD, 検証用)
+└── uv.lock                     # 依存パッケージロックファイル
 ```
 
 
-## Usage
+## 使用方法
 
-Use notebooks in `notebooks/` for analysis. Example:
+### VS Code での Jupyter Notebook カーネル設定
+
+`uv`で作成した仮想環境を VS Code の Notebook で認識させるには、以下の手順を実行します。
+
+1. `uv sync` を実行して `.venv` ディレクトリが作成されていることを確認します。
+2. `ipykernel` パッケージをインストールします（Jupyter がカーネルを認識するために必要です）。
+   ```bash
+   uv add ipykernel
+   ```
+3. VS Code で Jupyter Notebook ファイル (`.ipynb`) を開きます。
+4. 右上の **「カーネルの選択」** (`Select Kernel`) をクリックします。
+5. **「Python 環境...」** (`Python Environments...`) を選択します。
+6. リストから、プロジェクトルートにある `.venv` フォルダ内の Python インタプリタを選択します。これにより、Notebook がプロジェクトの仮想環境で実行されるようになります。
+
+### 分析の実行
+
+主な分析は `notebooks/` ディレクトリ内の Jupyter Notebook から行います。
 
 ```python
 import sys
 from pathlib import Path
 
-# --- 1. Python Path Configuration ---
-# Get the absolute path of the current directory
+# --- 1. Python実行パスの設定 ---
+# 現在の作業ディレクトリの絶対パスを取得
 PROJECT_ROOT = Path().resolve()
 
-# If running from 'notebooks' or 'src' subdirectories, move up to the project root
+# 'notebooks' や 'src' ディレクトリから実行している場合、プロジェクトルートへ移動
 if PROJECT_ROOT.name in ['notebooks', 'src']:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
-# Add the determined project root to the Python system path.
-# This allows Python to find and import modules from the 'src' directory correctly,
-# regardless of the current working directory.
+# 'src' モジュールを正しくインポートできるように、プロジェクトルートをパスに追加
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# --- 2. Flare Detection Execution ---
-# Import the specific detector class tailored for the target star (e.g., DS_Tuc_A).
-# Each star might have a dedicated detector class for specific configurations or models.
+# --- 2. フレア検出の実行 ---
+# 対象とする恒星（例: DS Tuc A）専用の検出クラスをインポート
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
-# Construct the full path to the target TESS FITS light curve file.
-# This path is relative to the PROJECT_ROOT to ensure portability.
+# 解析したい TESS FITS ファイルのパス（PROJECT_ROOT を基準に指定）
 file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
-# Initialize the flare detector.
-# By setting `process_data=True`, the detector automatically executes its
-# entire analysis pipeline upon initialization, including detrending,
-# flare detection, and energy calculation.
+# 検出器のインスタンスを作成し、データ処理（デトレンド、検出、エネルギー計算等）を実行
+# process_data=True にすると、データの読み込みから解析までの一連のパイプラインが自動的に実行されます
 detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
-# Visualize the processed light curve along with the detected flares.
-# This method uses Plotly to generate an interactive plot, useful for detailed exploration.
+# Plotly を使用して、光度曲線と検出されたフレアをインタラクティブに表示・確認
 detector.plot_flare()
 
-# Generate a static plot of the flare energy frequency distribution.
-# This plot is suitable for publications or reports, typically using Matplotlib.
+# Matplotlib を使用して、エネルギー分布（発生頻度分布）をプロット
 detector.plot_energy_matplotlib()
 ```
 
+
 ## Outputs
 
-See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
+`docs/OUTPUTS.md` に生成物とデバッグ出力の場所が記載されています。
 
 ---
 
-## 🔧 Setup Guide
+## 🔧 セットアップガイド (Setup Guide)
 
-### 1. Install uv
+### 1. uv のインストール
 
-Used for fast and reliable Python environment management.
+Python の環境構築を高速かつ確実に行うために使用します。
 
 -   **macOS / Linux:**
     ```bash
@@ -134,20 +168,20 @@ Used for fast and reliable Python environment management.
     ```powershell
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
--   **Other Package Managers:**
+-   **その他パッケージマネージャー:**
     -   macOS (Homebrew): `brew install uv`
     -   Windows (winget): `winget install astral-sh.uv`
 
-### 2. Install Just
+### 2. Just のインストール
 
-Required to run various project commands (build, check, analysis tasks, etc.).
+プロジェクト内の様々なコマンド（ビルド、チェック、サーバー起動など）を実行するために必要です。
 
 -   **macOS (Homebrew):** `brew install just`
 *   **Windows (winget):** `winget install casey.just`
 *   **Linux (Ubuntu/Debian):** `sudo apt install just`
 
 > [!TIP]
-> After installation, restart your terminal and verify that `just --version` and `uv --version` work correctly.
+> インストール後、ターミナルを再起動して `just --version` および `uv --version` が動作することを確認してください。
 
 > [!NOTE]
-> **Cross-platform Support:** This project uses `Pathlib` for all file path operations, ensuring consistent behavior across macOS, Linux, and Windows. When using `just`, we recommend using a shell that supports standard commands (like Git Bash on Windows) for the best experience with the `justfile`'s utility tasks.
+> **クロスプラットフォーム対応:** このプロジェクトでは、すべてのファイルパス操作に `Pathlib` を使用しており、macOS, Linux, Windows 間で一貫した動作を確保しています。`just` を使用する場合、`justfile` 内のユーティリティタスクを円滑に実行するために、標準的なコマンド（Windows の場合は Git Bash など）をサポートするシェルを使用することをお勧めします。
