@@ -148,33 +148,39 @@ class BaseFlareDetector:
                 self.process_data()
 
     def load_TESS_data(self):
-        if self.atessBJD is not None:
+        """
+        TESS の FITS ファイルを読み込み、フラックスを正規化するメソッド。
+        Lazy Loading：まだデータが存在しない場合にのみ実行する。
+        """
+        if self.tessBJD is not None:
+            # すでに読み込み済み
             return
+
         if self.file is None:
             print("Error: ファイルパスが指定されていません。")
             return
 
         fname = self.file
         fname_base = os.path.basename(fname)
+
+        # 正規表現で必要な部分を抽出
         match = re.match(r"(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         if match:
             self.data_name = match.group(1)
 
-        # セクタ番号を抽出
         match = re.match(r"[a-z]+\d+-s00(.+)-\d+-\d+-s_lc\.fits$", fname_base)
         data_number = int(match.group(1)) if match else 0
 
+        # FITS データを読み込み
         hdulist = fits.open(fname, memmap=True)
         self.tessheader1 = hdulist[0].header
         data = hdulist[1].data
 
-        # セクタ分岐: sector_thresholdが設定されている場合のみ分岐
+        # NaN を含む行を除外
         if self.sector_threshold is not None and data_number > self.sector_threshold:
-            flux_field = "SAP_FLUX"
-            flux_err_field = "SAP_FLUX_ERR"
+            flux_field, flux_err_field = "SAP_FLUX", "SAP_FLUX_ERR"
         else:
-            flux_field = "PDCSAP_FLUX"
-            flux_err_field = "PDCSAP_FLUX_ERR"
+            flux_field, flux_err_field = "PDCSAP_FLUX", "PDCSAP_FLUX_ERR"
 
         mask = ~np.isnan(data.field(flux_field))
         bjd = _ensure_native(data.field("time")[mask], dtype=np.float64)
@@ -183,47 +189,65 @@ class BaseFlareDetector:
             data.field(flux_err_field)[mask], dtype=np.float64
         )
 
-        # 正規化: use_sector_meanがTrueの場合は各セクターの平均値を使用
+        # 光度データの正規化
         if self.use_sector_mean:
-            sector_mean = np.mean(pdcsap_flux)
-            norm_flux = pdcsap_flux / sector_mean
-            norm_flux_err = pdcsap_flux_err / sector_mean
+            flux_mean = np.mean(pdcsap_flux)
         else:
-            norm_flux = pdcsap_flux / self.flux_mean
-            norm_flux_err = pdcsap_flux_err / self.flux_mean
+            flux_mean = self.flux_mean
 
+        norm_flux = pdcsap_flux / flux_mean
+        norm_flux_err = pdcsap_flux_err / flux_mean
+
+        # インスタンス変数へ格納
+        self.tessBJD = bjd
+        self.mPDCSAPflux = norm_flux
+        self.mPDCSAPfluxerr = norm_flux_err
+        # Compatibility with some internal methods that expect amPDCSAPflux
         self.atessBJD = bjd
         self.amPDCSAPflux = norm_flux
         self.amPDCSAPfluxerr = norm_flux_err
 
-        # Initially, set tessBJD to the loaded data. It can be overridden by child classes.
-        self.tessBJD = self.atessBJD
-        self.mPDCSAPflux = self.amPDCSAPflux
-        self.mPDCSAPfluxerr = self.amPDCSAPfluxerr
-
     def apply_gap_correction(self):
+        """
+        時系列データ内のギャップを補正し、データの前後にバッファ領域を追加するメソッド。
+        """
         bjd = self.tessBJD.copy()
         flux = self.mPDCSAPflux.copy()
         flux_err = self.mPDCSAPfluxerr.copy()
         buf_size = self.buffer_size
 
+        # ギャップ検出
         diff_bjd = np.diff(bjd)
         gap_indices = np.where(diff_bjd >= self.gap_threshold)[0]
 
+        # ====== ギャップ補正 ======
         for idx in gap_indices:
             flux[idx + 1 :] -= flux[idx + 1] - flux[idx]
 
+        # ====== バッファ追加 ======
         flux_ext = np.hstack(
-            [np.full(buf_size, flux[0]), flux, np.full(buf_size, flux[-1])]
+            [
+                np.full(buf_size, flux[0]),
+                flux,
+                np.full(buf_size, flux[-1]),
+            ]
         )
         flux_err_ext = np.hstack(
-            [np.full(buf_size, 0.0001), flux_err, np.full(buf_size, 0.0001)]
+            [
+                np.full(buf_size, 0.0001),
+                flux_err,
+                np.full(buf_size, 0.0001),
+            ]
         )
 
         dt_min = 2 / (24 * 60)
         a = np.arange(buf_size) * dt_min
         bjd_ext = np.hstack(
-            [(a - a[-1] - dt_min + bjd[0]), bjd, (a + dt_min + bjd[-1])]
+            [
+                (a - a[-1] - dt_min + bjd[0]),
+                bjd,
+                (a + dt_min + bjd[-1]),
+            ]
         )
 
         self.gmPDCSAPflux = flux_ext
@@ -270,6 +294,9 @@ class BaseFlareDetector:
         self.s2mPDCSAPflux = flux_ext[valid_slice] - self.flux_spline
 
     def reestimate_errors(self):
+        """
+        フラックスの誤差をローカルスキャッターから再推定するメソッド（最適化版）。
+        """
         bjd = self.tessBJD
         flux = self.s2mPDCSAPflux
         err = np.ones(len(self.mPDCSAPfluxerr))
@@ -308,9 +335,10 @@ class BaseFlareDetector:
                 sum_val = prefix[end_idx] - prefix[start_idx]
                 sum_sq = prefix_sq[end_idx] - prefix_sq[start_idx]
                 mean_val = sum_val / samples
-                var = max((sum_sq / samples) / 1.0 - mean_val**2, 0.0)
-                err[i] = np.sqrt(var)  # [perf] prefix-sum variance to avoid slicing
+                var = max((sum_sq / samples) - mean_val**2, 0.0)
+                err[i] = np.sqrt(var)
 
+        # 全体の平均スケールを元のエラーに合わせる
         err *= np.mean(self.mPDCSAPfluxerr) / self.err_constant_mean
         self.mPDCSAPfluxerr_cor = err
 
@@ -324,7 +352,7 @@ class BaseFlareDetector:
         detecttime = []
 
         i = 0
-        while i <= (len(oversigma_idx) - 2):
+        while i <= (len(oversigma_idx) - 3):
             if i >= (len(oversigma_idx) - 1):
                 break
             if (oversigma_idx[i + 1] - oversigma_idx[i]) != 1:
