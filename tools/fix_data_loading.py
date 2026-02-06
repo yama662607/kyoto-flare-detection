@@ -13,7 +13,7 @@ data_loading_source = [
     "    \"DS Tuc\":   {\"class\": ds_module.FlareDetector_DS_Tuc_A,   \"label\": \"DS Tuc\"},\n",
     "}\n",
     "\n",
-    "# Legacy compatibility\n",
+    "# Historical compatibility\n",
     "STAR_CLASS_MAP = {k: v['class'] for k, v in STAR_INFO.items()}\n",
     "\n",
     "BASE_STARS_FOLDER = \"C:/Users/81803/Documents/フレア/Kyoto_Student_Flare_Project/all_stars/\"\n",

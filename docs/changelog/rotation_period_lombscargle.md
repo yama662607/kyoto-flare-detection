@@ -11,7 +11,7 @@
 | 変更前         | 各測光点ごとに `np.searchsorted` を呼び出して ±0.5 日の範囲を取得。ウィンドウ位置は毎回ゼロから探索していた。                                                                                                |
 | 変更後         | 連続走査で `start_idx` / `end_idx` を更新し、同じウィンドウ集合を再利用。コメント `# [perf] reuse sliding window instead of per-point searchsorted` を付与。                                                 |
 | 目的           | O(N log N) 相当の挙動を O(N) へ削減し、`np.searchsorted` の大量呼び出しを回避する。                                                                                                                          |
-| 値が不変な理由 | `left` / `right` によるギャップ判定は変更しておらず、どの値を標準偏差に使うかは従来と完全一致。`uv run python scripts/verify_detector_state.py ...` で `mPDCSAPfluxerr_cor` のハッシュが一致することを確認。 |
+| 値が不変な理由 | `left` / `right` によるギャップ判定は変更しておらず、どの値を標準偏差に使うかは従来と完全一致。`uv run python tools/verify_detector_state.py ...` で `mPDCSAPfluxerr_cor` のハッシュが一致することを確認。 |
 
 ```python
 while start_idx < n_quiet and quiet_bjd[start_idx] < left:
@@ -49,7 +49,7 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 | 項目           | 内容                                                                                                                                                                                                                                                                  |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 変更前         | Matplotlib ベースの静的 PNG。`docs/profiling/` 直下にファイルが点在。ブラウザ表示は不可。                                                                                                                                                                             |
-| 変更後         | `scripts/profile_base_flare_detector.py`, `scripts/compare_profile_results.py`, `scripts/verify_detector_state.py` を Plotly Express / Graph Objects に統一。`--show-plot` でブラウザ表示、`reports/performance/...` および `reports/validation/...` に成果物を整理。 |
+| 変更後         | `tools/profile_base_flare_detector.py`, `tools/compare_profile_results.py`, `tools/verify_detector_state.py` を Plotly Express / Graph Objects に統一。`--show-plot` でブラウザ表示、`reports/performance/...` および `reports/validation/...` に成果物を整理。 |
 | 目的           | ビジュアルの統一と、開発者・研究者がコマンド一発でブラウザ表示まで確認できるようにする。                                                                                                                                                                              |
 | 値が不変な理由 | CSV と計算ロジックは従来のままで、可視化レイヤーのみ変更。`base_flare_detector_cumtime_comparison.csv` などを比較し差異がないことを確認。                                                                                                                             |
 
@@ -73,7 +73,7 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 | 変更内容            | `BaseFlareDetector` に `rotation_period_min`, `rotation_period_max`, `rotation_n_points` を追加し、`make_rotation_frequency_grid(period_min, period_max, n_points)` で **正則周波数グリッドと対応する周期配列**を生成するようにした。既定値は 1〜8 日・10000 点で、従来の `ROTATION_FREQUENCY_GRID = np.linspace(1/8, 1, 10000)` と同等。                  |
 | method の扱い       | Lomb–Scargle の `method` はインスタンス属性 `rotation_ls_method` で切り替え可能とし、**デフォルトは `"auto"`** に設定。TESS のような等間隔データでは `auto` が内部的に fast 実装を選び、必要に応じて `"fast"` を明示指定できる。                                                                                                                           |
 | 星ごとの周期レンジ  | 各ターゲットクラスで archive/daijiro 実装と同じ周期レンジを明示的に指定: DS Tuc A は 1.0〜8.0 日, EK Dra は 1.5〜5.0 日, V889 Her は 0.3〜2.0 日。これにより「どのレンジを探索しているか」がクラス定義から一目で分かるようになった。                                                                                                                       |
-| 検証スクリプト      | `scripts/compare_rotation_lomb_methods.py` を追加し、`uv run python scripts/compare_rotation_lomb_methods.py --data-root data/TESS --output-dir reports/performance/rotation_lomb_methods --show-plot` で `method="auto"` と `method="fast"` の周期・計算時間を全 FITS について比較できるようにした。                                                      |
+| 検証スクリプト      | `tools/compare_rotation_lomb_methods.py` を追加し、`uv run python tools/compare_rotation_lomb_methods.py --data-root data/TESS --output-dir reports/performance/rotation_lomb_methods --show-plot` で `method="auto"` と `method="fast"` の周期・計算時間を全 FITS について比較できるようにした。                                                      |
 | auto vs fast の結果 | DS Tuc A (5 ファイル)、EK Dra (12 ファイル)、V889 Her (4 ファイル) に対し比較した結果、`rotation_period_diff_summary.csv` および `rotation_period_diff_summary_table.png` が示すように、**全てのターゲットで `mean_abs_delta_days`, `max_abs_delta_days`, `mean_rel_delta`, `max_rel_delta` は 0.0** となり、`auto` と `fast` の自転周期は完全に一致した。 |
 | グラフと表          | `rotation_period_auto_vs_fast_scatter.png` では全点が `y = x` 上に乗り、`rotation_period_diff_hist_hours.png` のヒストグラムは 0 時間以外に広がりを持たない。さらに `rotation_period_diff_summary_table.png` により、ターゲット別の件数と差分統計を一覧できる。                                                                                            |
 | 目的                | デフォルトを `method="auto"` としつつ、正則周波数グリッドとパラメータ化された周期レンジにより、**汎用性（疎・非等間隔データへの適用可能性）と性能（TESS 等での fast 実装利用）を両立**すること。                                                                                                                                                           |
@@ -84,12 +84,12 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 ### 参考コマンド
 
 ```
-uv run python scripts/profile_base_flare_detector.py \
+uv run python tools/profile_base_flare_detector.py \
   --fits data/TESS/DS_Tuc_A/tess2020212050318-s0028-0000000410214986-0190-s_lc.fits \
   --output-dir reports/performance/ds_tuc_a/s0028/after \
   --show-plot
 
-uv run python scripts/compare_profile_results.py \
+uv run python tools/compare_profile_results.py \
   --before reports/performance/ds_tuc_a/s0028/before/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
   --after  reports/performance/ds_tuc_a/s0028/after/tess2020212050318-s0028-0000000410214986-0190-s_lc_profile_full.csv \
   --output-dir reports/performance/ds_tuc_a/s0028 \
@@ -98,7 +98,7 @@ uv run python scripts/compare_profile_results.py \
   --top-n 12 \
   --show-plot
 
-uv run python scripts/verify_detector_state.py \
+uv run python tools/verify_detector_state.py \
   --fits data/TESS/DS_Tuc_A/tess2020212050318-s0028-0000000410214986-0190-s_lc.fits \
   --plot        reports/validation/global/base_flare_detector_summary_table.png \
   --detail-plot reports/validation/global/base_flare_detector_detail_table.png \
