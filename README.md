@@ -19,7 +19,7 @@ This project provides a Python framework to detect stellar flares in TESS light 
 TESS data are large and excluded from Git. Place FITS files under `data/`.
 Also place the TESS response file at `data/tess-response-function-v1.0.csv`.
 
-Example structure:
+Example structure (filenames vary by sector and target):
 
 ```
 data/
@@ -27,9 +27,9 @@ data/
 │   ├── DS_Tuc_A/
 │   │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
 │   ├── EK_Dra/
-│   │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+│   │   └── tess2019198215352-s0014-0000000159613900-0150-s_lc.fits
 │   └── V889_Her/
-│       └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+│       └── tess2022164095748-s0053-0000000471000657-0226-s_lc.fits
 └── tess-response-function-v1.0.csv
 ```
 
