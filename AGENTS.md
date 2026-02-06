@@ -1,115 +1,112 @@
 # AGENTS.md
 
-このドキュメントは、AI エージェントがこのプロジェクトで効率的に作業するためのガイドラインを提供します。
+This document provides guidelines for AI agents to work efficiently on this project.
 
-## 🤖 Justfile 利用ガイド
+## Justfile Guide
 
-このプロジェクトでは**Justfile**を採用し、Python プロジェクトの品質管理と CI/CD を標準化しています。
+This project uses **Justfile** to standardize quality checks and CI/CD for the Python codebase.
 
-### 📋 基本コマンド
+### Basic Commands
 
-| コマンド              | 説明                                 | 使用タイミング           |
-| --------------------- | ------------------------------------ | ------------------------ |
-| `just` / `just check` | 全体品質検証（format + lint + test） | 作業開始前、PR 作成前    |
-| `just fix`            | 自動修正（format + lint --fix）      | エラー検出時の第一対応   |
-| `just setup`          | 環境構築（依存関係インストール）     | 新規環境、依存関係更新時 |
+| Command              | Description                              | When to Use            |
+| -------------------- | ---------------------------------------- | ---------------------- |
+| `just` / `just check` | Run full quality checks (format + lint + test) | Before starting work, before PR |
+| `just fix`           | Auto-fix (format + lint --fix)           | First response to errors |
+| `just setup`         | Environment setup (install deps)         | New environment, after dependency updates |
 
-### 🧪 テスト関連
+### Testing
 
-| コマンド                    | 説明                 | 例                                 |
-| --------------------------- | -------------------- | ---------------------------------- |
-| `just test`                 | 全テスト実行         | -                                  |
-| `just test path/to/file.py` | 特定ファイルのテスト | `just test tests/test_detector.py` |
+| Command                    | Description          | Example                             |
+| -------------------------- | -------------------- | ----------------------------------- |
+| `just test`                | Run all tests        | -                                   |
+| `just test path/to/file.py` | Run tests for a file | `just test tests/test_detector.py` |
 
-### 🔧 個別タスク
+### Individual Tasks
 
-| コマンド         | 説明                             | 用途               |
-| ---------------- | -------------------------------- | ------------------ |
-| `just fmt`       | コードフォーマット適用           | 手動フォーマット   |
-| `just fmt-check` | フォーマット検証                 | CI でのチェック    |
-| `just lint`      | 静的解析実行                     | コード品質確認     |
-| `just lint-fix`  | Lint エラー自動修正              | 軽微なエラー対応   |
-| `just clean`     | キャッシュ・アーティファクト削除 | 環境クリーンアップ |
+| Command         | Description                  | Purpose               |
+| --------------- | ---------------------------- | --------------------- |
+| `just fmt`      | Apply formatting             | Manual formatting     |
+| `just fmt-check`| Check formatting             | CI check              |
+| `just lint`     | Run static analysis          | Code quality check    |
+| `just lint-fix` | Auto-fix lint errors         | Minor lint issues     |
+| `just clean`    | Remove caches/artifacts      | Cleanup               |
 
-### 🚀 開発・運用
+### Development/Operations
 
-| コマンド     | 説明             | 備考       |
-| ------------ | ---------------- | ---------- |
-| `just dev`   | 開発サーバー起動 | 現在未設定 |
-| `just build` | 本番ビルド       | 現在未設定 |
+| Command     | Description          | Notes        |
+| ----------- | -------------------- | ------------ |
+| `just dev`  | Start dev server     | Not configured |
+| `just build`| Production build     | Not configured |
 
-## 🎯 AI エージェントの作業フロー
+## Agent Workflow
 
-### 1. 作業開始時
-
-```bash
-just check  # 現在の品質状態を確認
-```
-
-### 2. コード変更後
+### 1. Start of work
 
 ```bash
-just fix    # 自動修正を適用
-just check  # 品質検証を実施
+just check  # Check current quality state
 ```
 
-### 3. PR 作成前
+### 2. After code changes
 
 ```bash
-just check && just test  # 全チェックを実施
+just fix
+just check
 ```
 
-### 4. 問題解決時
+### 3. Before PR
 
 ```bash
-just fix    # まず自動修正を試行
-# 解決しない場合は手動対応
+just check && just test
 ```
 
-## 📁 プロジェクト構造
+### 4. When issues are found
+
+```bash
+just fix
+# If not resolved, fix manually
+```
+
+## Project Structure
 
 ```
 kyoto-flare-detection/
-├── justfile              # タスクランナー設定
-├── pyproject.toml        # Pythonプロジェクト設定
-├── src/                  # ソースコード
-│   ├── base_flare_detector.py  # 基底クラス
-│   ├── flarepy_DS_Tuc_A.py     # DS Tuc A 用実装
-│   ├── flarepy_EK_Dra.py       # EK Dra 用実装
-│   └── flarepy_V889_Her.py     # V889 Her 用実装
-├── tests/                # テストコード
-├── docs/                 # ドキュメント
-├── notebooks/            # Jupyter Notebook
-│   ├── flare_create_graphs.ipynb # メイン分析・グラフ生成
-│   └── flare_detect_*.ipynb      # 各恒星のフレア検出・解析
-├── outputs/              # 出力ファイル (figures/ 等)
-│   └── debug/            # 実行ごとのデバッグ出力 (YYYYMMDD_HHMMSS)
-└── tools/              # ユーティリティスクリプト
+├── justfile              # Task runner
+├── pyproject.toml        # Python project settings
+├── src/                  # Source code
+│   ├── base_flare_detector.py  # Base class
+│   ├── flarepy_DS_Tuc_A.py     # DS Tuc A
+│   ├── flarepy_EK_Dra.py       # EK Dra
+│   └── flarepy_V889_Her.py     # V889 Her
+├── tests/                # Tests
+├── docs/                 # Documentation
+├── notebooks/            # Jupyter notebooks
+│   ├── flare_create_graphs.ipynb # Main analysis/graph generation
+│   └── flare_detect_*.ipynb      # Per-star detection/analysis
+├── outputs/              # Output files (figures, etc.)
+│   └── debug/            # Per-run debug output (YYYYMMDD_HHMMSS)
+└── tools/                # Utility scripts
 ```
 
-## ⚙️ ツール設定
+## Tooling
 
-- **パッケージマネージャー**: uv
-- **フォーマッター**: Ruff format
+- **Package manager**: uv
+- **Formatter**: Ruff format
 - **Linter**: Ruff check
-- **テスト**: pytest（最小構成のスモークテストあり）
-- **対象ディレクトリ**: `src/`
+- **Tests**: pytest (minimal smoke test)
+- **Target directory**: `src/`
 
-## 🔄 CI/CD 連携
+## CI/CD Alignment
 
-Justfile は以下の CI/CD プラクティスに準拠：
+Justfile tasks align with CI/CD:
 
-- **品質ゲート**: `just check`が CI の品質検証
-- **自動修正**: `just fix`がエージェントの第一対応
-- **標準化**: 全てのエージェントが同じコマンドを使用
+- **Quality gate**: `just check`
+- **Auto-fix**: `just fix`
+- **Standardized commands** for all agents
 
-## 📝 注意事項
+## Notes
 
-- **引数パススルー**: `just test`や`just e2e`では引数を渡せます
-- **環境変数**: `.env`ファイルを自動で読み込みます
-- **エラー処理**: 各タスクは適切なエラーハンドリングを実装
-- **未設定タスク**: `dev`や`build`はプロジェクト要件に応じて有効化
-
----
-
-このガイドは、AI エージェントが一貫性のある高品質な作業を行うために定期的に更新してください。
+- **Argument pass-through**: `just test` allows args
+- **Env vars**: `.env` is loaded automatically
+- **Error handling**: tasks are expected to handle errors properly
+- **Unconfigured tasks**: `dev` / `build` are placeholders
+```
