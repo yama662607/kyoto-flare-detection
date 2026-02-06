@@ -11,8 +11,7 @@
 
 ## 概要
 
-この日本語版は `japanese` ブランチにオリジナルを保持しています。日本語の内容を参照したい場合は `japanese` ブランチを確認してください。
-
+`japanese` ブランチに、文章やコメントが日本語版のコードベースがあります。master ブランチは英語版です。
 
 このプロジェクトは、TESS (Transiting Exoplanet Survey Satellite) の光度曲線データから恒星のフレアを検出し、そのエネルギーや頻度を分析するための Python フレームワークです。
 
@@ -118,31 +117,39 @@ data/
 import sys
 from pathlib import Path
 
-# プロジェクトルートの設定
+# --- 1. Python実行パスの設定 ---
+# 現在の作業ディレクトリの絶対パスを取得
 PROJECT_ROOT = Path().resolve()
+
+# 'notebooks' や 'src' ディレクトリから実行している場合、プロジェクトルートへ移動
 if PROJECT_ROOT.name in ['notebooks', 'src']:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
+# 'src' モジュールを正しくインポートできるように、プロジェクトルートをパスに追加
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# --- 2. フレア検出の実行 ---
+# 対象とする恒星（例: DS Tuc A）専用の検出クラスをインポート
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
-# 解析したいFITSファイルのパス
+# 解析したい TESS FITS ファイルのパス（PROJECT_ROOT を基準に指定）
 file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
-# インスタンスを作成し、データ処理を実行
-# process_data=True にすると、データの読み込みからフレア検出までの一連の処理が自動的に実行されます。
+# 検出器のインスタンスを作成し、データ処理（デトレンド、検出、エネルギー計算等）を実行
+# process_data=True にすると、データの読み込みから解析までの一連のパイプラインが自動的に実行されます
 detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
-# 結果をプロット
-detector.plot_flare() # Plotlyによる光度曲線プロット
-detector.plot_energy_matplotlib() # Matplotlibによるエネルギー分布プロット
+# Plotly を使用して、光度曲線と検出されたフレアをインタラクティブに表示・確認
+detector.plot_flare()
+
+# Matplotlib を使用して、エネルギー分布（発生頻度分布）をプロット
+detector.plot_energy_matplotlib()
 ```
 
 
 ## Outputs
 
-See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
+`docs/OUTPUTS.md` に生成物とデバッグ出力の場所が記載されています。
 
 ---
 

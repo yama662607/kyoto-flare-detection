@@ -76,20 +76,33 @@ Use notebooks in `notebooks/` for analysis. Example:
 import sys
 from pathlib import Path
 
-# Set the project root
+# --- 1. Python Path Configuration ---
+# Get the absolute path of the current directory
 PROJECT_ROOT = Path().resolve()
+
+# If running from 'notebooks' or 'src' subdirectories, move up to the project root
 if PROJECT_ROOT.name in ['notebooks', 'src']:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
+# Add the project root to sys.path so that 'src' module can be imported correctly
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# --- 2. Flare Detection Execution ---
+# Import the specific detector class for the target star
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
+# Specify the target TESS FITS file path (constructed relative to PROJECT_ROOT)
 file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
+# Initialize the detector and process data (detrending, flare detection, energy calculation)
+# Setting process_data=True triggers the analysis pipeline automatically upon initialization
 detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
+# Visualize the light curve and detected flares using Plotly (interactive plot)
 detector.plot_flare()
+
+# Visualize the energy frequency distribution using Matplotlib (static plot for papers)
+detector.plot_energy_matplotlib()
 ```
 
 ## Outputs
