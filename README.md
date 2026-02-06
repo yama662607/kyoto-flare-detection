@@ -76,25 +76,46 @@ Use notebooks in `notebooks/` for analysis. Example:
 import sys
 from pathlib import Path
 
-# Set the project root
+# --- 1. Python Path Configuration ---
+# Get the absolute path of the current directory
 PROJECT_ROOT = Path().resolve()
+
+# If running from 'notebooks' or 'src' subdirectories, move up to the project root
 if PROJECT_ROOT.name in ['notebooks', 'src']:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
+# Add the determined project root to the Python system path.
+# This allows Python to find and import modules from the 'src' directory correctly,
+# regardless of the current working directory.
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# --- 2. Flare Detection Execution ---
+# Import the specific detector class tailored for the target star (e.g., DS_Tuc_A).
+# Each star might have a dedicated detector class for specific configurations or models.
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
+# Construct the full path to the target TESS FITS light curve file.
+# This path is relative to the PROJECT_ROOT to ensure portability.
 file_path = PROJECT_ROOT / "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
 
+# Initialize the flare detector.
+# By setting `process_data=True`, the detector automatically executes its
+# entire analysis pipeline upon initialization, including detrending,
+# flare detection, and energy calculation.
 detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 
+# Visualize the processed light curve along with the detected flares.
+# This method uses Plotly to generate an interactive plot, useful for detailed exploration.
 detector.plot_flare()
+
+# Generate a static plot of the flare energy frequency distribution.
+# This plot is suitable for publications or reports, typically using Matplotlib.
+detector.plot_energy_matplotlib()
 ```
 
 ## Outputs
 
-See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
+`docs/OUTPUTS.md` に生成物とデバッグ出力の場所が記載されています。
 
 ---
 
