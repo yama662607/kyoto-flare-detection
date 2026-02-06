@@ -1,6 +1,9 @@
-# Kyoto Flare Detection Project
+# Kyoto Flare Detection (Analysis Code)
 
 ## 概要
+
+
+このリポジトリは**解析コード用**です（論文本文や論文データは含めません）。
 
 このプロジェクトは、TESS (Transiting Exoplanet Survey Satellite) の光度曲線データから恒星のフレアを検出し、そのエネルギーや頻度を分析するための Python フレームワークです。
 
