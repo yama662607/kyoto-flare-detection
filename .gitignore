@@ -30,6 +30,7 @@ data/TESS/**/*
 
 # Output and report files
 outputs/
+outputs/debug/
 # reports/
 
 # Jupyter notebook checkpoints
@@ -42,7 +43,5 @@ outputs/
 # Any PDF file
 *.pdf
 
-#legacy code
-legacy/
 # Temporary executed notebooks
 *_exec.ipynb

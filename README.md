@@ -15,6 +15,7 @@
 ## 重要
 
 - TESS 衛星のデータは非常に大きいため、Git の追跡対象から除外しています。`data/`ディレクトリに TESS の FITS ファイルを配置して使用してください。
+- `data/tess-response-function-v1.0.csv` に TESS 応答関数ファイルを配置してください。
 
 構成例
 
@@ -27,6 +28,7 @@ data/
     │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
     └── V889_Her/
         └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+└── tess-response-function-v1.0.csv
 ```
 
 ## コードの構成
@@ -74,8 +76,7 @@ data/
 │       ├── flare_plots.py      # グラフ描画関数群
 │       └── paper_style.py      # Matplotlib スタイル設定
 ├── docs/                       # プロジェクトドキュメント
-├── scripts/                    # ユーティリティ・保守スクリプト
-├── archive/                    # アーカイブされた旧実装・ノートブック
+├── tools/                    # ユーティリティ・保守スクリプト
 ├── .gitignore                  # Git除外設定
 ├── pyproject.toml              # プロジェクト依存関係・設定
 ├── justfile                    # タスクランナー (CI/CD, 検証用)
@@ -146,3 +147,8 @@ detector = FlareDetector_DS_Tuc_A(file=file_path, process_data=True)
 detector.plot_flare() # Plotlyによる光度曲線プロット
 detector.plot_energy_matplotlib() # Matplotlibによるエネルギー分布プロット
 ```
+
+
+## Outputs
+
+See `docs/OUTPUTS.md` for generated artifacts and debug output locations.

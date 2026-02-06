@@ -83,7 +83,8 @@ kyoto-flare-detection/
 │   ├── flare_create_graphs.ipynb # メイン分析・グラフ生成
 │   └── flare_detect_*.ipynb      # 各恒星のフレア検出・解析
 ├── outputs/              # 出力ファイル (figures/ 等)
-└── scripts/              # ユーティリティスクリプト
+│   └── debug/            # 実行ごとのデバッグ出力 (YYYYMMDD_HHMMSS)
+└── tools/              # ユーティリティスクリプト
 ```
 
 ## ⚙️ ツール設定
@@ -91,7 +92,7 @@ kyoto-flare-detection/
 - **パッケージマネージャー**: uv
 - **フォーマッター**: Ruff format
 - **Linter**: Ruff check
-- **テスト**: pytest
+- **テスト**: pytest（最小構成のスモークテストあり）
 - **対象ディレクトリ**: `src/`
 
 ## 🔄 CI/CD 連携
