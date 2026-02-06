@@ -133,6 +133,16 @@ uv sync
 主な分析は `notebooks/` ディレクトリ内の Jupyter Notebook から行います。
 
 ```python
+import sys
+from pathlib import Path
+
+# プロジェクトルートの設定
+PROJECT_ROOT = Path().resolve()
+if PROJECT_ROOT.name in ['notebooks', 'src']:
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
 # 解析したいFITSファイルのパス

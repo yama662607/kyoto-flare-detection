@@ -71,6 +71,16 @@ uv sync
 Use notebooks in `notebooks/` for analysis. Example:
 
 ```python
+import sys
+from pathlib import Path
+
+# Set the project root
+PROJECT_ROOT = Path().resolve()
+if PROJECT_ROOT.name in ['notebooks', 'src']:
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from src.flarepy_DS_Tuc_A import FlareDetector_DS_Tuc_A
 
 file_path = "data/TESS/DS_Tuc_A/tess2018206045859-s0001-0000000410214986-0120-s_lc.fits"
