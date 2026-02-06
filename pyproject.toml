@@ -58,5 +58,7 @@ ignore = ["E501"]
 
 [dependency-groups]
 dev = [
+    "jupyter>=1.1.1",
+    "nbconvert>=7.17.0",
     "ruff>=0.14.5",
 ]
