@@ -5,7 +5,7 @@
 set dotenv-load := true
 set shell := ["bash", "-c"]
 
-# Python プロジェクト用の変数
+# Python project variables
 src_dir := "src"
 test_dir := "tests"
 
@@ -13,19 +13,19 @@ test_dir := "tests"
 # 🤖 Standard Interface (AI Agent Protocol)
 # =============================================================================
 
-# デフォルト: 読み取り専用の全体チェックを実行
+# Default: run read-only full checks
 default: check
 
-# 環境構築: 依存関係のインストール、ツールチェーンのセットアップ
+# Environment setup: install dependencies and toolchain
 setup:
     @echo "📦 Setting up environment..."
     uv sync --all-extras
 
-# 全体品質検証: コードを変更せずに品質を検証 (CIゲート)
+# Full quality verification without code changes (CI gate)
 check: fmt-check lint test
     @echo "✅ All quality checks passed!"
 
-# 自動修正: フォーマットとLint修正を適用 (Agentの第一手)
+# Auto-fix: apply formatting and lint fixes (agent's first response)
 fix: fmt lint-fix
     @echo "✨ Auto-fixes applied!"
 
@@ -33,8 +33,8 @@ fix: fmt lint-fix
 # 🧪 Testing & Verification
 # =============================================================================
 
-# ユニット/統合テスト: 引数パススルー対応
-# Usage: just test (全実行) | just test path/to/file (特定実行)
+# Unit/integration tests: supports argument passthrough
+# Usage: just test (all) | just test path/to/file (specific)
 test *args="":
     @echo "🧪 Running unit tests..."
     @if [ -d "{{test_dir}}" ]; then \
@@ -43,7 +43,7 @@ test *args="":
         echo "⚠️  No tests directory found. Skipping tests."; \
     fi
 
-# E2Eテスト: 引数パススルー対応
+# E2E tests: supports argument passthrough
 e2e *args="":
     @echo "🎭 Running E2E tests..."
     @echo "⚠️  E2E tests not configured for this project."
@@ -52,7 +52,7 @@ e2e *args="":
 # 🧩 Granular Tasks (Components of 'check' & 'fix')
 # =============================================================================
 
-# --- Format (整形) ---
+# --- Format ---
 
 fmt-check:
     @echo "📏 Checking formatting..."
@@ -62,7 +62,7 @@ fmt:
     @echo "💅 Formatting code..."
     uv run ruff format {{src_dir}}
 
-# --- Lint (静的解析) ---
+# --- Lint ---
 
 lint:
     @echo "🔍 Linting..."
@@ -72,7 +72,7 @@ lint-fix:
     @echo "🧹 Fixing lint errors..."
     uv run ruff check --fix {{src_dir}}
 
-# --- Typecheck (型検査) ---
+# --- Typecheck ---
 
 typecheck:
     @echo "📐 Checking types..."
@@ -82,17 +82,17 @@ typecheck:
 # 🛠️ Operations & Utilities
 # =============================================================================
 
-# 開発サーバー起動
+# Start dev server
 dev:
     @echo "🚀 Starting dev server..."
     @echo "⚠️  No dev server configured for this project."
 
-# 本番ビルド
+# Production build
 build:
     @echo "🏗️ Building artifact..."
     @echo "⚠️  No build process configured for this project."
 
-# アーティファクト削除
+# Remove artifacts
 clean:
     @echo "🗑️ Cleaning artifacts..."
     rm -rf .ruff_cache .pytest_cache .mypy_cache __pycache__ .coverage htmlcov

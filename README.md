@@ -1,3 +1,5 @@
+[日本語 (Japanese)](README_Ja.md)
+
 # Kyoto Flare Detection Project
 
 ## 🚀 Quick Start
@@ -8,8 +10,6 @@
 4. Place TESS FITS data in `data/TESS/<star_name>/`
 5. Start analysis with notebooks in `notebooks/`
 
-
-[日本語のREADMEはこちら](./README_Ja.md)
 
 ## Overview
 
@@ -33,12 +33,12 @@ Example structure (filenames vary by sector and target):
 ```
 data/
 ├── TESS/
-│   ├── DS_Tuc_A/
-│   │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
-│   ├── EK_Dra/
-│   │   └── tess2019198215352-s0014-0000000159613900-0150-s_lc.fits
-│   └── V889_Her/
-│       └── tess2022164095748-s0053-0000000471000657-0226-s_lc.fits
+    ├── DS_Tuc_A/
+    │   └── tess2018206045859-s0001-0000000410214986-0120-s_lc.fits
+    ├── EK_Dra/
+    │   └── tess2019198215352-s0014-0000000159613900-0150-s_lc.fits
+    └── V889_Her/
+        └── tess2022164095748-s0053-0000000471000657-0226-s_lc.fits
 └── tess-response-function-v1.0.csv
 ```
 
@@ -115,7 +115,7 @@ detector.plot_energy_matplotlib()
 
 ## Outputs
 
-`docs/OUTPUTS.md` に生成物とデバッグ出力の場所が記載されています。
+See `docs/OUTPUTS.md` for generated artifacts and debug output locations.
 
 ---
 
@@ -147,3 +147,6 @@ Required to run various project commands (build, check, analysis tasks, etc.).
 
 > [!TIP]
 > After installation, restart your terminal and verify that `just --version` and `uv --version` work correctly.
+
+> [!NOTE]
+> **Windows Compatibility:** This project uses `Pathlib` for all file path operations, ensuring compatibility across macOS, Linux, and Windows. When using `just`, we recommend using a shell that supports standard commands (like Git Bash) for the best experience with the `justfile`'s utility tasks.

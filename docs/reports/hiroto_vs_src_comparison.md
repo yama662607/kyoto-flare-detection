@@ -1,19 +1,19 @@
-# hirotoフォルダとsrcフォルダの比較分析
+# Comparison Between the hiroto Folder and src
 
-## 概要
+## Overview
 
-このドキュメントは、`hiroto`フォルダと`src`フォルダの内容を詳細に比較し、違いを明確にすることを目的とします。
+This document compares the contents of the `hiroto` folder and the `src` folder to clarify their differences.
 
-## フォルダ構造の比較
+## Folder Structure
 
-### hirotoフォルダ
+### hiroto folder
 ```
 hiroto/
 ├── flare_DS_Tuc_A.ipynb (9.7MB)
 └── flarepy_improved.py (41KB)
 ```
 
-### srcフォルダ
+### src folder
 ```
 src/
 ├── __init__.py
@@ -29,77 +29,77 @@ src/
     └── flarepy_V889_Her.py (52KB)
 ```
 
-## 主要な違い
+## Key Differences
 
-### 1. アーキテクチャの違い
+### 1. Architecture
 
-#### hirotoフォルダ（単一クラス設計）
-- **flarepy_improved.py**: 単一の`FlareDetector`クラスを含む
-- 汎用的な設計で、コンストラクタで恒星パラメータを指定
-- Jupyter Notebookで実行することを想定
+#### hiroto folder (single-class design)
+- **flarepy_improved.py**: contains a single `FlareDetector` class
+- Generic design with stellar parameters passed via the constructor
+- Intended to be run from a Jupyter notebook
 
-#### srcフォルダ（オブジェクト指向設計）
-- **base_flare_detector.py**: 基底クラス`BaseFlareDetector`を定義
-- **個別クラス**: 各恒星ごとに専用クラスを継承して実装
-  - `FlareDetector_DS_Tuc_A`
-  - `FlareDetector_EK_Dra` 
-  - `FlareDetector_V889_Her`
-- モジュール性と再利用性を重視した設計
+#### src folder (object-oriented design)
+- **base_flare_detector.py**: defines the base class `BaseFlareDetector`
+- **Star-specific classes**: dedicated subclasses per target
+- `FlareDetector_DS_Tuc_A`
+- `FlareDetector_EK_Dra`
+- `FlareDetector_V889_Her`
+- Emphasizes modularity and reuse
 
-### 2. コード規模の違い
+### 2. Code scale
 
-| ファイル | hirotoフォルダ | srcフォルダ |
+| File | hiroto folder | src folder |
 |---------|----------------|-------------|
-| 主要クラス | 41KB (1,086行) | 22KB (490行) + 個別クラス |
-| Jupyter Notebook | 9.7MB (321,242行) | なし |
-| トータル | 約9.8MB | 約166KB |
+| Main class | 41KB (1,086 lines) | 22KB (490 lines) + star-specific subclasses |
+| Jupyter notebook | 9.7MB (321,242 lines) | None |
+| Total | ~9.8MB | ~166KB |
 
-### 3. 機能の違い
+### 3. Functional differences
 
-#### hirotoフォルダの特徴
-- **包括的なプロット機能**: 6段階のサブプロットを持つ詳細な可視化
-- **実験的なコード**: `process_data_2()`フラグなど、試験的な機能を含む
-- **完全な自己完結型**: 単一ファイルで全機能を実装
+#### hiroto folder
+- **Comprehensive plotting**: 6-panel subplot visualization
+- **Experimental code**: flags such as `process_data_2()`
+- **Self-contained**: all functionality in a single file
 
-#### srcフォルダの特徴
-- **モジュール化**: 機能を基底クラスと個別クラスに分割
-- **Matplotlibサポート**: Plotlyに加えてMatplotlibでのプロット機能
-- **改良されたエラー処理**: より堅牢なエラーハンドリング
-- **恒星固有の最適化**: 各恒星の特性に応じたパラメータ設定
+#### src folder
+- **Modular design**: base class + per-star subclasses
+- **Matplotlib support**: in addition to Plotly
+- **Improved error handling**: more robust error checks
+- **Star-specific tuning**: parameters customized per target
 
-### 4. 具体的な実装の違い
+### 4. Implementation differences
 
-#### データ読み込み
+#### Data loading
 ```python
-# hirotoフォルダ
+# hiroto folder
 match = re.match(r"(.+)-s_lc\.fits$", fname_base)
 
-# srcフォルダ
+# src folder
 match = re.match(r"(.+)-\d+-\d+-s_lc\.fits$", fname_base)
 match = re.match(r"[a-z]+\d+-s00(.+)-\d+-\d+-s_lc\.fits$", fname_base)
 ```
 
-#### TESS応答関数ファイルパス
+#### TESS response file path
 ```python
-# hirotoフォルダ
+# hiroto folder
 wave, resp = np.loadtxt(".\\tess-energy.csv", delimiter=",").T
 
-# srcフォルダ  
+# src folder
 wave, resp = np.loadtxt("data/tess-response-function-v1.0.csv", delimiter=",").T
 ```
 
-#### ギャップ検出の閾値
+#### Gap-detection threshold
 ```python
-# hirotoフォルダ
+# hiroto folder
 gap_indices = np.where(diff_bjd >= 0.1)[0]
 
-# srcフォルダ
+# src folder
 gap_indices = np.where(diff_bjd >= 0.05)[0]
 ```
 
-### 5. クラス変数の違い
+### 5. Class variable differences
 
-#### hirotoフォルダ
+#### hiroto folder
 ```python
 array_flare_ratio = np.array([])
 array_energy_ratio = np.array([])
@@ -108,7 +108,7 @@ average_flare_ratio = 0.0
 array_observation_time = np.array([])
 ```
 
-#### srcフォルダ
+#### src folder
 ```python
 array_flare_ratio = np.array([])
 array_observation_time = np.array([])
@@ -121,42 +121,42 @@ array_per = np.array([])
 array_per_err = np.array([])
 ```
 
-### 6. 新機能の追加（srcフォルダのみ）
+### 6. Features added in src only
 
-- **恒星黒点計算**: `starspot`, `starspot_ratio`
-- **自転周期計算**: `rotation_period()`メソッド
-- **Lomb-Scargle周期分析**: `astropy.timeseries.LombScargle`使用
-- **Matplotlibプロット**: `plot_flare_matplotlib()`, `plot_energy_matplotlib()`
-- **エネルギー閾値処理**: `flare_energy()`メソッドの改良
+- **Starspot metrics**: `starspot`, `starspot_ratio`
+- **Rotation period**: `rotation_period()`
+- **Lomb-Scargle analysis**: uses `astropy.timeseries.LombScargle`
+- **Matplotlib plots**: `plot_flare_matplotlib()`, `plot_energy_matplotlib()`
+- **Energy threshold handling**: improved `flare_energy()` logic
 
-### 7. V889 Her固有の実装
+### 7. V889 Her-specific implementation
 
-srcフォルダにはV889 Her専用のカスタムデトレンドメソッドが実装されています：
-- `difference_at_lag()`メソッド
-- 複数のラグでの差分検出
-- フレア候補の開始・終点検出アルゴリズム
+The src folder includes a custom detrending method for V889 Her:
+- `difference_at_lag()`
+- Multi-lag difference detection
+- Flare candidate start/end detection logic
 
-## 開発段階の違い
+## Development maturity
 
-### hirotoフォルダ
-- **開発・実験段階**: Jupyter Notebookでの試行錯誤の痕跡
-- **単一ファイル設計**: プロトタイプとしての性格が強い
-- **Windowsパス**: ハードコードされたWindowsパス（".\\tess-energy.csv"）
+### hiroto folder
+- **Prototype stage**: experimentation inside a Jupyter notebook
+- **Single-file design**: prototype-centric
+- **Windows paths**: hard-coded Windows path (`".\\tess-energy.csv"`)
 
-### srcフォルダ  
-- **製品版設計**: モジュール化されたクリーンなアーキテクチャ
-- **クロスプラットフォーム**: Unixベースのパス設計
-- **保守性**: コードの分離と再利用性を重視
+### src folder
+- **Production-ready**: clean, modular architecture
+- **Cross-platform paths**: Unix-friendly paths
+- **Maintainability**: separation of concerns and reuse
 
-## まとめ
+## Summary
 
-| 項目 | hirotoフォルダ | srcフォルダ |
+| Item | hiroto folder | src folder |
 |------|----------------|-------------|
-| 目的 | 開発・実験 | 製品・保守 |
-| 設計 | 単一クラス | 継承ベース |
-| 可読性 | 中 | 高 |
-| 保守性 | 低 | 高 |
-| 機能性 | 基本機能 + 実験的機能 | 拡張機能 + 安定版 |
-| サイズ | 大（Notebook含む） | 小（モジュール化） |
+| Purpose | Prototype / experimentation | Production / maintenance |
+| Design | Single-class | Inheritance-based |
+| Readability | Medium | High |
+| Maintainability | Low | High |
+| Functionality | Core + experimental | Extended + stable |
+| Size | Large (includes notebook) | Small (modular) |
 
-**結論**: `hiroto`フォルダは開発初期段階の実験的な実装であり、`src`フォルダはそれを元に改良された製品版のコードベースと言えます。srcフォルダはオブジェクト指向の原則に従い、モジュール性、保守性、拡張性を大幅に向上させています。
+**Conclusion**: The `hiroto` folder is an early, experimental implementation. The `src` folder represents a refined production codebase that follows object-oriented principles and provides improved modularity, maintainability, and extensibility.

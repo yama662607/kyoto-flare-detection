@@ -48,5 +48,5 @@ class FlareDetector_EK_Dra(BaseFlareDetector):
             ene_thres_high=ene_thres_high,
             use_sector_mean=True,
         )
-        # EK Dra固有のギャップ検出閾値を設定
+        # EK Dra-specific gap detection threshold.
         self.gap_threshold = 0.2

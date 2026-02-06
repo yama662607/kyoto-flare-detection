@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BaseFlareDetector の状態が既知のベースラインと一致するか検証するスクリプト。"""
+"""Verify that BaseFlareDetector state matches a known baseline."""
 
 from __future__ import annotations
 
@@ -389,7 +389,7 @@ def plot_detailed(
 
 def capture_state(args: argparse.Namespace) -> dict[str, Any]:
     if not args.fits.exists():
-        raise FileNotFoundError(f"FITS ファイルが存在しません: {args.fits}")
+        raise FileNotFoundError(f"FITS file not found: {args.fits}")
 
     if str(PROJECT_ROOT) not in __import__("sys").path:
         __import__("sys").path.insert(0, str(PROJECT_ROOT))
@@ -422,63 +422,63 @@ def capture_state(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="BaseFlareDetector のクラス変数／インスタンス変数が baseline と一致するか検証します。"
+        description="Verify BaseFlareDetector class/instance variables against the baseline."
     )
     parser.add_argument(
-        "--fits", type=Path, required=True, help="検証対象の FITS ファイル"
+        "--fits", type=Path, required=True, help="FITS file to validate"
     )
     parser.add_argument(
         "--baseline",
         type=Path,
         default=DEFAULT_BASELINE,
-        help=f"baseline JSON の保存場所 (既定: {DEFAULT_BASELINE})",
+        help=f"Baseline JSON path (default: {DEFAULT_BASELINE})",
     )
     parser.add_argument(
         "--skip-remove",
         action="store_true",
-        help="process_data(skip_remove=True) で検証",
+        help="Validate with process_data(skip_remove=True)",
     )
     parser.add_argument(
         "--run-process-data-2",
         action="store_true",
-        help="コンストラクタ引数 run_process_data_2 を有効化",
+        help="Enable constructor argument run_process_data_2",
     )
     parser.add_argument(
         "--sector-threshold",
         type=int,
         default=None,
-        help="コンストラクタ引数 sector_threshold の指定値",
+        help="Constructor argument value for sector_threshold",
     )
     parser.add_argument(
         "--ene-thres-low",
         type=float,
         default=None,
-        help="process_data の ene_thres_low 上書き値",
+        help="Override value for process_data ene_thres_low",
     )
     parser.add_argument(
         "--ene-thres-high",
         type=float,
         default=None,
-        help="process_data の ene_thres_high 上書き値",
+        help="Override value for process_data ene_thres_high",
     )
     parser.add_argument(
         "--update-baseline",
         action="store_true",
-        help="baseline を現在の結果で更新します",
+        help="Update baseline with current results",
     )
     parser.add_argument(
-        "--plot", type=Path, help="集計グラフ (セクション別) の保存先 PNG"
+        "--plot", type=Path, help="Output PNG for summary plots (by section)"
     )
     parser.add_argument(
-        "--detail-plot", type=Path, help="変数ごとのステータス可視化グラフの保存先 PNG"
+        "--detail-plot", type=Path, help="Output PNG for per-variable status plots"
     )
     parser.add_argument(
-        "--table-csv", type=Path, help="各変数の比較結果を CSV で保存するパス"
+        "--table-csv", type=Path, help="Path to save per-variable comparison CSV"
     )
     parser.add_argument(
         "--show-plot",
         action="store_true",
-        help="生成した Plotly グラフをブラウザで表示します",
+        help="Open generated Plotly graphs in a browser",
     )
     return parser.parse_args()
 
@@ -490,12 +490,12 @@ def main() -> None:
     if args.update_baseline:
         args.baseline.parent.mkdir(parents=True, exist_ok=True)
         args.baseline.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
-        print(f"Baseline を更新しました: {args.baseline}")
+        print(f"Baseline updated: {args.baseline}")
         summary_rows = summarize_differences(snapshot, snapshot)
     else:
         if not args.baseline.exists():
             raise FileNotFoundError(
-                f"baseline ファイルが見つかりません。まず --update-baseline で作成してください: {args.baseline}"
+                f"Baseline file not found. Create it first with --update-baseline: {args.baseline}"
             )
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         summary_rows = summarize_differences(baseline, snapshot)
@@ -516,23 +516,23 @@ def main() -> None:
             writer.writeheader()
             for row in summary_rows:
                 writer.writerow(row)
-        print(f"比較結果テーブルを出力しました: {args.table_csv}")
+        print(f"Comparison table saved: {args.table_csv}")
 
     if args.plot:
         plot_summary(summary_rows, args.plot, show_plot=False)
-        print(f"比較結果（集計）を図示しました: {args.plot}")
+        print(f"Summary plot saved: {args.plot}")
     if args.detail_plot:
         plot_detailed(summary_rows, args.detail_plot, show_plot=args.show_plot)
-        print(f"比較結果（一覧）を図示しました: {args.detail_plot}")
+        print(f"Detail plot saved: {args.detail_plot}")
 
     if args.update_baseline:
         if args.table_csv or args.detail_plot:
-            print("基準状態の可視化／テーブルを生成しました。")
+            print("Generated baseline visualization/table.")
         return
 
     diff_rows = [row for row in summary_rows if row["status"] != "match"]
     if diff_rows:
-        print("状態差分を検出しました:")
+        print("Detected state differences:")
         for row in diff_rows:
             path = f"{row['section']}.{row['key']}"
             if row["status"] == "diff":
@@ -540,15 +540,15 @@ def main() -> None:
                     f"- {path}: baseline={row['baseline_repr']} vs current={row['current_repr']}"
                 )
             elif row["status"] == "missing_in_baseline":
-                print(f"- {path}: baseline に存在せず、現行のみ {row['current_repr']}")
+                print(f\"- {path}: missing in baseline, current only {row['current_repr']}\")
             elif row["status"] == "missing_in_current":
-                print(f"- {path}: baseline には存在しますが、現行には存在しません")
+                print(f\"- {path}: present in baseline but missing in current state\")
             else:
                 print(f"- {path}: status={row['status']}")
         raise SystemExit(1)
 
     print(
-        "BaseFlareDetector のクラス変数／インスタンス変数は baseline と一致しています。"
+        "BaseFlareDetector class/instance variables match the baseline."
     )
 
 

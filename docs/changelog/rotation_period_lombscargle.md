@@ -1,17 +1,17 @@
-## BaseFlareDetector 最適化ドキュメント
+## BaseFlareDetector Optimization Notes
 
-このドキュメントでは、`feat/safe-speedup-base-flare` ブランチで `BaseFlareDetector` と検証ツールに加えた主な変更を、変更前/変更後/目的/値が不変な理由の順でまとめています。引用しているコード片にはリポジトリ内で付けた目印コメント（`# [perf] ...` など）も含めています。
+This document summarizes the main changes made on the `feat/safe-speedup-base-flare` branch to `BaseFlareDetector` and validation tools. Each item lists before/after, goal, and why values remain unchanged. Code excerpts include repository markers (e.g., `# [perf] ...`).
 
 ---
 
-### 1. `reestimate_errors` のスライディングウィンドウ化
+### 1. Sliding-window optimization in `reestimate_errors`
 
-| 項目           | 内容                                                                                                                                                                                                         |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 変更前         | 各測光点ごとに `np.searchsorted` を呼び出して ±0.5 日の範囲を取得。ウィンドウ位置は毎回ゼロから探索していた。                                                                                                |
-| 変更後         | 連続走査で `start_idx` / `end_idx` を更新し、同じウィンドウ集合を再利用。コメント `# [perf] reuse sliding window instead of per-point searchsorted` を付与。                                                 |
-| 目的           | O(N log N) 相当の挙動を O(N) へ削減し、`np.searchsorted` の大量呼び出しを回避する。                                                                                                                          |
-| 値が不変な理由 | `left` / `right` によるギャップ判定は変更しておらず、どの値を標準偏差に使うかは従来と完全一致。`uv run python tools/verify_detector_state.py ...` で `mPDCSAPfluxerr_cor` のハッシュが一致することを確認。 |
+| Item | Details |
+| --- | --- |
+| Before | For each point, `np.searchsorted` was used to find the ±0.5 day window from scratch. |
+| After | Reuse a sliding window by updating `start_idx` / `end_idx`. Added comment `# [perf] reuse sliding window instead of per-point searchsorted`. |
+| Goal | Reduce behavior from ~O(N log N) to O(N) and avoid repeated `searchsorted` calls. |
+| Why values are unchanged | The left/right gap logic is identical and the same samples feed the standard deviation. `uv run python tools/verify_detector_state.py ...` confirmed identical `mPDCSAPfluxerr_cor` hashes. |
 
 ```python
 while start_idx < n_quiet and quiet_bjd[start_idx] < left:
@@ -22,66 +22,66 @@ err[i] = np.std(quiet_flux[start_idx:end_idx])  # [perf] reuse sliding window in
 
 ---
 
-### 2. `tess_band_energy` の応答関数キャッシュ
+### 2. Response-function caching in `tess_band_energy`
 
-| 項目           | 内容                                                                                                                                                                                |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 変更前         | `tess_band_energy` 呼び出しのたびに CSV を `np.loadtxt` し、星温度ごとの積分を再計算。                                                                                              |
-| 変更後         | `_get_tess_response()` と `_get_star_intensity_ratio()` にモジュールスコープのキャッシュを追加。コメント `# [perf] cached ratio keeps math identical but avoids recompute` を付与。 |
-| 目的           | I/O と積分コストを削減し、`tess_band_energy` を多数回呼び出すケースで速度を稼ぐ。                                                                                                   |
-| 値が不変な理由 | キャッシュは初回計算結果を保存するだけで、式自体・浮動小数演算は全く同じ。`verify_detector_state.py` で `sum_flare_energy` が同値であることを確認。                                 |
-
----
-
-### 3. `rotation_period` を正則グリッド + fast 法に刷新
-
-| 項目           | 内容                                                                                                                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 変更前         | 周期側を等分した非正則グリッド (`1 / np.linspace(1.0, 8.0, 10000)`) を使用し、`LombScargle.power()` が `method="auto"` だった。                                                                      |
-| 変更後         | `ROTATION_FREQUENCY_GRID = np.linspace(1/8, 1, 10000)` を導入し、`power(..., method="fast")` を呼び出すよう変更。コメント `# [perf] regular frequency grid enables LombScargle fast solver` を付与。 |
-| 目的           | FFT ベースの O(N log N) 実装を確実に利用して計算時間を 1.5 s → 0.005 s まで短縮。                                                                                                                    |
-| 値が不変な理由 | 周波数グリッドと周期グリッドの細かい差異のみで、同じピークインデックスが得られれば周期値は同じ。数値差は離散化誤差 (約 2.7e-4 日) のみ。                                                             |
+| Item | Details |
+| --- | --- |
+| Before | Each call loaded the CSV and recomputed temperature integrals. |
+| After | Added module-level caches in `_get_tess_response()` and `_get_star_intensity_ratio()`. Comment `# [perf] cached ratio keeps math identical but avoids recompute`. |
+| Goal | Reduce I/O and integration overhead for repeated calls. |
+| Why values are unchanged | The cache only stores the first computed result; formulas and floating-point math are unchanged. `verify_detector_state.py` confirms identical `sum_flare_energy`. |
 
 ---
 
-### 4. Plotly レポート & `docs/reports/` ディレクトリの整備
+### 3. Regular grid + fast solver for `rotation_period`
 
-| 項目           | 内容                                                                                                                                                                                                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 変更前         | Matplotlib ベースの静的 PNG。`docs/profiling/` 直下にファイルが点在。ブラウザ表示は不可。                                                                                                                                                                             |
-| 変更後         | `tools/profile_base_flare_detector.py`, `tools/compare_profile_results.py`, `tools/verify_detector_state.py` を Plotly Express / Graph Objects に統一。`--show-plot` でブラウザ表示、`docs/reports/performance/...` および `docs/reports/validation/...` に成果物を整理。 |
-| 目的           | ビジュアルの統一と、開発者・研究者がコマンド一発でブラウザ表示まで確認できるようにする。                                                                                                                                                                              |
-| 値が不変な理由 | CSV と計算ロジックは従来のままで、可視化レイヤーのみ変更。`base_flare_detector_cumtime_comparison.csv` などを比較し差異がないことを確認。                                                                                                                             |
-
----
-
-### 5. 状態検証のプレビュー & ツールチップ
-
-| 項目           | 内容                                                                                                                                                                                                                                         |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 変更前         | 詳細表には JSON の文字列がそのまま出力され視認性が低かった。                                                                                                                                                                                 |
-| 変更後         | `serialize_value` が `preview` を付加し、表には `"[122859.93, 122937.38, 122670.76...] (shape=[15307], dtype=float32)"` のように整形した値を表示。`--show-plot` 時は `<span title="...">value</span>` 構造でブラウザ上にツールチップを表示。 |
-| 目的           | 大きな配列/辞書でも「何が違うのか」を一目で判断でき、必要ならホバーで完全な JSON を確認できるようにする。                                                                                                                                    |
-| 値が不変な理由 | 表示専用の `preview` を追加しているだけで、JSON ベースラインや CSV の正確な値は従来と同じ。`--update-baseline` で同期済み。                                                                                                                  |
+| Item | Details |
+| --- | --- |
+| Before | Used a non-regular period grid (`1 / np.linspace(1.0, 8.0, 10000)`), and `LombScargle.power()` used `method="auto"`. |
+| After | Introduced `ROTATION_FREQUENCY_GRID = np.linspace(1/8, 1, 10000)` and call `power(..., method="fast")`. Comment `# [perf] regular frequency grid enables LombScargle fast solver`. |
+| Goal | Ensure the FFT-based O(N log N) implementation is used and reduce runtime (1.5s → 0.005s). |
+| Why values are unchanged | Only discretization differs; the peak index and derived period are identical. Numerical differences are limited to discretization (~2.7e-4 days). |
 
 ---
 
-### 6. LombScargle 回転周期の汎用化と auto/fast 比較結果
+### 4. Plotly reporting and `docs/reports/` organization
 
-| 項目                | 内容                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 変更内容            | `BaseFlareDetector` に `rotation_period_min`, `rotation_period_max`, `rotation_n_points` を追加し、`make_rotation_frequency_grid(period_min, period_max, n_points)` で **正則周波数グリッドと対応する周期配列**を生成するようにした。既定値は 1〜8 日・10000 点で、従来の `ROTATION_FREQUENCY_GRID = np.linspace(1/8, 1, 10000)` と同等。                  |
-| method の扱い       | Lomb–Scargle の `method` はインスタンス属性 `rotation_ls_method` で切り替え可能とし、**デフォルトは `"auto"`** に設定。TESS のような等間隔データでは `auto` が内部的に fast 実装を選び、必要に応じて `"fast"` を明示指定できる。                                                                                                                           |
-| 星ごとの周期レンジ  | 各ターゲットクラスで archive/daijiro 実装と同じ周期レンジを明示的に指定: DS Tuc A は 1.0〜8.0 日, EK Dra は 1.5〜5.0 日, V889 Her は 0.3〜2.0 日。これにより「どのレンジを探索しているか」がクラス定義から一目で分かるようになった。                                                                                                                       |
-| 検証スクリプト      | `tools/compare_rotation_lomb_methods.py` を追加し、`uv run python tools/compare_rotation_lomb_methods.py --data-root data/TESS --output-dir docs/reports/performance/rotation_lomb_methods --show-plot` で `method="auto"` と `method="fast"` の周期・計算時間を全 FITS について比較できるようにした。                                                      |
-| auto vs fast の結果 | DS Tuc A (5 ファイル)、EK Dra (12 ファイル)、V889 Her (4 ファイル) に対し比較した結果、`rotation_period_diff_summary.csv` および `rotation_period_diff_summary_table.png` が示すように、**全てのターゲットで `mean_abs_delta_days`, `max_abs_delta_days`, `mean_rel_delta`, `max_rel_delta` は 0.0** となり、`auto` と `fast` の自転周期は完全に一致した。 |
-| グラフと表          | `rotation_period_auto_vs_fast_scatter.png` では全点が `y = x` 上に乗り、`rotation_period_diff_hist_hours.png` のヒストグラムは 0 時間以外に広がりを持たない。さらに `rotation_period_diff_summary_table.png` により、ターゲット別の件数と差分統計を一覧できる。                                                                                            |
-| 目的                | デフォルトを `method="auto"` としつつ、正則周波数グリッドとパラメータ化された周期レンジにより、**汎用性（疎・非等間隔データへの適用可能性）と性能（TESS 等での fast 実装利用）を両立**すること。                                                                                                                                                           |
-| 値が不変な理由      | 既存の TESS データセットについては、`auto` と `fast` の周期が完全一致していることを比較スクリプトで確認済み。グリッド生成ロジックも `1/period_max〜1/period_min` の線形周波数グリッドという点で従来と同等であり、星ごとの周期レンジは旧実装の値をそのままパラメータとして明示しただけである。                                                              |
+| Item | Details |
+| --- | --- |
+| Before | Matplotlib PNGs scattered under `docs/profiling/`, not browser-friendly. |
+| After | Unified tools into Plotly-based output: `tools/profile_base_flare_detector.py`, `tools/compare_profile_results.py`, `tools/verify_detector_state.py`. Outputs organized under `docs/reports/performance/...` and `docs/reports/validation/...`, with `--show-plot` for browser preview. |
+| Goal | Consistent visuals and one-command browser preview for developers/researchers. |
+| Why values are unchanged | CSV and computation remain the same; only visualization changed. Validated with `base_flare_detector_cumtime_comparison.csv` comparisons. |
 
 ---
 
-### 参考コマンド
+### 5. State validation previews and tooltips
+
+| Item | Details |
+| --- | --- |
+| Before | Detail tables showed raw JSON strings, hard to read. |
+| After | `serialize_value` adds a `preview` field and renders values like `"[122859.93, 122937.38, 122670.76...] (shape=[15307], dtype=float32)"`. When `--show-plot` is used, tooltips are rendered via `<span title="...">value</span>`. |
+| Goal | Make large arrays/dicts readable at a glance, with full JSON on hover. |
+| Why values are unchanged | Only the presentation layer is updated; JSON baselines and CSV values are unchanged. |
+
+---
+
+### 6. Generalized Lomb-Scargle rotation period + auto/fast comparison
+
+| Item | Details |
+| --- | --- |
+| Change | Added `rotation_period_min`, `rotation_period_max`, and `rotation_n_points` to `BaseFlareDetector`, using `make_rotation_frequency_grid(period_min, period_max, n_points)` to build a regular frequency grid and corresponding period array. Defaults match the previous grid (1–8 days, 10000 points). |
+| Method handling | `rotation_ls_method` controls `method`, defaulting to `"auto"`. For regular TESS cadence, `auto` picks the fast solver; `"fast"` can be set explicitly. |
+| Per-star ranges | Subclasses now explicitly declare their period ranges to match archive/daijiro settings: DS Tuc A 1.0–8.0 days, EK Dra 1.5–5.0 days, V889 Her 0.3–2.0 days. |
+| Verification tool | Added `tools/compare_rotation_lomb_methods.py` to compare `method="auto"` vs `"fast"` across FITS files. |
+| auto vs fast results | For DS Tuc A (5 files), EK Dra (12 files), V889 Her (4 files), `mean_abs_delta_days`, `max_abs_delta_days`, `mean_rel_delta`, and `max_rel_delta` are all 0.0. |
+| Plots and tables | `rotation_period_auto_vs_fast_scatter.png` lies on `y = x`, `rotation_period_diff_hist_hours.png` shows no spread, and `rotation_period_diff_summary_table.png` summarizes per-target stats. |
+| Goal | Keep `method="auto"` as default while ensuring a regular grid and parameterized ranges for both generality and performance. |
+| Why values are unchanged | `auto` and `fast` yield identical periods for the existing dataset. The grid logic remains equivalent, and per-star ranges simply expose existing values. |
+
+---
+
+### Reference commands
 
 ```
 uv run python tools/profile_base_flare_detector.py \
@@ -106,4 +106,4 @@ uv run python tools/verify_detector_state.py \
   --show-plot
 ```
 
-これらを実行することで、最適化後の挙動と可視化を再現できます。
+Running these commands reproduces the optimized behavior and visualizations.

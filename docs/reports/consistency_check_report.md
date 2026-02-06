@@ -1,40 +1,40 @@
-# フレア検出パイプライン：整合性チェックおよび修正報告書
+# Flare Detection Pipeline: Consistency Check and Fixes Report
 
-本報告書は、論文案（`flare_detection.tex`）とPython実装（`flarepy`）の整合性を詳細に調査した結果、および科学的妥当性を確保するために実施した修正内容をまとめたものです。
+This report summarizes the detailed consistency review between the draft paper (`flare_detection.tex`) and the Python implementation (`flarepy`), along with the fixes applied to ensure scientific validity.
 
-## 1. 不整合の特定と修正内容
+## 1. Identified Inconsistencies and Fixes
 
-### 1.1 フレア検出の連続点数条件
-- **調査結果**: 従来のコードではフレア候補の同定に **3点連続** して $5\sigma$ を超える必要がありましたが、論文案では **2点連続** と記載されていました。
-- **修正内容**: `BaseFlareDetector.flaredetect()` を更新し、論文に合わせて「2点連続」で候補とするように変更しました。
-- **科学的妥当性**: 2分間隔（2-min cadence）のデータにおいて、2点連続の条件は単一のノイズを排除しつつ、小規模なフレアの立ち上がりを捉えるのに十分な設定です。
+### 1.1 Consecutive-point criterion for flare detection
+- **Finding**: The legacy code required **3 consecutive** points above $5\sigma$ to identify a flare candidate, while the paper draft specified **2 consecutive** points.
+- **Fix**: Updated `BaseFlareDetector.flaredetect()` to use **2 consecutive** points in line with the paper.
+- **Scientific rationale**: For 2-minute cadence data, 2 consecutive points are sufficient to reject single-point noise while capturing small flare rises.
 
-### 1.2 有効観測時間の計算ロジック
-- **調査結果**: 従来のコードは「全期間から0.2日以上の大きなギャップを差し引く」計算でした。これでは、短いデータ欠落（クオリティフラグ等による除去）が観測時間に含まれてしまっていました。
-- **修正内容**: ケイデンス（データ点数）ベースの計算 `データ点数 × 2分` に変更しました。
-- **影響調査結果**:
-    - **EK Dra (Sector 23)**: 報告される観測時間が約 **5.4% 減少**。
-    - **DS Tuc A (Sector 1)**: 約 **5.1% 減少**。
-- **科学的妥当性**: フレア頻度（$N/T_{\rm obs}$）の計算において、観測時間（$T_{\rm obs}$）は「実際にフレアを検出し得る期間」であるべきです。短い欠落を厳密に排除することで、フレア発生頻度の推定精度が向上します。
+### 1.2 Effective observation time calculation
+- **Finding**: The legacy code subtracted only large gaps (>= 0.2 day) from the total duration. This incorrectly counted short gaps (e.g., quality-flag removals) as observable time.
+- **Fix**: Switched to a cadence-based calculation: `number of points × 2 minutes`.
+- **Impact check**:
+- **EK Dra (Sector 23)**: reported observation time decreased by about **5.4%**.
+- **DS Tuc A (Sector 1)**: decreased by about **5.1%**.
+- **Scientific rationale**: The observation time ($T_{\rm obs}$) used for flare frequency ($N/T_{\rm obs}$) should represent intervals where flares are detectable. Excluding short gaps improves frequency estimates.
 
-### 1.3 エネルギー推定の表記と定数の統一
-- **調査結果**: 論文内の数式表記において、時間変化する温度 $T_{\rm BB}(t)$ と、固定温度 $10000\mathrm{K}$ の仮定が混在していました。また、コード内の物理定数にも微細な簡略化がありました。
-- **修正内容**:
-    - **論文案**: 表記を $10000\mathrm{K}$ 固定に統一し、エネルギー積分の説明を数式と整合させました。
-    - **コード**: ステファン・ボルツマン定数 `sigma_SB` を正確な値（$5.670374e-5$）に更新し、数式との対応を明文化しました。
+### 1.3 Energy estimation notation and constants
+- **Finding**: The paper draft mixed a time-varying temperature $T_{\rm BB}(t)$ with a fixed $10000\,\mathrm{K}$ assumption. The code also used a slightly simplified physical constant.
+- **Fixes**:
+- **Paper**: Standardized the notation to a fixed $10000\,\mathrm{K}$ and aligned the integral description with the equations.
+- **Code**: Updated the Stefan-Boltzmann constant `sigma_SB` to the accurate value ($5.670374e-5$) and clarified the formula mapping.
 
-## 2. 更新後の手法サマリー
+## 2. Summary of the Updated Method
 
-| 項目 | 旧実装 | 新実装（現在） | 論文案の参照 |
+| Item | Legacy | Current | Paper reference |
 | :--- | :--- | :--- | :--- |
-| フレア候補の閾値 | 3点連続 ($5\sigma$) | 2点連続 ($5\sigma$) | 第2.1節 |
-| 有効観測時間 | ギャップ除去（閾値0.2日） | ケイデンスベース ($N \times 2$分) | 第2.1節 |
-| フレア温度 | $10000\mathrm{K}$ (固定) | $10000\mathrm{K}$ (固定) | 第2.2節 |
-| エネルギー計算式 | 簡略化した面積計数 | 標準化された強度比 | 式11-14 |
+| Flare candidate threshold | 3 consecutive ($5\sigma$) | 2 consecutive ($5\sigma$) | Section 2.1 |
+| Effective observation time | Gap subtraction (0.2 day threshold) | Cadence-based ($N \times 2$ min) | Section 2.1 |
+| Flare temperature | $10000\,\mathrm{K}$ (fixed) | $10000\,\mathrm{K}$ (fixed) | Section 2.2 |
+| Energy formula | Simplified area counting | Standardized intensity ratio | Eq. 11-14 |
 
-## 3. 検証結果
-- **ロジックテスト**: `tests/test_logic.py` を作成し、2点連続での検出および観測時間の計算が正確に行われることを確認しました（全テスト合格）。
-- **影響確認**: DS Tuc A および V889 Her の各セクターにて、有効観測時間の精緻化に伴い、フレア頻度（回/日）がわずかに上昇することを確認しました。
+## 3. Verification Results
+- **Logic tests**: Added `tests/test_logic.py` to verify 2-point detection and the observation-time calculation (all tests pass).
+- **Impact check**: For DS Tuc A and V889 Her sectors, the refined observation time slightly increases flare frequency (per day).
 
 ---
-*本報告書は研究チームのレビュー用に作成されました - 2026年1月*
+*Prepared for internal review - January 2026*

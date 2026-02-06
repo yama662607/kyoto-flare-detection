@@ -1,25 +1,25 @@
-# ドキュメント目次
+# Documentation Index
 
-## Method 関連ドキュメント
+## Method Documents
 
-### 開発・検証レポート (Reports)
+### Development & Verification Reports
 
-- **[reports/hiroto_vs_src_comparison.md](./reports/hiroto_vs_src_comparison.md)** - hiroto 氏実装と現行 src の比較
-- **[reports/performance/profiling/](./reports/performance/profiling/)** - パフォーマンスプロファイル結果
+- **[reports/hiroto_vs_src_comparison.md](./reports/hiroto_vs_src_comparison.md)** - Comparison between Hiroto's implementation and current src
+- **[reports/performance/profiling/](./reports/performance/profiling/)** - Performance profiling results
 
-### アーカイブ (Archive)
+### Archive
 
-- **[archive/integration_plan_daijiro_hiroto.md](./archive/integration_plan_daijiro_hiroto.md)** - 実装統合計画
-- **[archive/migration_progress.md](./archive/migration_progress.md)** - マイグレーション進捗記録
+- **[archive/integration_plan_daijiro_hiroto.md](./archive/integration_plan_daijiro_hiroto.md)** - Integration plan
+- **[archive/migration_progress.md](./archive/migration_progress.md)** - Migration progress log
 
-### 変更履歴
+### Changelog
 
-- **[changelog/](./changelog/)** - 変更履歴
+- **[changelog/](./changelog/)** - Change history
 
-## プロジェクト構成の整理
+## Project Organization Notes
 
-2026 年に実施したドキュメント整理：
-- `docs/reports/`: 検証レポート・プロファイル結果
-- `docs/archive/`: 古い計画・進捗ログの移動
+Documentation cleanup performed in 2026:
+- `docs/reports/`: Verification reports and profiling results
+- `docs/archive/`: Older plans and progress logs
 
-詳細なプロジェクト構成についてはルートの [README.md](../README.md) を参照してください。
+For project structure details, see the root [README.md](../README.md).

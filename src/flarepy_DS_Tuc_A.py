@@ -43,7 +43,7 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
             ene_thres_high=ene_thres_high,
             use_sector_mean=True,
         )
-        # DS Tuc A固有のギャップ検出閾値を設定
+        # DS Tuc A-specific gap detection threshold.
         self.gap_threshold = 0.05
 
     def remove(self):
@@ -95,7 +95,8 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
 
     def tess_band_energy(self, count):
         """
-        DS Tuc A (主星) と伴星を含めた TESS 帯のエネルギーを推定する。
+        Estimate TESS-band energy including contributions from the DS Tuc A
+        primary and its companion.
         """
         response = self._get_tess_response()
         if response is None:
@@ -109,7 +110,7 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
         R_primary = Rsun_cm * self.R_sunstar_ratio  # 0.87 Rsun
         R_companion = Rsun_cm * 0.864  # Rsun
 
-        # TESS帯域での各成分の強度積分
+        # Integrate intensities in the TESS band for each component.
         planck_star = self.planck(wave * 1e-9, self.T_star)
         planck_companion = self.planck(wave * 1e-9, 4700)
         planck_flare = self.planck(wave * 1e-9, 10000)
@@ -121,19 +122,19 @@ class FlareDetector_DS_Tuc_A(BaseFlareDetector):
         if ref_intensity == 0:
             return np.array([])
 
-        # 恒星全体の強度（面積重み付き）
+        # Total stellar intensity (area-weighted).
         total_star_intensity = (
             main_intensity * R_primary**2 + companion_intensity * R_companion**2
         )
 
         # A_flare = C_flare * pi * R_primary^2 * (L_total_star_TESS / L_primary_flare_TESS)
-        # ※フレアは主星で発生すると仮定
+        # Assume flares occur on the primary star.
         area_factor = np.pi * (total_star_intensity / ref_intensity)
 
         return sigma_SB * (10000**4) * area_factor * dt * count
 
     def flux_diff(self, min_flux=0.02, max_flux=0.98):
-        """主星＋伴星の面積を使ってスポット面積を更新する。"""
+        """Update starspot area using the primary + companion areas."""
         super().flux_diff(min_percent=min_flux, max_percent=max_flux)
         primary_area = (self.R_sunstar_ratio * 695510e3) ** 2
         companion_area = (0.864 * 695510e3) ** 2
