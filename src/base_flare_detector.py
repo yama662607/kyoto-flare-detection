@@ -873,7 +873,7 @@ class BaseFlareDetector:
 
     def plot_rotation_period(self, save_path: str | None = None, dpi: int = 300):
         """
-        Show diagnostic plots (3 panels) for rotation period estimation.
+        Show diagnostic plot (single panel) for rotation period estimation.
 
         Parameters
         ----------
@@ -907,7 +907,7 @@ class BaseFlareDetector:
         plt.rcParams["pdf.fonttype"] = 42
         plt.rcParams["ps.fonttype"] = 42
 
-        fig, ax = plt.subplots(3, 1, figsize=(10, 10))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 4))
 
         # Gaussian function.
         def gauss_c0(f, A, f0, sigma):
@@ -915,55 +915,35 @@ class BaseFlareDetector:
 
         A_fit, f0_fit, sigma_f_fit = main["popt"]
 
-        # 1) Power spectrum + Gaussian fit.
-        ax[0].plot(freq, power, lw=1, label="LS power")
-        ax[0].plot(
+        # Power spectrum + Gaussian fit.
+        ax.plot(freq, power, lw=1, label="LS power")
+        ax.plot(
             main["f_fit"],
             main["p_fit"],
             ".",
             ms=3,
             label=f"Fit region (±{self.main_window:.3f})",
         )
-        ax[0].axvline(f0_fit, ls="--", color="red", label=f"f0 = {f0_fit:.5f}")
-        ax[0].axvline(f0_fit - sigma_f_fit, ls=":", color="orange")
-        ax[0].axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label="f0±σ_f")
+        ax.axvline(f0_fit, ls="--", color="red", label=f"f0 = {f0_fit:.5f}")
+        ax.axvline(f0_fit - sigma_f_fit, ls=":", color="orange")
+        ax.axvline(f0_fit + sigma_f_fit, ls=":", color="orange", label="f0±σ_f")
+
         # Fit curve.
         f_dense = np.linspace(f0_fit - 2 * sigma_f_fit, f0_fit + 2 * sigma_f_fit, 200)
-        ax[0].plot(
+        ax.plot(
             f_dense,
             gauss_c0(f_dense, A_fit, f0_fit, sigma_f_fit),
             "r-",
             lw=2,
             label="Gaussian fit",
         )
-        ax[0].set_xlabel("Frequency [1/day]")
-        ax[0].set_ylabel("LS Power")
-        ax[0].set_title(
+
+        ax.set_xlabel("Frequency [1/day]")
+        ax.set_ylabel("LS Power")
+        ax.set_title(
             f"Rotation Period: P = {self.per:.4f} (+{self.per_err_plus:.4f} / -{self.per_err_minus:.4f}) day"
         )
-        ax[0].legend(loc="upper right", fontsize=9)
-
-        # 2) Residuals.
-        ax[1].plot(main["f_fit"], main["resid"], lw=1, color="blue")
-        ax[1].axhline(0, ls="--", color="gray")
-        ax[1].set_xlabel("Frequency [1/day]")
-        ax[1].set_ylabel("Residual")
-        ax[1].set_title(
-            f"Residuals (window=±{self.main_window:.3f}); RMS={main['resid_rms']:.5f}"
-        )
-
-        # 3) σ_f vs window
-        ax[2].plot(self.windows, self.sigma_list, lw=1, marker="o", ms=3, label="σ_f")
-        ax[2].axvline(
-            self.main_window,
-            ls="--",
-            color="red",
-            label=f"Main window = {self.main_window:.3f}",
-        )
-        ax[2].set_xlabel("Window half-width")
-        ax[2].set_ylabel("σ_f")
-        ax[2].set_title("σ_f vs Window (stability check)")
-        ax[2].legend(loc="upper right", fontsize=9)
+        ax.legend(loc="upper right", fontsize=9)
 
         plt.tight_layout()
 
@@ -972,6 +952,7 @@ class BaseFlareDetector:
             print(f"Saved: {save_path}")
 
         plt.show()
+
 
     def remove(self):
         # This method is intended to be overridden by subclasses for specific data removal.
@@ -1222,6 +1203,8 @@ class BaseFlareDetector:
         fig.update_layout(title_text=f"Flare Energy Distribution ({self.data_name})")
         fig.update_xaxes(title_text="Flare Energy [erg]", type="log")
         fig.update_yaxes(title_text=r"Cumulative Number [day$^{-1}$]", type="log")
+
+        fig.show()
 
     def plot_flare_matplotlib(self, save_path=None, dpi=300):
         """
