@@ -7,17 +7,19 @@
 ### 1. ツール一式の準備
 まずは環境を整えるために `uv` をインストールしてください（詳細は[セットアップガイド](#-セットアップガイド-setup-guide)を参照）。
 
-### 2. リポジトリのクローンと依存関係のセットアップ
-以下のコマンドをコピー＆ペーストして実行してください。
+### 2. リポジトリのクローンと環境構築
 
-```bash
-# リポジトリのクローン
-git clone https://github.com/yama662607/kyoto-flare-detection.git
-cd kyoto-flare-detection
-
-# 依存関係のインストールと環境構築
-uv sync
-```
+1. **リポジトリのクローン**:
+   ```bash
+   git clone https://github.com/yama662607/kyoto-flare-detection.git
+   ```
+2. **プロジェクトを開く**:
+   クローンした `kyoto-flare-detection` フォルダを、お使いのIDE（**VS Code**, **Cursor**, **Antigravity** など）で開いてください。
+3. **依存関係のインストール**:
+   IDE の統合ターミナルで以下のコマンドを実行し、環境を構築します。
+   ```bash
+   uv sync
+   ```
 
 ### 3. 解析の準備と開始
 1. **データの配置**:
