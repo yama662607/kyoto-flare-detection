@@ -10,16 +10,18 @@ Follow these steps to quickly set up and start your analysis.
 Install `uv` if you haven't already (see [Setup Guide](#-setup-guide) below for detailed instructions).
 
 ### 2. Setup the Project
-Clone the repository and install dependencies using the following commands:
 
-```bash
-# Clone the repository
-git clone https://github.com/yama662607/kyoto-flare-detection.git
-cd kyoto-flare-detection
-
-# Install dependencies and setup the environment
-uv sync
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yama662607/kyoto-flare-detection.git
+   ```
+2. **Open the project**:
+   Open the `kyoto-flare-detection` folder in your preferred IDE (e.g., **VS Code**, **Cursor**, or **Antigravity**).
+3. **Install dependencies**:
+   Run the following command in the IDE's integrated terminal to setup the environment:
+   ```bash
+   uv sync
+   ```
 
 ### 3. Start Analysis
 1. **Prepare Data**:
